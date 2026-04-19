@@ -1,0 +1,71 @@
+[
+  {
+    "id": 1,
+    "name": "Signature Ceruty Outer",
+    "price": "Rp 349.000",
+    "originalPrice": "Rp 399.000",
+    "badge": "NEW",
+    "rating": 5.0,
+    "reviews": 33,
+    "shortDescription": "Outer berbahan Ceruty Babydoll Premium yang flowy dan elegan. Cocok untuk acara formal maupun kasual.",
+    "fullDescription": "Outer berbahan Ceruty Babydoll Premium yang flowy dan elegan. Cocok untuk acara formal maupun kasual. Diformulasikan dengan material yang breathable, memberikan kenyamanan sepanjang hari tanpa mengorbankan gaya.",
+    "images": [
+      "https://images.unsplash.com/photo-1589156229687-496a31ad1d1f?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1550614000-4b95d466f21c?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1621112904887-419379ce6824?q=80&w=1200&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1580651315530-69c8e0026377?q=80&w=1200&auto=format&fit=crop"
+    ],
+    "details": [
+      {
+        "title": "MENGAPA SPESIAL",
+        "content": "Material premium yang tidak mudah kusut dan sangat jatuh saat dikenakan. Memberikan siluet yang ramping dan elegan untuk berbagai bentuk tubuh."
+      },
+      {
+        "title": "CARA PERAWATAN",
+        "content": "Cuci dengan tangan menggunakan air dingin. Jangan gunakan pemutih. Setrika dengan suhu rendah atau gunakan steamer untuk hasil terbaik."
+      },
+      {
+        "title": "PANDUAN UKURAN",
+        "content": "All Size fit to XL. Lingkar Dada: 110cm, Panjang Baju: 115cm, Panjang Lengan: 55cm."
+      },
+      {
+        "title": "PENGIRIMAN & PENGEMBALIAN",
+        "content": "Pengiriman gratis untuk pesanan di atas Rp 500.000. Pengembalian diterima dalam 7 hari setelah barang diterima dengan syarat tag masih terpasang."
+      }
+    ],
+    "checkoutLinks": {
+      "shopee": "https://shopee.co.id/...",
+      "tiktok": "https://shop.tiktok.com/...",
+      "whatsapp": "https://wa.me/..."
+    }
+  },
+  {
+    "id": 2,
+    "name": "Essential Pleated Skirt",
+    "price": "Rp 289.000",
+    "originalPrice": null,
+    "badge": null,
+    "rating": 4.8,
+    "reviews": 124,
+    "shortDescription": "Rok plisket premium dengan potongan A-line yang memberikan siluet ramping dan nyaman dipakai seharian.",
+    "fullDescription": "Rok plisket premium dengan potongan A-line yang memberikan siluet ramping dan nyaman dipakai seharian. Material yang digunakan sangat ringan namun tidak menerawang.",
+    "images": [
+      "https://images.unsplash.com/photo-1550614000-4b95d466f21c?q=80&w=1200&auto=format&fit=crop"
+    ],
+    "details": [
+      {
+        "title": "MENGAPA SPESIAL",
+        "content": "Lipatan plisket permanen yang tidak akan hilang meski dicuci berkali-kali."
+      },
+      {
+        "title": "PANDUAN UKURAN",
+        "content": "Lingkar Pinggang: 60-100cm (Full Karet), Panjang Rok: 95cm."
+      }
+    ],
+    "checkoutLinks": {
+      "shopee": "https://shopee.co.id/...",
+      "tiktok": "https://shop.tiktok.com/...",
+      "whatsapp": "https://wa.me/..."
+    }
+  }
+]
