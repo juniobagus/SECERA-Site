@@ -3608,7 +3608,8 @@ export const products: Product[] = [
 ];
 
 
-export function formatPrice(price: number): string {
+export function formatPrice(price: number | null | undefined): string {
+  if (price === null || price === undefined) return 'Rp 0';
   return `Rp ${price.toLocaleString('id-ID')}`;
 }
 

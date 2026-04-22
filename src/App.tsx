@@ -18,6 +18,8 @@ import AdminLayout from './pages/admin/AdminLayout';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProducts from './pages/admin/AdminProducts';
 import AdminOrders from './pages/admin/AdminOrders';
+import AdminCMS from './pages/admin/AdminCMS';
+import AdminSettings from './pages/admin/AdminSettings';
 
 function StorefrontLayout() {
   return (
@@ -40,9 +42,10 @@ export default function App() {
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
+            <Route path="cms" element={<AdminCMS />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrders />} />
-            <Route path="settings" element={<div className="p-8 text-gray-500 text-center">Settings (Coming Soon)</div>} />
+            <Route path="settings" element={<AdminSettings />} />
           </Route>
 
           {/* Storefront Routes */}

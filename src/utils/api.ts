@@ -47,13 +47,29 @@ export async function getProducts() {
   return response.json();
 }
 
-export async function createOrder(orderData: any) {
-  const response = await fetch(`${API_BASE_URL}/orders`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(orderData),
-  });
-  return response.json();
+export async function createOrder(orderData: any, items: any[]) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...orderData, items }),
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server error (${response.status}): ${errorText}`);
+    }
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return await response.json();
+    }
+    
+    return { success: true };
+  } catch (error) {
+    console.error('API Error (createOrder):', error);
+    throw error;
+  }
 }

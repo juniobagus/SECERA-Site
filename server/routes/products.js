@@ -61,7 +61,7 @@ router.get('/:id', async (req, res) => {
 
 // CREATE product
 router.post('/', authenticate, async (req, res) => {
-  const { name, short_name, description, category_id, thumbnail_url, variants, images } = req.body;
+  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, variants, images } = req.body;
   const productId = uuidv4();
 
   const connection = await db.getConnection();
@@ -70,16 +70,16 @@ router.post('/', authenticate, async (req, res) => {
 
     // 1. Insert product
     await connection.query(
-      'INSERT INTO products (id, name, short_name, description, category_id, thumbnail_url) VALUES (?, ?, ?, ?, ?, ?)',
-      [productId, name, short_name, description, category_id, thumbnail_url]
+      'INSERT INTO products (id, name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [productId, name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, JSON.stringify(details)]
     );
 
     // 2. Insert variants
     if (variants && variants.length > 0) {
       for (const v of variants) {
         await connection.query(
-          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), productId, v.sku, v.color, v.option_name, v.price, v.cost_price || 0, v.stock, v.is_bundle || false, v.image_url]
+          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [uuidv4(), productId, v.sku, v.color, v.option_name || v.option, v.price, v.promo_price || v.promoPrice, v.cost_price || 0, v.stock, v.is_bundle || false, v.image_url || v.image]
         );
       }
     }
@@ -89,7 +89,7 @@ router.post('/', authenticate, async (req, res) => {
       for (let i = 0; i < images.length; i++) {
         await connection.query(
           'INSERT INTO product_images (id, product_id, image_url, display_order) VALUES (?, ?, ?, ?)',
-          [uuidv4(), productId, images[i].url, i]
+          [uuidv4(), productId, images[i].url || images[i], i]
         );
       }
     }
@@ -99,7 +99,7 @@ router.post('/', authenticate, async (req, res) => {
   } catch (err) {
     await connection.rollback();
     console.error(err);
-    res.status(500).json({ message: 'Error creating product' });
+    res.status(500).json({ message: 'Error creating product', error: err.message });
   } finally {
     connection.release();
   }
@@ -108,7 +108,7 @@ router.post('/', authenticate, async (req, res) => {
 // UPDATE product
 router.put('/:id', authenticate, async (req, res) => {
   const productId = req.params.id;
-  const { name, short_name, description, category_id, thumbnail_url, variants, images } = req.body;
+  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, variants, images } = req.body;
 
   const connection = await db.getConnection();
   try {
@@ -116,17 +116,17 @@ router.put('/:id', authenticate, async (req, res) => {
 
     // 1. Update product
     await connection.query(
-      'UPDATE products SET name = ?, short_name = ?, description = ?, category_id = ?, thumbnail_url = ? WHERE id = ?',
-      [name, short_name, description, category_id, thumbnail_url, productId]
+      'UPDATE products SET name = ?, short_name = ?, description = ?, category_id = ?, thumbnail_url = ?, material = ?, weight = ?, shopee_link = ?, tiktok_link = ?, details = ? WHERE id = ?',
+      [name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, JSON.stringify(details), productId]
     );
 
-    // 2. Refresh variants (Delete and re-insert for simplicity in this version)
+    // 2. Refresh variants
     await connection.query('DELETE FROM product_variants WHERE product_id = ?', [productId]);
     if (variants && variants.length > 0) {
       for (const v of variants) {
         await connection.query(
-          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), productId, v.sku, v.color, v.option_name, v.price, v.cost_price || 0, v.stock, v.is_bundle || false, v.image_url]
+          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [uuidv4(), productId, v.sku, v.color, v.option_name || v.option, v.price, v.promo_price || v.promoPrice, v.cost_price || 0, v.stock, v.is_bundle || false, v.image_url || v.image]
         );
       }
     }
@@ -137,7 +137,7 @@ router.put('/:id', authenticate, async (req, res) => {
       for (let i = 0; i < images.length; i++) {
         await connection.query(
           'INSERT INTO product_images (id, product_id, image_url, display_order) VALUES (?, ?, ?, ?)',
-          [uuidv4(), productId, images[i].url, i]
+          [uuidv4(), productId, images[i].url || images[i], i]
         );
       }
     }
@@ -146,7 +146,8 @@ router.put('/:id', authenticate, async (req, res) => {
     res.json({ message: 'Product updated successfully' });
   } catch (err) {
     await connection.rollback();
-    res.status(500).json({ message: 'Error updating product' });
+    console.error(err);
+    res.status(500).json({ message: 'Error updating product', error: err.message });
   } finally {
     connection.release();
   }

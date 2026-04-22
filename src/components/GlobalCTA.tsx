@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { initialCMSContent as cms } from '../data/cms';
 
 export default function GlobalCTA() {
   return (
@@ -30,9 +31,7 @@ export default function GlobalCTA() {
               transition={{ duration: 0.6 }}
               className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#722F38] leading-tight mb-6"
             >
-              Belanja Lebih Hemat
-              <br />
-              via WhatsApp
+              {cms.cta.title}
             </motion.h2>
             
             <motion.p 
@@ -42,7 +41,7 @@ export default function GlobalCTA() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-lg md:text-xl text-[#722F38]/80 mb-10"
             >
-              Selesaikan pesanan Anda melalui WhatsApp dan nikmati potongan harga eksklusif hingga 15%.
+              {cms.cta.description}
             </motion.p>
             
             <motion.div 
@@ -62,20 +61,14 @@ export default function GlobalCTA() {
                 <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#FFFFFF_50%,transparent_100%)]"></span>
               </div>
 
-              <button className="relative w-full h-full overflow-hidden px-10 py-5 rounded-full bg-[#F9F9F9] text-[#722F38] font-medium transition-all cursor-pointer">
+              <button 
+                onClick={() => window.location.href = '/shop'}
+                className="relative w-full h-full overflow-hidden px-10 py-5 rounded-full bg-[#F9F9F9] text-[#722F38] font-medium transition-all cursor-pointer"
+              >
                 {/* Shimmer Sweep Effect */}
                 <div className="absolute top-0 left-0 w-full h-full -translate-x-full skew-x-[-20deg] bg-gradient-to-r from-transparent via-[#722F38]/10 to-transparent group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none z-10"></div>
 
-                {/* Ribbon Label */}
-                <div className="absolute top-0 right-0 z-10 bg-[#722F38] text-[#F9F9F9] text-[10px] font-bold px-3 py-1.5 rounded-bl-[1rem] shadow-sm flex items-center gap-1.5 pointer-events-none">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                  </span>
-                  UP TO 15% OFF
-                </div>
-
-                <span className="relative z-10 text-lg pointer-events-none">Hubungi Kami di WhatsApp</span>
+                <span className="relative z-10 text-lg pointer-events-none">{cms.cta.buttonText}</span>
               </button>
             </motion.div>
           </div>

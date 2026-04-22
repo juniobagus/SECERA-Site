@@ -9,6 +9,8 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { products, formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
+import { initialCMSContent as cms } from '../data/cms';
+import ProductCard from '../components/ProductCard';
 
 export default function Home() {
   const { addItem } = useCart();
@@ -18,30 +20,11 @@ export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
 
-  const faqs = [
-    {
-      question: "Apakah bahannya mudah kusut?",
-      answer: "Tidak, kami menggunakan material Ceruty Babydoll Premium yang flowy dan tidak mudah kusut, sehingga Anda tetap tampil rapi sepanjang hari."
-    },
-    {
-      question: "Berapa lama waktu pengiriman?",
-      answer: "Pengiriman reguler memakan waktu 2-3 hari kerja untuk area Jabodetabek, dan 3-5 hari kerja untuk luar Jabodetabek."
-    },
-    {
-      question: "Apakah bisa dikembalikan jika ukuran tidak pas?",
-      answer: "Ya, kami menerima penukaran ukuran maksimal 3 hari setelah barang diterima dengan syarat tag masih terpasang dan belum dicuci."
-    },
-    {
-      question: "Bagaimana cara perawatannya?",
-      answer: "Disarankan untuk mencuci dengan tangan menggunakan air dingin dan deterjen lembut. Hindari penggunaan pemutih dan setrika dengan suhu rendah."
-    }
-  ];
-
   const handleScroll = () => {
     if (carouselRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
       setCanScrollLeft(scrollLeft > 0);
-      
+
       const maxScroll = scrollWidth - clientWidth;
       const isAtEnd = Math.ceil(scrollLeft) >= maxScroll - 10;
       setCanScrollRight(!isAtEnd && maxScroll > 0);
@@ -66,508 +49,418 @@ export default function Home() {
 
   return (
     <>
-    <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
-      <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[80vh]">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          {/* 
+      <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
+        <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[80vh]">
+          {/* Background Image */}
+          <div className="absolute inset-0 z-0">
+            {/* 
             Note: Please upload your image to the 'public' folder 
             in the file explorer and name it 'hero-image.jpg' 
           */}
-          <img
-            src="/hero-image.jpg"
-            alt="SECERA women wearing maroon scarves"
-            className="w-full h-full object-cover object-center"
-            referrerPolicy="no-referrer"
-          />
-          {/* Dark overlay for white text readability */}
-          <div className="absolute inset-0 bg-black/40" />
+            <img
+              src="/hero-image.jpg"
+              alt="SECERA women wearing maroon scarves"
+              className="w-full h-full object-cover object-center"
+              referrerPolicy="no-referrer"
+            />
+            {/* Dark overlay for white text readability */}
+            <div className="absolute inset-0 bg-black/40" />
+          </div>
+
+          {/* Hero Content */}
+          <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
+            <motion.h2 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tight mb-6 max-w-4xl leading-tight text-white"
+            >
+              {cms.hero.title}
+            </motion.h2>
+
+            <motion.p 
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+              className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-light"
+            >
+              {cms.hero.subtitle}
+            </motion.p>
+
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="flex flex-col sm:flex-row items-center gap-4"
+            >
+              <Link to="/shop" className="px-8 py-3.5 rounded-full border border-white/60 bg-transparent hover:bg-white hover:text-black transition-all duration-300 text-sm font-medium w-full sm:w-auto text-white">
+                {cms.hero.cta}
+              </Link>
+            </motion.div>
+          </main>
         </div>
 
-        {/* Hero Content */}
-        <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
-          <h2 className="text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tight mb-6 max-w-4xl leading-tight text-white">
-            Anggun dalam<br />Sekejap
-          </h2>
-
-          <p className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-light">
-            Tampil berbudaya dan elegan tanpa kompromi. Desain eksklusif yang siap memukau dalam 5 detik.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <button className="px-8 py-3.5 rounded-full border border-white/60 bg-transparent hover:bg-white hover:text-black transition-all duration-300 text-sm font-medium w-full sm:w-auto text-white">
-              Lihat Koleksi
-            </button>
-            <button className="px-8 py-3.5 rounded-full border border-white/60 bg-transparent hover:bg-white hover:text-black transition-all duration-300 text-sm font-medium w-full sm:w-auto text-white">
-              Keajaiban 5 Detik
-            </button>
+        {/* Trust & Features Marquee */}
+        <div className="w-full py-4 mt-3 md:mt-5 flex items-center overflow-hidden px-4 md:px-8 shrink-0">
+          {/* Left side: Rating */}
+          <div className="hidden md:flex items-center gap-2 pr-6 md:pr-8 shrink-0 z-10">
+            <div className="flex items-center gap-1">
+              <Star className="w-6 h-6 fill-[#00b67a] text-[#00b67a]" />
+              <span className="font-bold text-xl tracking-tight">Trustpilot</span>
+            </div>
+            <div className="flex items-center gap-0.5 ml-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="bg-[#00b67a] p-1 rounded-sm">
+                  <Star className="w-4 h-4 fill-white text-white" />
+                </div>
+              ))}
+            </div>
           </div>
-        </main>
-      </div>
 
-      {/* Trust & Features Marquee */}
-      <div className="w-full py-4 mt-3 md:mt-5 flex items-center overflow-hidden px-4 md:px-8 shrink-0">
-        {/* Left side: Rating */}
-        <div className="hidden md:flex items-center gap-2 pr-6 md:pr-8 shrink-0 z-10">
-          <div className="flex items-center gap-1">
-            <Star className="w-6 h-6 fill-[#00b67a] text-[#00b67a]" />
-            <span className="font-bold text-xl tracking-tight">Trustpilot</span>
-          </div>
-          <div className="flex items-center gap-0.5 ml-3">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="bg-[#00b67a] p-1 rounded-sm">
-                <Star className="w-4 h-4 fill-white text-white" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right side: Marquee */}
-        <div className="flex-1 overflow-hidden relative md:ml-8 flex items-center mask-image-linear">
-          {/* 
+          {/* Right side: Marquee */}
+          <div className="flex-1 overflow-hidden relative md:ml-8 flex items-center mask-image-linear">
+            {/* 
             We duplicate the content to create a seamless infinite loop.
             The animation translates from 0 to -50%, so the content needs to be twice as wide.
           */}
-          <div className="flex items-center gap-12 animate-marquee whitespace-nowrap w-max">
-            {/* Group 1 */}
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">Siap pakai dalam 5 detik</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Layers className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">1 Outer untuk 3 Looks</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Gem className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">Material Premium Ceruty Babydoll</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">Ketenangan & Keanggunan</span>
-            </div>
-            
-            {/* Group 2 (Duplicate for seamless loop) */}
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">Siap pakai dalam 5 detik</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Layers className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">1 Outer untuk 3 Looks</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Gem className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">Material Premium Ceruty Babydoll</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-zinc-600" strokeWidth={1.5} />
-              <span className="text-zinc-800 font-medium">Ketenangan & Keanggunan</span>
+            <div className="flex items-center gap-12 animate-marquee whitespace-nowrap w-max">
+              {/* Group 1 */}
+              {cms.features.items.map((feature, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-zinc-800 font-medium">{feature.title}</span>
+                </div>
+              ))}
+
+              {/* Group 2 (Duplicate for seamless loop) */}
+              {cms.features.items.map((feature, i) => (
+                <div key={`dup-${i}`} className="flex items-center gap-3">
+                  <span className="text-zinc-800 font-medium">{feature.title}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Product Section */}
-      <div className="relative w-full rounded-[2rem] overflow-hidden bg-[#F9F9F9] mt-3 md:mt-5 pt-20 pb-6 px-4 md:px-6 flex flex-col items-center">
-        <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-500 mb-4 relative z-10">
-          KOLEKSI SECERA
-        </span>
-        <h2 className="text-4xl md:text-6xl font-serif text-[#6E2B30] mb-8 relative z-10">
-          Timeless Elegance
-        </h2>
 
-        {/* Section Background Image */}
-        <div className="absolute top-40 left-0 right-0 bottom-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#F9F9F9] via-transparent to-[#F9F9F9]/50 z-10" />
-          <img
-            src="https://images.unsplash.com/photo-1594223274512-ad4803739b7c?q=80&w=2800&auto=format&fit=crop"
-            alt="Elegant woman"
-            className="w-full h-full object-cover object-top"
-            referrerPolicy="no-referrer"
-          />
-        </div>
 
-        {/* Cards Grid */}
-        <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full max-w-6xl mt-[20vh] md:mt-[30vh]">
-          {/* Card 1 */}
-          <div className="group bg-gradient-to-b from-[#f3e1d5]/60 to-[#e8cbb7]/60 backdrop-blur-xl rounded-[2rem] p-8 md:p-10 flex flex-col h-[450px] md:h-[550px] relative overflow-hidden shadow-lg border border-white/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
-            <div className="flex flex-col items-start z-10 relative">
-              <div className="pr-4">
-                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 mb-2">Pre-stitched</h3>
-                <p className="text-zinc-700 text-sm md:text-base">Siap pakai dalam 5 detik tanpa ribet</p>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-5">
-                <a href="#" target="_blank" rel="noopener noreferrer" className="px-5 py-2 bg-white/80 hover:bg-white text-zinc-900 text-sm font-medium rounded-full backdrop-blur-sm transition-colors border border-white shadow-sm">
-                  Shopee
-                </a>
-                <a href="#" target="_blank" rel="noopener noreferrer" className="px-5 py-2 bg-white/80 hover:bg-white text-zinc-900 text-sm font-medium rounded-full backdrop-blur-sm transition-colors border border-white shadow-sm">
-                  TikTok Shop
-                </a>
-              </div>
-            </div>
-            <div className="absolute bottom-0 left-8 right-8 h-[55%] rounded-t-2xl overflow-hidden shadow-2xl bg-white border border-white/50">
-              <img src="https://images.unsplash.com/photo-1617019114583-affb34d1b3cd?q=80&w=800&auto=format&fit=crop" alt="Pre-stitched scarf detail" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
+        {/* Carousel Section */}
+        <div className="w-full bg-[#F9F9F9] py-20 px-4 md:px-12 flex flex-col mt-3 md:mt-5 rounded-[2rem]">
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] max-w-2xl leading-tight">
+              Kualitas premium yang <span className="text-zinc-400">terasa personal, bukan sekadar busana</span>
+            </h2>
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => scroll('left')}
+                disabled={!canScrollLeft}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${canScrollLeft ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900' : 'bg-zinc-50 text-zinc-300 cursor-not-allowed'
+                  }`}
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={() => scroll('right')}
+                disabled={!canScrollRight}
+                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${canScrollRight ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900' : 'bg-zinc-50 text-zinc-300 cursor-not-allowed'
+                  }`}
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
             </div>
           </div>
 
-          {/* Card 2 */}
-          <div className="group bg-gradient-to-b from-[#e8ebe6]/60 to-[#d1d6cc]/60 backdrop-blur-xl rounded-[2rem] p-8 md:p-10 flex flex-col h-[450px] md:h-[550px] relative overflow-hidden shadow-lg border border-white/50 transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl">
-            <div className="flex flex-col items-start z-10 relative">
-              <div className="pr-4">
-                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 mb-2">Versatile Styling</h3>
-                <p className="text-zinc-700 text-sm md:text-base">Satu item untuk 3 looks berbeda</p>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-5">
-                <a href="#" target="_blank" rel="noopener noreferrer" className="px-5 py-2 bg-white/80 hover:bg-white text-zinc-900 text-sm font-medium rounded-full backdrop-blur-sm transition-colors border border-white shadow-sm">
-                  Shopee
-                </a>
-                <a href="#" target="_blank" rel="noopener noreferrer" className="px-5 py-2 bg-white/80 hover:bg-white text-zinc-900 text-sm font-medium rounded-full backdrop-blur-sm transition-colors border border-white shadow-sm">
-                  TikTok Shop
-                </a>
-              </div>
-            </div>
-            <div className="absolute bottom-0 left-8 right-8 h-[55%] rounded-t-2xl overflow-hidden shadow-2xl bg-white border border-white/50">
-              <img src="https://images.unsplash.com/photo-1584273143981-41c073dfe8f8?q=80&w=800&auto=format&fit=crop" alt="Versatile styling detail" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Carousel Section */}
-      <div className="w-full bg-[#F9F9F9] py-20 px-4 md:px-12 flex flex-col mt-3 md:mt-5 rounded-[2rem]">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] max-w-2xl leading-tight">
-            Kualitas premium yang <span className="text-zinc-400">terasa personal, bukan sekadar busana</span>
-          </h2>
-          <div className="flex items-center gap-3 shrink-0">
-            <button 
-              onClick={() => scroll('left')} 
-              disabled={!canScrollLeft}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                canScrollLeft ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900' : 'bg-zinc-50 text-zinc-300 cursor-not-allowed'
-              }`}
+          <div
+            ref={carouselRef}
+            onScroll={handleScroll}
+            className="flex gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-8"
+          >
+            {/* Card 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              whileHover={{ y: -8 }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
+              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
             >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button 
-              onClick={() => scroll('right')} 
-              disabled={!canScrollRight}
-              className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${
-                canScrollRight ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900' : 'bg-zinc-50 text-zinc-300 cursor-not-allowed'
-              }`}
+              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">MATERIAL</span>
+                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
+                  Ceruty Babydoll Premium
+                </h3>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-64 bg-[#6E2B30] rounded-t-lg shadow-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
+                  <span className="text-white font-serif text-2xl -rotate-90 tracking-widest">SECERA</span>
+                </div>
+              </div>
+              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
+                Material flowy yang jatuh sempurna, memberikan tampilan mewah dan kenyamanan maksimal.
+              </p>
+            </motion.div>
+
+            {/* Card 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              whileHover={{ y: -8 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
+              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
             >
-              <ChevronRight className="w-6 h-6" />
-            </button>
+              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">CRAFTSMANSHIP</span>
+                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
+                  Kualitas Butik Presisi
+                </h3>
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
+                  <img src="https://images.unsplash.com/photo-1589465885855-44224b203439?q=80&w=400&auto=format&fit=crop" alt="Craftsmanship" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                </div>
+              </div>
+              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
+                Dikerjakan oleh tangan ahli untuk jahitan rapi, kuat, dan tahan lama di setiap helainya.
+              </p>
+            </motion.div>
+
+            {/* Card 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              whileHover={{ y: -8 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
+              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
+            >
+              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">VERSATILITY</span>
+                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
+                  1 Outer, 3 Looks
+                </h3>
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full px-8 flex flex-col gap-3 transition-transform duration-500 group-hover:-translate-y-2">
+                  <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Gaya Formal</div>
+                  <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Gaya Kasual</div>
+                  <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Acara Spesial</div>
+                </div>
+              </div>
+              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
+                Desain inovatif untuk transformasi gaya instan. Cocok untuk acara formal maupun kasual.
+              </p>
+            </motion.div>
+
+            {/* Card 4 (Dummy) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              whileHover={{ y: -8 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
+              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
+            >
+              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">COMFORT</span>
+                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
+                  Ringan & Breathable
+                </h3>
+                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
+                  <img src="https://images.unsplash.com/photo-1515347619152-14123c126839?q=80&w=400&auto=format&fit=crop" alt="Comfort" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                </div>
+              </div>
+              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
+                Tetap segar dan bebas gerak dari pagi hingga malam tanpa rasa gerah.
+              </p>
+            </motion.div>
+
+            {/* Card 5 (Dummy) */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              whileHover={{ y: -8 }}
+              transition={{ duration: 0.5, ease: "easeOut", delay: 0.4 }}
+              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
+            >
+              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
+                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">ELEGANCE</span>
+                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
+                  Timeless Elegance
+                </h3>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-64 bg-[#6E2B30] rounded-t-lg shadow-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
+                  <span className="text-white font-serif text-2xl -rotate-90 tracking-widest">TIMELESS</span>
+                </div>
+              </div>
+              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
+                Siluet klasik dengan sentuhan modern. Gaya anggun yang selalu relevan di setiap momen.
+              </p>
+            </motion.div>
+          </div>
+
+          {/* Progress Slider */}
+          <div className="w-full max-w-md mx-auto mt-8 bg-zinc-200 rounded-full h-1.5 overflow-hidden">
+            <div
+              className="bg-[#6E2B30] h-full transition-all duration-300 ease-out"
+              style={{ width: `${scrollProgress}%` }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Product Grid Section */}
+      <section className="py-24 px-6 md:px-12 max-w-[1600px] mx-auto">
+        <div className="max-w-5xl mx-auto text-center mb-24">
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-2xl md:text-4xl lg:text-[40px] font-serif text-[#6E2B30] leading-snug md:leading-relaxed"
+          >
+            Secera adalah merek yang menggabungkan keanggunan dan kepraktisan. Terinspirasi oleh kebutuhan wanita modern, kami percaya bahwa tampil memukau tidak harus rumit. Setiap helai dirancang untuk menyelaraskan kenyamanan dan gaya, menghadirkan <span className="italic">timeless elegance</span> dalam setiap detik berharga Anda.
+          </motion.h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
+          {products.slice(0, 4).map((product, index) => (
+            <ProductCard key={product.id} product={product} index={index} />
+          ))}
+        </div>
+      </section>
+
+      {/* UGC Video Section - Infinite Scrolling Carousel */}
+      <section className="py-24 overflow-hidden bg-white">
+        <div className="px-6 md:px-12 max-w-[1600px] mx-auto mb-12 flex items-end justify-between">
+          <div>
+            <h2 className="text-3xl md:text-5xl font-serif text-[#6E2B30] mb-4">Our Community</h2>
+            <p className="text-zinc-500 max-w-xl">Lihat bagaimana para pelanggan kami tampil memukau dengan koleksi Secera. Tandai kami di media sosial untuk kesempatan ditampilkan di sini.</p>
           </div>
         </div>
 
-        <div 
-          ref={carouselRef} 
-          onScroll={handleScroll}
-          className="flex gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-8"
-        >
-          {/* Card 1 */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            whileHover={{ y: -8 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-          >
-            <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">MATERIAL</span>
-              <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                Ceruty Babydoll Premium
-              </h3>
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-64 bg-[#6E2B30] rounded-t-lg shadow-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                <span className="text-white font-serif text-2xl -rotate-90 tracking-widest">SECERA</span>
-              </div>
-            </div>
-            <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-              Material flowy yang jatuh sempurna, memberikan tampilan mewah dan kenyamanan maksimal.
-            </p>
-          </motion.div>
+        <div className="relative group">
+          {/* Mask for smooth edges */}
+          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-20 pointer-events-none" />
 
-          {/* Card 2 */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            whileHover={{ y: -8 }}
-            transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-            className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-          >
-            <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">CRAFTSMANSHIP</span>
-              <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                Kualitas Butik Presisi
-              </h3>
-              <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                <img src="https://images.unsplash.com/photo-1589465885855-44224b203439?q=80&w=400&auto=format&fit=crop" alt="Craftsmanship" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
-            </div>
-            <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-              Dikerjakan oleh tangan ahli untuk jahitan rapi, kuat, dan tahan lama di setiap helainya.
-            </p>
-          </motion.div>
-
-          {/* Card 3 */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            whileHover={{ y: -8 }}
-            transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
-            className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-          >
-            <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">VERSATILITY</span>
-              <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                1 Outer, 3 Looks
-              </h3>
-              <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full px-8 flex flex-col gap-3 transition-transform duration-500 group-hover:-translate-y-2">
-                <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Gaya Formal</div>
-                <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Gaya Kasual</div>
-                <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Acara Spesial</div>
-              </div>
-            </div>
-            <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-              Desain inovatif untuk transformasi gaya instan. Cocok untuk acara formal maupun kasual.
-            </p>
-          </motion.div>
-
-          {/* Card 4 (Dummy) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            whileHover={{ y: -8 }}
-            transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
-            className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-          >
-            <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">COMFORT</span>
-              <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                Ringan & Breathable
-              </h3>
-              <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                <img src="https://images.unsplash.com/photo-1515347619152-14123c126839?q=80&w=400&auto=format&fit=crop" alt="Comfort" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
-            </div>
-            <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-              Tetap segar dan bebas gerak dari pagi hingga malam tanpa rasa gerah.
-            </p>
-          </motion.div>
-
-          {/* Card 5 (Dummy) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            whileHover={{ y: -8 }}
-            transition={{ duration: 0.5, ease: "easeOut", delay: 0.4 }}
-            className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-          >
-            <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">ELEGANCE</span>
-              <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                Timeless Elegance
-              </h3>
-              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-64 bg-[#6E2B30] rounded-t-lg shadow-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                <span className="text-white font-serif text-2xl -rotate-90 tracking-widest">TIMELESS</span>
-              </div>
-            </div>
-            <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-              Siluet klasik dengan sentuhan modern. Gaya anggun yang selalu relevan di setiap momen.
-            </p>
-          </motion.div>
+          {/* Marquee Container */}
+          <div className="flex gap-6 animate-marquee group-hover:[animation-play-state:paused]">
+            {[...products.slice(0, 4), ...products.slice(0, 4), ...products.slice(0, 4)].map((item, index) => {
+              const firstVariant = item.variants[0];
+              return (
+                <div
+                  key={`${item.id}-${index}`}
+                  className="flex flex-col shrink-0 w-[280px] md:w-[320px] group/item"
+                >
+                  {/* Video/Image Container */}
+                  <div className="relative aspect-[4/5] bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden cursor-pointer shadow-sm group-hover/item:shadow-xl transition-all duration-500">
+                    <video 
+                      autoPlay 
+                      loop 
+                      muted 
+                      playsInline 
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover/item:scale-105"
+                      poster={firstVariant.image}
+                    >
+                      <source src="https://cdn.joinvoy.com/voyage/video/voytex-MIX-homepage-desktop.mp4" type="video/mp4" />
+                    </video>
+                    <div className="absolute top-6 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all hover:bg-white/40 z-10 border border-white/30 opacity-0 group-hover/item:opacity-100 scale-90 group-hover/item:scale-100">
+                      <VolumeX className="w-5 h-5" />
+                    </div>
+                    {/* Overlay brand logo like yuumae */}
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 group-hover/item:opacity-80 transition-opacity">
+                      <h3 className="text-2xl font-bold text-white tracking-tighter">secera</h3>
+                    </div>
+                  </div>
+                  
+                  {/* Product Info Card (Underneath like yuumae) */}
+                  <Link to={`/product/${item.id}`} className="flex items-center gap-4 px-2">
+                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#F1F2E9] shrink-0">
+                      <img src={firstVariant.image} alt={item.name} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">({item.category})</span>
+                      <h4 className="text-sm font-medium text-[#6E2B30] truncate">{item.shortName}</h4>
+                      <div className="flex items-center justify-between gap-4 mt-1">
+                        <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant.price)}</span>
+                        <div className="w-6 h-6 rounded-full bg-[#6E2B30] text-white flex items-center justify-center">
+                          <Plus className="w-3 h-3" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Progress Slider */}
-        <div className="w-full max-w-md mx-auto mt-8 bg-zinc-200 rounded-full h-1.5 overflow-hidden">
-          <div 
-            className="bg-[#6E2B30] h-full transition-all duration-300 ease-out"
-            style={{ width: `${scrollProgress}%` }}
-          />
-        </div>
-      </div>
-    </div>
+        <style>{`
+          @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(calc(-320px * 4 - 24px * 4)); }
+          }
+          .animate-marquee {
+            animation: marquee 40s linear infinite;
+          }
+          @media (max-width: 768px) {
+             @keyframes marquee {
+              0% { transform: translateX(0); }
+              100% { transform: translateX(calc(-280px * 4 - 24px * 4)); }
+            }
+          }
+        `}</style>
+      </section>
 
-    {/* Product Grid Section */}
-    <section className="py-24 px-6 md:px-12 max-w-[1600px] mx-auto bg-[#F9F9F9]">
-      <div className="max-w-5xl mx-auto text-center mb-24">
-        <motion.h2 
+      {/* FAQ Section */}
+      <section className="py-24 px-6 md:px-12 max-w-3xl mx-auto w-full">
+        <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.7, ease: "easeOut" }}
-          className="text-2xl md:text-4xl lg:text-[40px] font-serif text-[#6E2B30] leading-snug md:leading-relaxed"
+          className="text-4xl md:text-5xl font-serif text-[#6E2B30] text-center mb-4"
         >
-          Secera adalah merek yang menggabungkan keanggunan dan kepraktisan. Terinspirasi oleh kebutuhan wanita modern, kami percaya bahwa tampil memukau tidak harus rumit. Setiap helai dirancang untuk menyelaraskan kenyamanan dan gaya, menghadirkan <span className="italic">timeless elegance</span> dalam setiap detik berharga Anda.
+          {cms.faq.title}
         </motion.h2>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
-        {products.slice(0, 4).map((product, index) => {
-          const firstVariant = product.variants[0];
-          return (
-            <motion.div 
-              key={product.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="flex flex-col group"
-            >
-              {/* Image Container */}
-              <Link to={`/product/${product.id}`} className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-[#F1F2E9] mb-6 block">
-                <img 
-                  src={firstVariant.image} 
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
-              </Link>
-
-              {/* Product Info */}
-              <div className="flex flex-col flex-1">
-                <span className="text-[11px] font-medium tracking-widest text-[#6E2B30]/60 mb-2 uppercase">{product.category}</span>
-                <Link to={`/product/${product.id}`}>
-                  <h3 className="text-xl font-serif text-[#6E2B30] mb-2 hover:opacity-80 transition-opacity">
-                    {product.shortName}
-                  </h3>
-                </Link>
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="text-base font-medium text-[#6E2B30]">
-                    {formatPrice(firstVariant.price)}
-                  </span>
-                </div>
-
-                {/* Actions */}
-                <div className="flex flex-col gap-2 mt-auto">
-                  <button 
-                    onClick={() => {
-                      addItem({
-                        sku: firstVariant.sku,
-                        productName: product.shortName,
-                        color: firstVariant.color,
-                        option: firstVariant.option,
-                        price: firstVariant.promoPrice || firstVariant.price,
-                        image: firstVariant.image,
-                        quantity: 1
-                      });
-                    }}
-                    className="w-full bg-[#722F38] hover:bg-[#5a252d] text-white text-xs font-bold py-4 px-4 rounded-xl uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <ShoppingBag className="w-4 h-4" />
-                    Tambah ke keranjang
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
-    </section>
-
-    {/* UGC Video Section */}
-    <section className="py-12 px-6 md:px-12 max-w-[1600px] mx-auto bg-[#F9F9F9]">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {products.slice(0, 4).map((item, index) => {
-          const firstVariant = item.variants[0];
-          return (
-            <motion.div 
+        <p className="text-zinc-600 text-center mb-16">{cms.faq.description}</p>
+        <div className="flex flex-col border-t border-zinc-900">
+          {cms.faq.items.map((faq, index) => (
+            <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
+              viewport={{ once: true }}
               transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-              className="flex flex-col group"
+              className="border-b border-zinc-900"
             >
-              {/* Video Thumbnail */}
-              <div className="relative aspect-[4/5] bg-[#F1F2E9] mb-3 rounded-2xl overflow-hidden cursor-pointer">
-                <img src={firstVariant.image} alt="UGC" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" loading="lazy" />
-                <div className="absolute top-4 right-4 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors hover:bg-black/60 z-10">
-                  <VolumeX className="w-4 h-4" />
-                </div>
-              </div>
-              {/* Product Card */}
-              <Link to={`/product/${item.id}`} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow flex relative cursor-pointer h-24 overflow-hidden border border-[#6E2B30]/5">
-                <div className="w-24 h-full shrink-0 bg-[#F1F2E9] p-2">
-                  <img src={firstVariant.image} alt={item.name} className="w-full h-full object-cover mix-blend-multiply rounded-lg" referrerPolicy="no-referrer" loading="lazy" />
-                </div>
-                <div className="flex flex-col justify-center py-2 px-3 flex-grow">
-                  <span className="text-[9px] font-medium tracking-widest text-[#6E2B30]/60 mb-1 uppercase">{item.category}</span>
-                  <h4 className="text-sm font-serif text-[#6E2B30] mb-1 line-clamp-1">{item.shortName}</h4>
-                  <p className="text-xs font-medium text-[#6E2B30] mt-auto">{formatPrice(firstVariant.price)}</p>
-                </div>
-                <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#F1F2E9] text-[#6E2B30] flex items-center justify-center hover:bg-[#e4e6d9] transition-colors rounded-tl-xl">
-                  <Plus className="w-4 h-4" />
-                </button>
-              </Link>
+              <button
+                onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
+                className="w-full py-6 flex items-center justify-between text-left focus:outline-none group cursor-pointer"
+              >
+                <span className="text-lg font-medium text-zinc-900 group-hover:text-zinc-600 transition-colors">{faq.question}</span>
+                {openFaqIndex === index ? (
+                  <ChevronUp className="w-5 h-5 text-zinc-500 font-light shrink-0 ml-4" strokeWidth={1} />
+                ) : (
+                  <ChevronDown className="w-5 h-5 text-zinc-500 font-light shrink-0 ml-4" strokeWidth={1} />
+                )}
+              </button>
+              <motion.div
+                initial={false}
+                animate={{ height: openFaqIndex === index ? 'auto' : 0, opacity: openFaqIndex === index ? 1 : 0 }}
+                className="overflow-hidden"
+              >
+                <p className="pb-6 text-zinc-600 leading-relaxed pr-8">
+                  {faq.answer}
+                </p>
+              </motion.div>
             </motion.div>
-          );
-        })}
-      </div>
-    </section>
-
-    {/* FAQ Section */}
-    <section className="py-24 px-6 md:px-12 max-w-3xl mx-auto w-full">
-      <motion.h2 
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
-        className="text-4xl md:text-5xl font-serif text-[#6E2B30] text-center mb-16"
-      >
-        FAQ
-      </motion.h2>
-      <div className="flex flex-col border-t border-zinc-900">
-        {faqs.map((faq, index) => (
-          <motion.div 
-            key={index} 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-            className="border-b border-zinc-900"
-          >
-            <button 
-              onClick={() => setOpenFaqIndex(openFaqIndex === index ? null : index)}
-              className="w-full py-6 flex items-center justify-between text-left focus:outline-none group cursor-pointer"
-            >
-              <span className="text-lg font-medium text-zinc-900 group-hover:text-zinc-600 transition-colors">{faq.question}</span>
-              {openFaqIndex === index ? (
-                <ChevronUp className="w-5 h-5 text-zinc-500 font-light shrink-0 ml-4" strokeWidth={1} />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-zinc-500 font-light shrink-0 ml-4" strokeWidth={1} />
-              )}
-            </button>
-            <motion.div 
-              initial={false}
-              animate={{ height: openFaqIndex === index ? 'auto' : 0, opacity: openFaqIndex === index ? 1 : 0 }}
-              className="overflow-hidden"
-            >
-              <p className="pb-6 text-zinc-600 leading-relaxed pr-8">
-                {faq.answer}
-              </p>
-            </motion.div>
-          </motion.div>
-        ))}
-      </div>
-      <motion.div 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.5, delay: 0.5 }}
-        className="text-center mt-12"
-      >
-        <a href="#" className="text-sm text-zinc-900 underline underline-offset-4 hover:text-zinc-600 transition-colors">See more</a>
-      </motion.div>
-    </section>
+          ))}
+        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, delay: 0.5 }}
+          className="text-center mt-12"
+        >
+          <a href="#" className="text-sm text-zinc-900 underline underline-offset-4 hover:text-zinc-600 transition-colors">See more</a>
+        </motion.div>
+      </section>
     </>
   );
 }

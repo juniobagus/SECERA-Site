@@ -1,7 +1,7 @@
 import { CartItem } from '../context/CartContext';
 import { formatPrice } from '../data/products';
 
-const ADMIN_PHONE = '6281234567890'; // Replace with actual admin WhatsApp number
+const ADMIN_PHONE = '6285750990000'; // Secera Admin WhatsApp
 
 export interface ShippingInfo {
   name: string;

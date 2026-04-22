@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Save, User, Bell, Shield, Globe, CreditCard } from 'lucide-react';
+import { Save, User, Globe, CreditCard } from 'lucide-react';
 
 export default function AdminSettings() {
   const [isSaving, setIsSaving] = useState(false);
@@ -16,7 +16,7 @@ export default function AdminSettings() {
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">General Settings</h1>
           <p className="text-sm text-gray-500">Configure your store and account preferences.</p>
         </div>
         <button 
@@ -57,7 +57,7 @@ export default function AdminSettings() {
           <div className="p-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Order Number</label>
-              <input type="text" defaultValue="6281234567890" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" placeholder="e.g. 62812..." />
+              <input type="text" defaultValue="6285750990000" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" placeholder="e.g. 62812..." />
               <p className="text-xs text-gray-400 mt-1">International format without + or spaces.</p>
             </div>
             <div>

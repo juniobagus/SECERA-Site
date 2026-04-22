@@ -1,4 +1,5 @@
-import { Instagram, Linkedin, Twitter, ArrowRight } from 'lucide-react';
+import { Instagram, Linkedin, Twitter, ArrowRight, MessageCircle } from 'lucide-react';
+import { initialCMSContent as cms } from '../data/cms';
 
 export default function Footer() {
   return (
@@ -26,7 +27,10 @@ export default function Footer() {
 
           <div className="lg:col-span-3 flex flex-col gap-4">
             <h4 className="font-bold text-lg mb-2">Hubungi Kami</h4>
-            <a href="mailto:care@secera.id" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors mb-4">care@secera.id</a>
+            <a href={`https://wa.me/${cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors mb-1 flex items-center gap-2">
+              <MessageCircle className="w-4 h-4" /> +{cms.footer.phone}
+            </a>
+            <a href={`mailto:${cms.footer.email}`} className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors mb-4">{cms.footer.email}</a>
             <div className="flex items-center gap-4">
               <a href="#" className="hover:text-white/70 transition-colors"><Instagram className="w-5 h-5" /></a>
               <a href="#" className="hover:text-white/70 transition-colors"><Linkedin className="w-5 h-5" /></a>
@@ -52,7 +56,7 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 text-xs text-[#F9F9F9]/70 mb-8">
-          <span>Mendefinisikan ulang gaya modest</span>
+          <span>{cms.footer.tagline}</span>
           <span className="hidden md:inline">|</span>
           <span>©Copyright 2026 Secera</span>
           <span className="hidden md:inline">|</span>

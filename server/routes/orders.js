@@ -51,7 +51,7 @@ router.post('/', async (req, res) => {
   } catch (err) {
     await connection.rollback();
     console.error(err);
-    res.status(500).json({ message: 'Error creating order' });
+    res.status(500).json({ message: 'Error creating order', error: err.message });
   } finally {
     connection.release();
   }
