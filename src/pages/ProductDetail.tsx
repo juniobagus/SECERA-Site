@@ -1,236 +1,280 @@
-import React, { useState } from 'react';
-import { Star, Plus, Minus } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
-import { useParams } from 'react-router-dom';
-
-// Mock data
-const product = {
-  id: 1,
-  name: 'Signature Ceruty Outer',
-  price: 'Rp 349.000',
-  rating: 5.0,
-  reviews: 33,
-  description: 'Outer berbahan Ceruty Babydoll Premium yang flowy dan elegan. Cocok untuk acara formal maupun kasual. Diformulasikan dengan material yang breathable, memberikan kenyamanan sepanjang hari tanpa mengorbankan gaya. Dikemas dengan rapi dan aman untuk pengiriman.',
-  images: [
-    'https://images.unsplash.com/photo-1589156229687-496a31ad1d1f?q=80&w=1200&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1550614000-4b95d466f21c?q=80&w=1200&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1621112904887-419379ce6824?q=80&w=1200&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1580651315530-69c8e0026377?q=80&w=1200&auto=format&fit=crop',
-  ],
-  details: [
-    { title: 'MENGAPA SPESIAL', content: 'Material premium yang tidak mudah kusut dan sangat jatuh saat dikenakan. Memberikan siluet yang ramping dan elegan untuk berbagai bentuk tubuh.' },
-    { title: 'CARA PERAWATAN', content: 'Cuci dengan tangan menggunakan air dingin. Jangan gunakan pemutih. Setrika dengan suhu rendah atau gunakan steamer untuk hasil terbaik.' },
-    { title: 'PANDUAN UKURAN', content: 'All Size fit to XL. Lingkar Dada: 110cm, Panjang Baju: 115cm, Panjang Lengan: 55cm.' },
-    { title: 'PENGIRIMAN & PENGEMBALIAN', content: 'Pengiriman gratis untuk pesanan di atas Rp 500.000. Pengembalian diterima dalam 7 hari setelah barang diterima dengan syarat tag masih terpasang.' },
-  ]
-};
+import { useState, useMemo, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { motion } from 'motion/react';
+import { ArrowLeft, ShoppingBag, Minus, Plus, Truck, Shield, Star } from 'lucide-react';
+import { formatPrice } from '../data/products';
+import { useCart } from '../context/CartContext';
+import { getProductById } from '../utils/api';
 
 export default function ProductDetail() {
-  const { id } = useParams();
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [quantity, setQuantity] = useState(1);
-  const [openAccordion, setOpenAccordion] = useState<number | null>(0);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 50, y: 50 });
+  const { id } = useParams<{ id: string }>();
+  const [product, setProduct] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { addItem } = useCart();
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
-    const x = ((e.clientX - left) / width) * 100;
-    const y = ((e.clientY - top) / height) * 100;
-    setMousePosition({ x, y });
+  useEffect(() => {
+    loadProduct();
+  }, [id]);
+
+  const loadProduct = async () => {
+    setIsLoading(true);
+    try {
+      const p = await getProductById(id || '');
+      if (p) {
+        const variants = p.product_variants || [];
+        const images = p.product_images || [];
+        
+        setProduct({
+          id: p.id,
+          shortName: p.short_name || p.name,
+          name: p.name,
+          description: p.description,
+          details: p.details || [],
+          variants: variants.map((v: any) => ({
+            sku: v.sku,
+            color: v.color,
+            option: v.option_name,
+            price: v.price,
+            promoPrice: v.promo_price,
+            stock: v.stock,
+            image: v.image_url || p.thumbnail_url || images[0]?.image_url
+          })),
+          images: images.map((i: any) => i.image_url)
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  const colors = useMemo(() => {
+    if (!product) return [];
+    return [...new Set(product.variants.map((v: any) => v.color))].filter(Boolean);
+  }, [product]);
+
+  const [selectedColor, setSelectedColor] = useState('');
+  const [quantity, setQuantity] = useState(1);
+  const [addedFeedback, setAddedFeedback] = useState(false);
+
+  useEffect(() => {
+    if (colors.length > 0 && !selectedColor) setSelectedColor(colors[0] as string);
+  }, [colors]);
+
+  const colorVariants = useMemo(() => {
+    if (!product) return [];
+    return product.variants.filter((v: any) => v.color === selectedColor);
+  }, [product, selectedColor]);
+
+  const options = useMemo(() => [...new Set(colorVariants.map((v: any) => v.option))], [colorVariants]);
+  const [selectedOption, setSelectedOption] = useState('');
+
+  useEffect(() => {
+    if (options.length > 0 && !selectedOption) setSelectedOption(options[0] as string);
+  }, [options, selectedColor]);
+
+  const activeVariant = useMemo(
+    () => colorVariants.find((v: any) => v.option === selectedOption) || colorVariants[0],
+    [colorVariants, selectedOption]
+  );
+
+  // Reset option when color changes
+  const handleColorChange = (color: string) => {
+    setSelectedColor(color);
+    const opts = product!.variants.filter((v: any) => v.color === color);
+    setSelectedOption(opts[0]?.option || '');
+    setQuantity(1);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F9F4ED] pt-32 pb-24 px-6 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#722F38]"></div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen bg-[#F9F4ED] pt-32 pb-24 px-6 flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-serif text-[#722F38] mb-4">Produk tidak ditemukan</h1>
+        <Link to="/shop" className="text-sm text-[#722F38] underline">Kembali ke Shop</Link>
+      </div>
+    );
+  }
+
+  function handleAddToCart() {
+    if (!activeVariant) return;
+    addItem({
+      sku: activeVariant.sku,
+      productId: product!.id,
+      productName: product!.shortName,
+      color: activeVariant.color,
+      option: activeVariant.option,
+      price: activeVariant.price,
+      promoPrice: activeVariant.promoPrice,
+      quantity: quantity,
+      image: activeVariant.image,
+    });
+    setAddedFeedback(true);
+    setTimeout(() => setAddedFeedback(false), 2000);
+  }
+
+  const allImages = colorVariants.map((v: any) => v.image);
+  const [activeImg, setActiveImg] = useState(0);
+
   return (
-    <div className="min-h-screen w-full bg-[#F9F9F9] pt-28 pb-24 px-4 md:px-6 lg:px-8 font-sans">
-      <div className="max-w-[1600px] mx-auto">
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
-          
-          {/* Left: Images */}
-          <div className="w-full lg:w-[55%] flex gap-3 lg:gap-4 h-[60vh] lg:h-[85vh] lg:sticky lg:top-28">
-            {/* Thumbnails */}
-            <div className="flex flex-col gap-3 overflow-y-auto no-scrollbar w-16 md:w-20 shrink-0 py-1">
-              {product.images.map((img, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedImage(idx)}
-                  className={`relative aspect-[3/4] w-full rounded-xl overflow-hidden transition-all duration-300 ${
-                    selectedImage === idx 
-                      ? 'ring-1 ring-[#6E2B30] opacity-100 scale-100' 
-                      : 'opacity-40 hover:opacity-80 scale-95'
-                  }`}
-                >
-                  <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
-                </button>
-              ))}
-            </div>
-            
-            {/* Main Image */}
-            <div 
-              className="flex-1 relative rounded-[2rem] overflow-hidden bg-[#F1F2E9] cursor-zoom-in"
-              onMouseEnter={() => setIsZoomed(true)}
-              onMouseLeave={() => setIsZoomed(false)}
-              onMouseMove={handleMouseMove}
-            >
-              <motion.div
-                key={selectedImage}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.4 }}
-                className="w-full h-full"
-              >
-                <img 
-                  src={product.images[selectedImage]} 
-                  alt={product.name} 
-                  className="w-full h-full object-cover transition-transform duration-200 ease-out" 
-                  style={{
-                    transformOrigin: `${mousePosition.x}% ${mousePosition.y}%`,
-                    transform: isZoomed ? 'scale(2.5)' : 'scale(1)'
-                  }}
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
-              </motion.div>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#F9F4ED] pt-28 pb-24 px-4 md:px-8 font-sans">
+      <div className="max-w-6xl mx-auto">
+        <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#722F38] mb-8 hover:opacity-70 transition-opacity">
+          <ArrowLeft className="w-4 h-4" /> Kembali ke Koleksi
+        </Link>
 
-          {/* Right: Details */}
-          <div className="w-full lg:w-[45%] bg-[#F1F2E9] rounded-[2rem] p-6 md:p-10 lg:p-12 flex flex-col">
-            
-            {/* Rating */}
-            <div className="flex items-center gap-1 text-[#6E2B30] mb-6">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-14">
+          {/* Images */}
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+            <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-white mb-4">
+              <img
+                src={allImages[activeImg] || activeVariant?.image}
+                alt={product.shortName}
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+            {allImages.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {allImages.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImg(i)}
+                    className={`w-16 h-20 rounded-xl overflow-hidden shrink-0 border-2 transition-colors ${
+                      activeImg === i ? 'border-[#722F38]' : 'border-transparent'
+                    }`}
+                  >
+                    <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  </button>
+                ))}
               </div>
-              <span className="text-xs font-bold tracking-widest ml-2 uppercase">
-                {product.rating.toFixed(1)} STARS ({product.reviews} REVIEWS)
+            )}
+          </motion.div>
+
+          {/* Info */}
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
+            <span className="text-xs font-medium tracking-widest text-[#722F38]/50 uppercase">{product.category}</span>
+            <h1 className="text-2xl md:text-3xl font-serif text-[#722F38] mt-2 mb-3 leading-tight">{product.name}</h1>
+
+            <div className="flex items-center gap-3 mb-4">
+              {activeVariant?.promoPrice && (
+                <span className="text-base text-[#3A3A3A]/40 line-through">{formatPrice(activeVariant.price)}</span>
+              )}
+              <span className="text-2xl font-bold text-[#722F38]">
+                {formatPrice(activeVariant?.promoPrice ?? activeVariant?.price ?? 0)}
               </span>
+              {activeVariant?.promoPrice && (
+                <span className="bg-[#722F38]/10 text-[#722F38] text-xs font-bold px-2.5 py-1 rounded-full">
+                  {Math.round((1 - activeVariant.promoPrice / activeVariant.price) * 100)}% OFF
+                </span>
+              )}
             </div>
 
-            {/* Title & Desc */}
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif text-[#6E2B30] mb-6 leading-tight">
-              {product.name}
-            </h1>
-            <p className="text-[#6E2B30]/80 leading-relaxed mb-6 text-sm md:text-base">
-              {product.description}
+            <p className="text-sm text-[#3A3A3A]/70 leading-relaxed mb-6">{product.description}</p>
+
+            {/* Color Selector */}
+            <div className="mb-5">
+              <p className="text-xs font-medium text-[#3A3A3A]/70 mb-2">Warna: <span className="text-[#722F38]">{selectedColor}</span></p>
+              <div className="flex flex-wrap gap-2">
+                {colors.map((color) => (
+                  <button
+                    key={color}
+                    onClick={() => handleColorChange(color)}
+                    className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                      selectedColor === color
+                        ? 'bg-[#722F38] text-white'
+                        : 'bg-white text-[#3A3A3A]/70 hover:bg-[#722F38]/10'
+                    }`}
+                  >
+                    {color}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Option Selector */}
+            {options.length > 1 && (
+              <div className="mb-5">
+                <p className="text-xs font-medium text-[#3A3A3A]/70 mb-2">Pilihan:</p>
+                <div className="flex flex-wrap gap-2">
+                  {options.map((opt) => (
+                    <button
+                      key={opt}
+                      onClick={() => setSelectedOption(opt)}
+                      className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                        selectedOption === opt
+                          ? 'bg-[#722F38] text-white'
+                          : 'bg-white text-[#3A3A3A]/70 hover:bg-[#722F38]/10'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Stock */}
+            <p className="text-xs text-[#3A3A3A]/50 mb-5">
+              Stok: <span className={`font-medium ${(activeVariant?.stock ?? 0) <= 3 ? 'text-red-500' : 'text-green-600'}`}>
+                {activeVariant?.stock ?? 0} tersisa
+              </span>
             </p>
 
-            {/* Price & Shipping */}
-            <div className="text-base font-medium text-[#6E2B30] mb-2">
-              {product.price} | All Size
-            </div>
-            <div className="text-sm text-[#6E2B30]/60 mb-8">
-              Gratis ongkir ke seluruh Indonesia untuk pesanan di atas Rp 500.000
-            </div>
-
-            {/* Quantity */}
-            <div className="flex items-center justify-between border border-[#6E2B30]/20 rounded-full w-32 px-4 py-2.5 mb-8 bg-transparent">
-              <button 
-                onClick={() => setQuantity(Math.max(1, quantity - 1))} 
-                className="text-[#6E2B30] hover:opacity-70 transition-opacity"
+            {/* Quantity + Add */}
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex items-center gap-3 border border-[#722F38]/15 rounded-xl px-4 py-2.5">
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-[#722F38]"><Minus className="w-4 h-4" /></button>
+                <span className="text-sm font-medium w-6 text-center text-[#3A3A3A]">{quantity}</span>
+                <button onClick={() => setQuantity(quantity + 1)} className="text-[#722F38]"><Plus className="w-4 h-4" /></button>
+              </div>
+              <button
+                onClick={handleAddToCart}
+                disabled={(activeVariant?.stock ?? 0) === 0}
+                className={`flex-1 text-white text-sm font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 uppercase tracking-wider transition-all ${
+                  addedFeedback ? 'bg-green-600' : 'bg-[#722F38] hover:bg-[#5a252d]'
+                } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="text-[#6E2B30] font-medium text-sm">{quantity}</span>
-              <button 
-                onClick={() => setQuantity(quantity + 1)} 
-                className="text-[#6E2B30] hover:opacity-70 transition-opacity"
-              >
-                <Plus className="w-4 h-4" />
+                <ShoppingBag className="w-4 h-4" />
+                {addedFeedback ? 'Ditambahkan ✓' : 'Tambah ke Keranjang'}
               </button>
             </div>
 
-            {/* CTAs */}
-            <div className="flex flex-col gap-3 mb-12">
-              <div className="flex gap-3">
-                <button className="flex-1 bg-white hover:bg-white/80 text-[#6E2B30] text-xs font-bold py-4 px-4 rounded-xl uppercase tracking-wider transition-colors border border-[#6E2B30]/10 shadow-sm cursor-pointer">
-                  Beli di Shopee
-                </button>
-                <button className="flex-1 bg-white hover:bg-white/80 text-[#6E2B30] text-xs font-bold py-4 px-4 rounded-xl uppercase tracking-wider transition-colors border border-[#6E2B30]/10 shadow-sm cursor-pointer">
-                  Beli di TikTok
-                </button>
-              </div>
-              <div className="relative w-full group p-[2px] rounded-xl">
-                {/* Outer Glow (Blurred) */}
-                <div className="absolute inset-0 rounded-xl overflow-hidden blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                  <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#FFFFFF_50%,transparent_100%)]"></span>
-                </div>
-
-                {/* Inner Border (Sharp) */}
-                <div className="absolute inset-0 rounded-xl overflow-hidden">
-                  <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#FFFFFF_50%,transparent_100%)]"></span>
-                </div>
-
-                <button className="w-full relative overflow-hidden rounded-[10px] shadow-md hover:shadow-lg transition-all bg-white cursor-pointer">
-                  <div className="absolute inset-0 z-0 pointer-events-none">
-                    <video 
-                      autoPlay 
-                      loop 
-                      muted 
-                      playsInline 
-                      className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105 pointer-events-none"
-                    >
-                      <source src="https://cdn.joinvoy.com/voyage/video/voytex-MIX-homepage-desktop.mp4" type="video/mp4" />
-                    </video>
-                    <div className="absolute inset-0 bg-[#F1F2E9]/20 mix-blend-overlay pointer-events-none"></div>
-                  </div>
-
-                  {/* Shimmer Sweep Effect */}
-                  <div className="absolute top-0 left-0 w-full h-full -translate-x-full skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/80 to-transparent group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none z-10"></div>
-
-                  {/* Ribbon Label */}
-                  <div className="absolute top-0 right-0 z-10 bg-[#6E2B30] text-[#F9F9F9] text-[10px] font-bold px-3 py-1.5 rounded-bl-[10px] shadow-sm flex items-center gap-1.5 pointer-events-none">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
-                    </span>
-                    UP TO 15% OFF
-                  </div>
-
-                  <div className="relative z-10 flex flex-col items-center justify-center py-4 px-4 text-[#6E2B30] min-h-[56px] pointer-events-none">
-                    <span className="text-sm font-bold uppercase tracking-wider mt-1">Beli di WhatsApp</span>
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* Accordion */}
-            <div className="mt-auto border-t border-[#6E2B30]/20">
-              {product.details.map((detail, idx) => (
-                <div key={idx} className="border-b border-[#6E2B30]/20">
-                  <button 
-                    onClick={() => setOpenAccordion(openAccordion === idx ? null : idx)}
-                    className="w-full py-5 flex items-center justify-between text-left group"
-                  >
-                    <span className="text-sm font-bold tracking-wider text-[#6E2B30] group-hover:opacity-80 transition-opacity">
-                      {detail.title}
-                    </span>
-                    <motion.div
-                      animate={{ rotate: openAccordion === idx ? 45 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <Plus className="w-5 h-5 text-[#6E2B30]" />
-                    </motion.div>
-                  </button>
-                  <AnimatePresence>
-                    {openAccordion === idx && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: "easeInOut" }}
-                        className="overflow-hidden"
-                      >
-                        <p className="pb-6 text-sm text-[#6E2B30]/75 leading-relaxed pr-8">
-                          {detail.content}
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+            {/* Features */}
+            <div className="grid grid-cols-3 gap-3 mb-8">
+              {[
+                { icon: Truck, label: 'Gratis Ongkir >200K' },
+                { icon: Shield, label: 'Premium Quality' },
+                { icon: Star, label: 'Original SECERA' },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex flex-col items-center gap-1.5 bg-white/70 rounded-xl p-3 text-center">
+                  <Icon className="w-4 h-4 text-[#722F38]/60" />
+                  <span className="text-[10px] text-[#3A3A3A]/60 font-medium">{label}</span>
                 </div>
               ))}
             </div>
 
-          </div>
+            {/* Details Accordion */}
+            <div className="space-y-0 border-t border-[#722F38]/10">
+              {product.details.map((detail) => (
+                <details key={detail.title} className="border-b border-[#722F38]/10 group">
+                  <summary className="py-4 text-sm font-medium text-[#3A3A3A] cursor-pointer flex justify-between items-center hover:text-[#722F38] transition-colors">
+                    {detail.title}
+                    <span className="text-[#722F38]/40 group-open:rotate-45 transition-transform text-lg">+</span>
+                  </summary>
+                  <p className="text-sm text-[#3A3A3A]/60 pb-4 leading-relaxed">{detail.content}</p>
+                </details>
+              ))}
+            </div>
+          </motion.div>
         </div>
       </div>
     </div>

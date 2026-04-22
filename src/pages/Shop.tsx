@@ -1,170 +1,220 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
-
-const products = [
-  {
-    id: 1,
-    name: 'SIGNATURE CERUTY OUTER',
-    price: 'Rp 349.000',
-    description: 'Outer berbahan Ceruty Babydoll Premium yang flowy dan elegan. Cocok untuk acara formal maupun kasual.',
-    image: 'https://images.unsplash.com/photo-1589156229687-496a31ad1d1f?q=80&w=800&auto=format&fit=crop',
-    badge: 'NEW',
-  },
-  {
-    id: 2,
-    name: 'ESSENTIAL PLEATED SKIRT',
-    price: 'Rp 289.000',
-    description: 'Rok plisket premium dengan potongan A-line yang memberikan siluet ramping dan nyaman dipakai seharian.',
-    image: 'https://images.unsplash.com/photo-1550614000-4b95d466f21c?q=80&w=800&auto=format&fit=crop',
-  },
-  {
-    id: 3,
-    name: 'EVERYDAY INNER DRESS',
-    price: 'Rp 259.000',
-    originalPrice: 'Rp 299.000',
-    description: 'Inner dress tanpa lengan berbahan katun rayon yang menyerap keringat. Solusi tepat untuk layering.',
-    image: 'https://images.unsplash.com/photo-1621112904887-419379ce6824?q=80&w=800&auto=format&fit=crop',
-    badge: '15% OFF',
-  },
-  {
-    id: 4,
-    name: 'PREMIUM SILK HIJAB',
-    price: 'Rp 149.000',
-    description: 'Hijab segi empat berbahan premium silk yang mudah dibentuk, tidak licin, dan memberikan kesan mewah.',
-    image: 'https://images.unsplash.com/photo-1580651315530-69c8e0026377?q=80&w=800&auto=format&fit=crop',
-  }
-];
+import { ShoppingBag } from 'lucide-react';
+import { CATEGORIES, formatPrice } from '../data/products';
+import { useCart } from '../context/CartContext';
+import { getProducts } from '../utils/api';
 
 export default function Shop() {
+  const [activeCategory, setActiveCategory] = useState('Semua');
+  const [dbProducts, setDbProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { addItem } = useCart();
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    setIsLoading(true);
+    const data = await getProducts();
+    
+    // Map DB structure to frontend structure
+    const mapped = data.map(p => {
+      const variants = p.product_variants || [];
+      const images = p.product_images || [];
+      const prices = variants.map((v: any) => v.price);
+      
+      return {
+        id: p.id,
+        shortName: p.short_name || p.name,
+        name: p.name,
+        category: p.category_id, // Note: ideally we'd join the category name
+        variants: variants.map((v: any) => ({
+          sku: v.sku,
+          color: v.color,
+          option: v.option_name,
+          price: v.price,
+          stock: v.stock,
+          image: v.image_url || p.thumbnail_url || (images[0]?.image_url)
+        }))
+      };
+    });
+
+    setDbProducts(mapped);
+    setIsLoading(false);
+  };
+
+  const filtered = activeCategory === 'Semua'
+    ? dbProducts
+    : dbProducts.filter((p) => p.category === activeCategory);
+
+  function handleQuickAdd(product: typeof dbProducts[0]) {
+    const v = product.variants[0];
+    if (!v) return;
+    addItem({
+      sku: v.sku,
+      productId: product.id,
+      productName: product.shortName,
+      color: v.color,
+      option: v.option,
+      price: v.price,
+      promoPrice: v.promoPrice,
+      quantity: 1,
+      image: v.image,
+    });
+  }
+
   return (
-    <div className="min-h-screen w-full bg-[#F9F9F9] pt-32 pb-24 px-6 md:px-12 font-sans">
+    <div className="min-h-screen w-full bg-[#F9F4ED] pt-32 pb-24 px-6 md:px-12 font-sans">
       <div className="max-w-[1600px] mx-auto">
         {/* Header */}
-        <div className="text-center mb-16 md:mb-24">
-          <motion.h1 
+        <div className="text-center mb-12 md:mb-16">
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight mb-6"
+            className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#722F38] leading-tight mb-4"
           >
             Koleksi Kami
           </motion.h1>
-          <motion.p 
+          <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-lg md:text-xl text-[#6E2B30]/80 max-w-3xl mx-auto leading-relaxed"
+            className="text-base md:text-lg text-[#3A3A3A]/70 max-w-2xl mx-auto"
           >
-            Pakaian modest yang dirancang untuk harmoni alam dan kelembutan.
-            <br className="hidden md:block" />
-            Kenyamanan tanpa mengorbankan estetika untuk gaya Anda setiap hari.
+            Anggun dalam Sekejap — busana modest premium yang dirancang untuk wanita modern.
           </motion.p>
         </div>
 
-        {/* Product Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-          {products.map((product, index) => (
-            <motion.div 
-              key={product.id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-100px" }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="flex flex-col group"
+        {/* Category Filter */}
+        <div className="flex flex-wrap justify-center gap-2 mb-12">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
+                activeCategory === cat
+                  ? 'bg-[#722F38] text-white shadow-md'
+                  : 'bg-white/60 text-[#3A3A3A]/70 hover:bg-white hover:text-[#722F38]'
+              }`}
             >
-              {/* Image Container */}
-              <Link to={`/product/${product.id}`} className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-[#F1F2E9] mb-6 block">
-                {product.badge && (
-                  <div className="absolute top-4 left-4 z-10 bg-[#F9F9F9]/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold tracking-wider text-[#6E2B30]">
-                    {product.badge}
-                  </div>
-                )}
-                <img 
-                  src={product.image} 
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  referrerPolicy="no-referrer"
-                  loading="lazy"
-                />
-              </Link>
+              {cat}
+            </button>
+          ))}
+        </div>
 
-              {/* Product Info */}
-              <div className="flex flex-col flex-1">
-                <Link to={`/product/${product.id}`}>
-                  <h3 className="text-xl font-serif text-[#6E2B30] mb-2 hover:opacity-80 transition-opacity">
-                    {product.name}
-                  </h3>
-                </Link>
-                <div className="flex items-center gap-3 mb-4">
-                  {product.originalPrice && (
-                    <span className="text-sm text-[#6E2B30]/50 line-through">
-                      {product.originalPrice}
-                    </span>
+        {/* Product Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-14">
+          {filtered.map((product, index) => {
+            const firstVariant = product.variants[0];
+            const hasPromo = firstVariant?.promoPrice;
+            const colors = [...new Set(product.variants.map((v) => v.color))];
+
+            return (
+              <motion.div
+                key={product.id}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{ duration: 0.5, delay: index * 0.05 }}
+                className="flex flex-col group"
+              >
+                {/* Image */}
+                <Link
+                  to={`/product/${product.id}`}
+                  className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-white mb-4 block"
+                >
+                  {hasPromo && (
+                    <div className="absolute top-3 left-3 z-10 bg-[#722F38] text-white text-[10px] font-bold px-3 py-1 rounded-full">
+                      PROMO
+                    </div>
                   )}
-                  <span className="text-base font-medium text-[#6E2B30]">
-                    {product.price}
-                  </span>
-                </div>
-                <p className="text-sm text-[#6E2B30]/70 leading-relaxed mb-8 flex-1">
-                  {product.description}
-                </p>
-
-                {/* Actions */}
-                <div className="flex flex-col gap-2 mt-auto">
-                  <button className="w-full bg-[#F1F2E9] hover:bg-[#e4e6d9] text-[#6E2B30] text-xs font-bold py-3 px-4 rounded-xl uppercase tracking-wider transition-colors cursor-pointer">
-                    Beli di Shopee
-                  </button>
-                  <button className="w-full bg-[#F1F2E9] hover:bg-[#e4e6d9] text-[#6E2B30] text-xs font-bold py-3 px-4 rounded-xl uppercase tracking-wider transition-colors cursor-pointer">
-                    Beli di TikTok Shop
-                  </button>
-                  <div className="relative w-full group p-[2px] rounded-xl">
-                    {/* Outer Glow (Blurred) */}
-                    <div className="absolute inset-0 rounded-xl overflow-hidden blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                      <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#FFFFFF_50%,transparent_100%)]"></span>
-                    </div>
-
-                    {/* Inner Border (Sharp) */}
-                    <div className="absolute inset-0 rounded-xl overflow-hidden">
-                      <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#FFFFFF_50%,transparent_100%)]"></span>
-                    </div>
-
-                    <button className="w-full relative overflow-hidden rounded-[10px] shadow-sm hover:shadow-md transition-all bg-white cursor-pointer">
-                      <div className="absolute inset-0 z-0 pointer-events-none">
-                        <video 
-                          autoPlay 
-                          loop 
-                          muted 
-                          playsInline 
-                          className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105 pointer-events-none"
-                        >
-                          <source src="https://cdn.joinvoy.com/voyage/video/voytex-MIX-homepage-desktop.mp4" type="video/mp4" />
-                        </video>
-                        <div className="absolute inset-0 bg-[#F1F2E9]/20 mix-blend-overlay pointer-events-none"></div>
-                      </div>
-                      
-                      {/* Shimmer Sweep Effect */}
-                      <div className="absolute top-0 left-0 w-full h-full -translate-x-full skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/80 to-transparent group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none z-10"></div>
-
-                      {/* Ribbon Label */}
-                      <div className="absolute top-0 right-0 z-10 bg-[#6E2B30] text-[#F9F9F9] text-[9px] font-bold px-2.5 py-1 rounded-bl-[10px] shadow-sm flex items-center gap-1.5 pointer-events-none">
-                        <span className="relative flex h-1.5 w-1.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-                        </span>
-                        UP TO 15% OFF
-                      </div>
-
-                      <div className="relative z-10 flex flex-col items-center justify-center py-3 px-4 text-[#6E2B30] min-h-[48px] pointer-events-none">
-                        <span className="text-xs font-bold uppercase tracking-wider mt-1">Beli di WhatsApp</span>
-                      </div>
+                  <img
+                    src={firstVariant?.image}
+                    alt={product.shortName}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    referrerPolicy="no-referrer"
+                    loading="lazy"
+                  />
+                  {/* Quick Add overlay */}
+                  <div className="absolute inset-x-0 bottom-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleQuickAdd(product);
+                      }}
+                      className="w-full bg-white/90 backdrop-blur-sm hover:bg-white text-[#722F38] text-xs font-bold py-3 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg"
+                    >
+                      <ShoppingBag className="w-4 h-4" />
+                      Tambah ke Keranjang
                     </button>
                   </div>
-                </div>
-              </div>
-            </motion.div>
-          ))}
+                </Link>
+
+                {/* Info */}
+                <Link to={`/product/${product.id}`} className="flex flex-col flex-1">
+                  <span className="text-[10px] font-medium tracking-widest text-[#722F38]/50 mb-1 uppercase">
+                    {product.category}
+                  </span>
+                  <h3 className="text-sm md:text-base font-serif text-[#722F38] mb-1.5 hover:opacity-80 transition-opacity leading-snug">
+                    {product.shortName}
+                  </h3>
+                  <div className="flex items-center gap-2 mb-2">
+                    {hasPromo && (
+                      <span className="text-xs text-[#3A3A3A]/40 line-through">
+                        {formatPrice(firstVariant.price)}
+                      </span>
+                    )}
+                    <span className="text-sm font-semibold text-[#722F38]">
+                      {formatPrice(hasPromo ? firstVariant.promoPrice! : firstVariant?.price ?? 0)}
+                    </span>
+                  </div>
+                  {/* Color dots */}
+                  <div className="flex items-center gap-1.5 mt-auto">
+                    {colors.slice(0, 5).map((color) => (
+                      <span
+                        key={color}
+                        title={color}
+                        className="w-3 h-3 rounded-full border border-[#722F38]/15"
+                        style={{ backgroundColor: getColorHex(color) }}
+                      />
+                    ))}
+                    {colors.length > 5 && (
+                      <span className="text-[10px] text-[#3A3A3A]/50">+{colors.length - 5}</span>
+                    )}
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
+}
+
+function getColorHex(name: string): string {
+  const map: Record<string, string> = {
+    'Maroon': '#722F38',
+    'Navy': '#1a2744',
+    'Black': '#1a1a1a',
+    'Cream': '#F5E6D3',
+    'Broken White': '#F5F0E8',
+    'Burgundy': '#6B1D2A',
+    'Mahogany': '#4E1609',
+    'Dusty': '#C4A5A0',
+    'Rose': '#D4A5A5',
+    'Coco Milk': '#C8A98A',
+    'Baby Pink': '#F4C2C2',
+    'Denim': '#5B7FA0',
+    'Bone': '#E3DAC9',
+    'Bata': '#B5651D',
+    'Soft Yellow': '#F9E4B7',
+    'Hitam': '#1a1a1a',
+    'Choco Milk': '#A0785A',
+  };
+  return map[name] || '#C4B5A8';
 }

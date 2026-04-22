@@ -2,7 +2,7 @@ import { Instagram, Linkedin, Twitter, ArrowRight } from 'lucide-react';
 
 export default function Footer() {
   return (
-    <footer className="bg-[#6E2B30] text-[#F9F9F9] pt-20 relative overflow-hidden">
+    <footer className="bg-[#722F38] text-[#F9F9F9] pt-20 relative overflow-hidden">
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative z-10">
         <h2 className="text-3xl md:text-4xl font-serif mb-12">Secera<span className="text-sm align-top">&trade;</span></h2>
 
