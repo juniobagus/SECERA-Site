@@ -67,4 +67,18 @@ router.get('/', async (req, res) => {
   }
 });
 
+// UPDATE order status
+router.patch('/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  try {
+    await db.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+    res.json({ message: 'Order status updated successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error updating order status' });
+  }
+});
+
 module.exports = router;

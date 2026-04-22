@@ -1,103 +1,48 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { ArrowLeft, ShoppingBag, Minus, Plus, Truck, Shield, Star } from 'lucide-react';
-import { formatPrice } from '../data/products';
+import { getProductById, formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
-import { getProductById } from '../utils/api';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
-  const [product, setProduct] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const product = getProductById(id || '');
   const { addItem } = useCart();
-
-  useEffect(() => {
-    loadProduct();
-  }, [id]);
-
-  const loadProduct = async () => {
-    setIsLoading(true);
-    try {
-      const p = await getProductById(id || '');
-      if (p) {
-        const variants = p.product_variants || [];
-        const images = p.product_images || [];
-        
-        setProduct({
-          id: p.id,
-          shortName: p.short_name || p.name,
-          name: p.name,
-          description: p.description,
-          details: p.details || [],
-          variants: variants.map((v: any) => ({
-            sku: v.sku,
-            color: v.color,
-            option: v.option_name,
-            price: v.price,
-            promoPrice: v.promo_price,
-            stock: v.stock,
-            image: v.image_url || p.thumbnail_url || images[0]?.image_url
-          })),
-          images: images.map((i: any) => i.image_url)
-        });
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const colors = useMemo(() => {
     if (!product) return [];
-    return [...new Set(product.variants.map((v: any) => v.color))].filter(Boolean);
+    return [...new Set(product.variants.map((v) => v.color))];
   }, [product]);
 
-  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedColor, setSelectedColor] = useState(colors[0] || '');
   const [quantity, setQuantity] = useState(1);
   const [addedFeedback, setAddedFeedback] = useState(false);
 
-  useEffect(() => {
-    if (colors.length > 0 && !selectedColor) setSelectedColor(colors[0] as string);
-  }, [colors]);
-
   const colorVariants = useMemo(() => {
     if (!product) return [];
-    return product.variants.filter((v: any) => v.color === selectedColor);
+    return product.variants.filter((v) => v.color === selectedColor);
   }, [product, selectedColor]);
 
-  const options = useMemo(() => [...new Set(colorVariants.map((v: any) => v.option))], [colorVariants]);
-  const [selectedOption, setSelectedOption] = useState('');
-
-  useEffect(() => {
-    if (options.length > 0 && !selectedOption) setSelectedOption(options[0] as string);
-  }, [options, selectedColor]);
+  const options = useMemo(() => [...new Set(colorVariants.map((v) => v.option))], [colorVariants]);
+  const [selectedOption, setSelectedOption] = useState(options[0] || '');
 
   const activeVariant = useMemo(
-    () => colorVariants.find((v: any) => v.option === selectedOption) || colorVariants[0],
+    () => colorVariants.find((v) => v.option === selectedOption) || colorVariants[0],
     [colorVariants, selectedOption]
   );
 
   // Reset option when color changes
   const handleColorChange = (color: string) => {
     setSelectedColor(color);
-    const opts = product!.variants.filter((v: any) => v.color === color);
+    const opts = product!.variants.filter((v) => v.color === color);
     setSelectedOption(opts[0]?.option || '');
     setQuantity(1);
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-[#F9F4ED] pt-32 pb-24 px-6 flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#722F38]"></div>
-      </div>
-    );
-  }
-
   if (!product) {
     return (
-      <div className="min-h-screen bg-[#F9F4ED] pt-32 pb-24 px-6 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#F9F9F9] pt-32 pb-24 px-6 flex flex-col items-center justify-center">
         <h1 className="text-2xl font-serif text-[#722F38] mb-4">Produk tidak ditemukan</h1>
         <Link to="/shop" className="text-sm text-[#722F38] underline">Kembali ke Shop</Link>
       </div>
@@ -114,18 +59,18 @@ export default function ProductDetail() {
       option: activeVariant.option,
       price: activeVariant.price,
       promoPrice: activeVariant.promoPrice,
-      quantity: quantity,
+      quantity,
       image: activeVariant.image,
     });
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
   }
 
-  const allImages = colorVariants.map((v: any) => v.image);
+  const allImages = colorVariants.map((v) => v.image);
   const [activeImg, setActiveImg] = useState(0);
 
   return (
-    <div className="min-h-screen bg-[#F9F4ED] pt-28 pb-24 px-4 md:px-8 font-sans">
+    <div className="min-h-screen bg-[#F9F9F9] pt-28 pb-24 px-4 md:px-8 font-sans">
       <div className="max-w-6xl mx-auto">
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#722F38] mb-8 hover:opacity-70 transition-opacity">
           <ArrowLeft className="w-4 h-4" /> Kembali ke Koleksi

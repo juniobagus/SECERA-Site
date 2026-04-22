@@ -26,7 +26,7 @@ export default function CartDrawer() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed top-0 right-0 h-full w-full max-w-md bg-[#F9F4ED] z-[70] flex flex-col shadow-2xl"
+            className="fixed top-0 right-0 h-full w-full max-w-md bg-[#F9F9F9] z-[70] flex flex-col shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#722F38]/10">
@@ -68,7 +68,7 @@ export default function CartDrawer() {
                       exit={{ opacity: 0, x: 50 }}
                       className="flex gap-4 bg-white rounded-2xl p-3 shadow-sm"
                     >
-                      <div className="w-20 h-24 rounded-xl overflow-hidden bg-[#F9F4ED] shrink-0">
+                      <div className="w-20 h-24 rounded-xl overflow-hidden bg-[#F9F9F9] shrink-0">
                         <img
                           src={item.image}
                           alt={item.productName}

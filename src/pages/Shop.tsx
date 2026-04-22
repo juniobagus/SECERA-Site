@@ -1,56 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
-import { CATEGORIES, formatPrice } from '../data/products';
+import { products, CATEGORIES, formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
-import { getProducts } from '../utils/api';
 
 export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('Semua');
-  const [dbProducts, setDbProducts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCart();
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  const loadProducts = async () => {
-    setIsLoading(true);
-    const data = await getProducts();
-    
-    // Map DB structure to frontend structure
-    const mapped = data.map(p => {
-      const variants = p.product_variants || [];
-      const images = p.product_images || [];
-      const prices = variants.map((v: any) => v.price);
-      
-      return {
-        id: p.id,
-        shortName: p.short_name || p.name,
-        name: p.name,
-        category: p.category_id, // Note: ideally we'd join the category name
-        variants: variants.map((v: any) => ({
-          sku: v.sku,
-          color: v.color,
-          option: v.option_name,
-          price: v.price,
-          stock: v.stock,
-          image: v.image_url || p.thumbnail_url || (images[0]?.image_url)
-        }))
-      };
-    });
-
-    setDbProducts(mapped);
-    setIsLoading(false);
-  };
-
   const filtered = activeCategory === 'Semua'
-    ? dbProducts
-    : dbProducts.filter((p) => p.category === activeCategory);
+    ? products
+    : products.filter((p) => p.category === activeCategory);
 
-  function handleQuickAdd(product: typeof dbProducts[0]) {
+  function handleQuickAdd(product: typeof products[0]) {
     const v = product.variants[0];
     if (!v) return;
     addItem({
@@ -67,7 +30,7 @@ export default function Shop() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#F9F4ED] pt-32 pb-24 px-6 md:px-12 font-sans">
+    <div className="min-h-screen w-full bg-[#F9F9F9] pt-32 pb-24 px-6 md:px-12 font-sans">
       <div className="max-w-[1600px] mx-auto">
         {/* Header */}
         <div className="text-center mb-12 md:mb-16">

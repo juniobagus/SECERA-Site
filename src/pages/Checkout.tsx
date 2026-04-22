@@ -58,7 +58,7 @@ export default function Checkout() {
 
   if (items.length === 0 && !sent) {
     return (
-      <div className="min-h-screen bg-[#F9F4ED] pt-32 pb-24 px-6 flex flex-col items-center justify-center text-center">
+      <div className="min-h-screen bg-[#F9F9F9] pt-32 pb-24 px-6 flex flex-col items-center justify-center text-center">
         <h1 className="text-3xl font-serif text-[#722F38] mb-4">Keranjang Kosong</h1>
         <p className="text-[#3A3A3A]/60 mb-8">Belum ada produk di keranjang Anda.</p>
         <Link to="/shop" className="bg-[#722F38] text-white px-8 py-3 rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-[#5a252d] transition-colors">
@@ -70,7 +70,7 @@ export default function Checkout() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-[#F9F4ED] pt-32 pb-24 px-6 flex flex-col items-center justify-center text-center">
+      <div className="min-h-screen bg-[#F9F9F9] pt-32 pb-24 px-6 flex flex-col items-center justify-center text-center">
         <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mb-6">
           <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <MessageCircle className="w-10 h-10 text-green-600" />
@@ -88,7 +88,7 @@ export default function Checkout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F4ED] pt-28 pb-24 px-4 md:px-6 font-sans">
+    <div className="min-h-screen bg-[#F9F9F9] pt-28 pb-24 px-4 md:px-6 font-sans">
       <div className="max-w-3xl mx-auto">
         {/* Steps */}
         <div className="flex items-center justify-center gap-2 mb-10">
@@ -117,7 +117,7 @@ export default function Checkout() {
             <div className="space-y-3 mb-8">
               {items.map((item) => (
                 <div key={item.sku} className="flex gap-4 bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="w-16 h-20 rounded-xl overflow-hidden bg-[#F9F4ED] shrink-0">
+                  <div className="w-16 h-20 rounded-xl overflow-hidden bg-[#F9F9F9] shrink-0">
                     <img src={item.image} alt={item.productName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   </div>
                   <div className="flex-1">

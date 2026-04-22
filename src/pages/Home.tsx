@@ -4,11 +4,14 @@
  */
 
 import { useRef, useState, useEffect } from 'react';
-import { Star, Clock, Layers, Gem, Sparkles, ChevronLeft, ChevronRight, VolumeX, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Star, Clock, Layers, Gem, Sparkles, ChevronLeft, ChevronRight, VolumeX, Plus, ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
+import { products, formatPrice } from '../data/products';
+import { useCart } from '../context/CartContext';
 
 export default function Home() {
+  const { addItem } = useCart();
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
@@ -407,190 +410,107 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
-        {[
-          {
-            id: 1,
-            name: "Secera Outer - Midnight Black",
-            category: "(SIGNATURE COLLECTION)",
-            price: "Rp 249.000",
-            image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=800&auto=format&fit=crop"
-          },
-          {
-            id: 2,
-            name: "Secera Outer - Broken White",
-            category: "(SIGNATURE COLLECTION)",
-            price: "Rp 249.000",
-            image: "https://images.unsplash.com/photo-1604004215402-e0be233f39be?q=80&w=800&auto=format&fit=crop"
-          },
-          {
-            id: 3,
-            name: "Secera Outer - Dusty Rose",
-            category: "(SIGNATURE COLLECTION)",
-            price: "Rp 249.000",
-            image: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?q=80&w=800&auto=format&fit=crop"
-          },
-          {
-            id: 4,
-            name: "Secera Outer - Sage Green",
-            category: "(SIGNATURE COLLECTION)",
-            price: "Rp 249.000",
-            image: "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=800&auto=format&fit=crop"
-          }
-        ].map((product, index) => (
-          <motion.div 
-            key={product.id}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.6, delay: index * 0.1 }}
-            className="flex flex-col group"
-          >
-            {/* Image Container */}
-            <Link to={`/product/${product.id}`} className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-[#F1F2E9] mb-6 block">
-              <img 
-                src={product.image} 
-                alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                referrerPolicy="no-referrer"
-                loading="lazy"
-              />
-            </Link>
-
-            {/* Product Info */}
-            <div className="flex flex-col flex-1">
-              <span className="text-[11px] font-medium tracking-widest text-[#6E2B30]/60 mb-2 uppercase">{product.category}</span>
-              <Link to={`/product/${product.id}`}>
-                <h3 className="text-xl font-serif text-[#6E2B30] mb-2 hover:opacity-80 transition-opacity">
-                  {product.name}
-                </h3>
+        {products.slice(0, 4).map((product, index) => {
+          const firstVariant = product.variants[0];
+          return (
+            <motion.div 
+              key={product.id}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              className="flex flex-col group"
+            >
+              {/* Image Container */}
+              <Link to={`/product/${product.id}`} className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-[#F1F2E9] mb-6 block">
+                <img 
+                  src={firstVariant.image} 
+                  alt={product.name}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                />
               </Link>
-              <div className="flex items-center gap-3 mb-6">
-                <span className="text-base font-medium text-[#6E2B30]">
-                  {product.price}
-                </span>
-              </div>
 
-              {/* Actions */}
-              <div className="flex flex-col gap-2 mt-auto">
-                <button className="w-full bg-[#F1F2E9] hover:bg-[#e4e6d9] text-[#6E2B30] text-xs font-bold py-3 px-4 rounded-xl uppercase tracking-wider transition-colors cursor-pointer">
-                  Beli di Shopee
-                </button>
-                <button className="w-full bg-[#F1F2E9] hover:bg-[#e4e6d9] text-[#6E2B30] text-xs font-bold py-3 px-4 rounded-xl uppercase tracking-wider transition-colors cursor-pointer">
-                  Beli di TikTok Shop
-                </button>
-                <div className="relative w-full group p-[2px] rounded-xl">
-                  {/* Outer Glow (Blurred) */}
-                  <div className="absolute inset-0 rounded-xl overflow-hidden blur-md opacity-60 group-hover:opacity-100 transition-opacity duration-500">
-                    <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#FFFFFF_50%,transparent_100%)]"></span>
-                  </div>
+              {/* Product Info */}
+              <div className="flex flex-col flex-1">
+                <span className="text-[11px] font-medium tracking-widest text-[#6E2B30]/60 mb-2 uppercase">{product.category}</span>
+                <Link to={`/product/${product.id}`}>
+                  <h3 className="text-xl font-serif text-[#6E2B30] mb-2 hover:opacity-80 transition-opacity">
+                    {product.shortName}
+                  </h3>
+                </Link>
+                <div className="flex items-center gap-3 mb-6">
+                  <span className="text-base font-medium text-[#6E2B30]">
+                    {formatPrice(firstVariant.price)}
+                  </span>
+                </div>
 
-                  {/* Inner Border (Sharp) */}
-                  <div className="absolute inset-0 rounded-xl overflow-hidden">
-                    <span className="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,transparent_0%,#FFFFFF_50%,transparent_100%)]"></span>
-                  </div>
-
-                  <button className="w-full relative overflow-hidden rounded-[10px] shadow-sm hover:shadow-md transition-all bg-white cursor-pointer">
-                    <div className="absolute inset-0 z-0 pointer-events-none">
-                      <video 
-                        autoPlay 
-                        loop 
-                        muted 
-                        playsInline 
-                        className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105 pointer-events-none"
-                      >
-                        <source src="https://cdn.joinvoy.com/voyage/video/voytex-MIX-homepage-desktop.mp4" type="video/mp4" />
-                      </video>
-                      <div className="absolute inset-0 bg-[#F1F2E9]/20 mix-blend-overlay pointer-events-none"></div>
-                    </div>
-                    
-                    {/* Shimmer Sweep Effect */}
-                    <div className="absolute top-0 left-0 w-full h-full -translate-x-full skew-x-[-20deg] bg-gradient-to-r from-transparent via-white/80 to-transparent group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none z-10"></div>
-
-                    {/* Ribbon Label */}
-                    <div className="absolute top-0 right-0 z-10 bg-[#6E2B30] text-[#F9F9F9] text-[9px] font-bold px-2.5 py-1 rounded-bl-[10px] shadow-sm flex items-center gap-1.5 pointer-events-none">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white"></span>
-                      </span>
-                      UP TO 15% OFF
-                    </div>
-
-                    <div className="relative z-10 flex flex-col items-center justify-center py-3 px-4 text-[#6E2B30] min-h-[48px] pointer-events-none">
-                      <span className="text-xs font-bold uppercase tracking-wider mt-1">Beli di WhatsApp</span>
-                    </div>
+                {/* Actions */}
+                <div className="flex flex-col gap-2 mt-auto">
+                  <button 
+                    onClick={() => {
+                      addItem({
+                        sku: firstVariant.sku,
+                        productName: product.shortName,
+                        color: firstVariant.color,
+                        option: firstVariant.option,
+                        price: firstVariant.promoPrice || firstVariant.price,
+                        image: firstVariant.image,
+                        quantity: 1
+                      });
+                    }}
+                    className="w-full bg-[#722F38] hover:bg-[#5a252d] text-white text-xs font-bold py-4 px-4 rounded-xl uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <ShoppingBag className="w-4 h-4" />
+                    Tambah ke keranjang
                   </button>
                 </div>
               </div>
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
     </section>
 
     {/* UGC Video Section */}
     <section className="py-12 px-6 md:px-12 max-w-[1600px] mx-auto bg-[#F9F9F9]">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          {
-            videoThumb: "https://images.unsplash.com/photo-1512413914594-887411624896?q=80&w=600&auto=format&fit=crop",
-            productImage: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=200&auto=format&fit=crop",
-            category: "(SIGNATURE COLLECTION)",
-            name: "Midnight Black",
-            price: "Rp 249.000"
-          },
-          {
-            videoThumb: "https://images.unsplash.com/photo-1589156229687-496a31ad1d1f?q=80&w=600&auto=format&fit=crop",
-            productImage: "https://images.unsplash.com/photo-1604004215402-e0be233f39be?q=80&w=200&auto=format&fit=crop",
-            category: "(SIGNATURE COLLECTION)",
-            name: "Broken White",
-            price: "Rp 249.000"
-          },
-          {
-            videoThumb: "https://images.unsplash.com/photo-1618331835717-801e976710b2?q=80&w=600&auto=format&fit=crop",
-            productImage: "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?q=80&w=200&auto=format&fit=crop",
-            category: "(SIGNATURE COLLECTION)",
-            name: "Dusty Rose",
-            price: "Rp 249.000"
-          },
-          {
-            videoThumb: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?q=80&w=600&auto=format&fit=crop",
-            productImage: "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?q=80&w=200&auto=format&fit=crop",
-            category: "(SIGNATURE COLLECTION)",
-            name: "Sage Green",
-            price: "Rp 249.000"
-          }
-        ].map((item, index) => (
-          <motion.div 
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
-            className="flex flex-col group"
-          >
-            {/* Video Thumbnail */}
-            <div className="relative aspect-[4/5] bg-[#F1F2E9] mb-3 rounded-2xl overflow-hidden cursor-pointer">
-              <img src={item.videoThumb} alt="UGC" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" loading="lazy" />
-              <div className="absolute top-4 right-4 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors hover:bg-black/60 z-10">
-                <VolumeX className="w-4 h-4" />
+        {products.slice(0, 4).map((item, index) => {
+          const firstVariant = item.variants[0];
+          return (
+            <motion.div 
+              key={index}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+              className="flex flex-col group"
+            >
+              {/* Video Thumbnail */}
+              <div className="relative aspect-[4/5] bg-[#F1F2E9] mb-3 rounded-2xl overflow-hidden cursor-pointer">
+                <img src={firstVariant.image} alt="UGC" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" loading="lazy" />
+                <div className="absolute top-4 right-4 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-colors hover:bg-black/60 z-10">
+                  <VolumeX className="w-4 h-4" />
+                </div>
               </div>
-            </div>
-            {/* Product Card */}
-            <div className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow flex relative cursor-pointer h-24 overflow-hidden border border-[#6E2B30]/5">
-              <div className="w-24 h-full shrink-0 bg-[#F1F2E9] p-2">
-                <img src={item.productImage} alt={item.name} className="w-full h-full object-cover mix-blend-multiply rounded-lg" referrerPolicy="no-referrer" loading="lazy" />
-              </div>
-              <div className="flex flex-col justify-center py-2 px-3 flex-grow">
-                <span className="text-[9px] font-medium tracking-widest text-[#6E2B30]/60 mb-1 uppercase">{item.category}</span>
-                <h4 className="text-sm font-serif text-[#6E2B30] mb-1 line-clamp-1">{item.name}</h4>
-                <p className="text-xs font-medium text-[#6E2B30] mt-auto">{item.price}</p>
-              </div>
-              <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#F1F2E9] text-[#6E2B30] flex items-center justify-center hover:bg-[#e4e6d9] transition-colors rounded-tl-xl">
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          </motion.div>
-        ))}
+              {/* Product Card */}
+              <Link to={`/product/${item.id}`} className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow flex relative cursor-pointer h-24 overflow-hidden border border-[#6E2B30]/5">
+                <div className="w-24 h-full shrink-0 bg-[#F1F2E9] p-2">
+                  <img src={firstVariant.image} alt={item.name} className="w-full h-full object-cover mix-blend-multiply rounded-lg" referrerPolicy="no-referrer" loading="lazy" />
+                </div>
+                <div className="flex flex-col justify-center py-2 px-3 flex-grow">
+                  <span className="text-[9px] font-medium tracking-widest text-[#6E2B30]/60 mb-1 uppercase">{item.category}</span>
+                  <h4 className="text-sm font-serif text-[#6E2B30] mb-1 line-clamp-1">{item.shortName}</h4>
+                  <p className="text-xs font-medium text-[#6E2B30] mt-auto">{formatPrice(firstVariant.price)}</p>
+                </div>
+                <button className="absolute bottom-0 right-0 w-8 h-8 bg-[#F1F2E9] text-[#6E2B30] flex items-center justify-center hover:bg-[#e4e6d9] transition-colors rounded-tl-xl">
+                  <Plus className="w-4 h-4" />
+                </button>
+              </Link>
+            </motion.div>
+          );
+        })}
       </div>
     </section>
 
