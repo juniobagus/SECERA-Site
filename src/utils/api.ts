@@ -82,6 +82,33 @@ export async function createCategory(name: string) {
   }
 }
 
+export async function updateCategory(id: string, name: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) throw new Error('Failed to update category');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (updateCategory):', error);
+    throw error;
+  }
+}
+
+export async function deleteCategory(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/categories/${id}`, {
+      method: 'DELETE',
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (deleteCategory):', error);
+    return false;
+  }
+}
+
 export async function getProductById(productId: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/products/${productId}`);
@@ -150,17 +177,17 @@ export async function createOrder(orderData: any, items: any[]) {
       },
       body: JSON.stringify({ ...orderData, items }),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Server error (${response.status}): ${errorText}`);
     }
-    
+
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       return await response.json();
     }
-    
+
     return { success: true };
   } catch (error) {
     console.error('API Error (createOrder):', error);
@@ -203,7 +230,7 @@ export async function uploadImage(file: File): Promise<string | null> {
       method: 'POST',
       body: formData,
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       return data.url;

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { getCMSContent } from '../utils/api';
 
 const initialAboutContent = {
@@ -46,64 +47,76 @@ export default function About() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans gap-3 md:gap-5">
-      {/* Hero Section */}
-      <div className="relative w-full rounded-[2rem] overflow-hidden flex flex-col md:flex-row min-h-[calc(100dvh-1.5rem)] md:min-h-[calc(100dvh-2.5rem)]">
-        <div className="w-full md:w-1/2 bg-[#F1F2E9] p-8 pt-32 md:p-16 lg:p-24 flex items-center justify-center">
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif text-[#6E2B30] leading-snug max-w-2xl">
-            {content.hero.title}
-          </h2>
-        </div>
-        <div className="w-full md:w-1/2 relative min-h-[40vh] md:min-h-full">
-          <img 
-            src={content.hero.imageUrl} 
-            alt="Secera Team" 
-            className="absolute inset-0 w-full h-full object-cover"
+    <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
+      <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[70vh]">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0 scale-105">
+          <img
+            src={content.hero.imageUrl}
+            alt="About Secera"
+            className="w-full h-full object-cover object-center"
             referrerPolicy="no-referrer"
           />
+          {/* Dark overlay for white text readability */}
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+
+        {/* Hero Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
+          <motion.h1
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-4xl md:text-6xl lg:text-7xl font-serif font-light tracking-tight mb-6 max-w-5xl leading-tight text-white"
+          >
+            {content.hero.title}
+          </motion.h1>
         </div>
       </div>
 
-      {/* Our Inspiration Section */}
-      <div className="w-full flex flex-col md:flex-row gap-3 md:gap-5">
-        <div className="w-full md:w-[40%] relative min-h-[40vh] md:min-h-[60vh] rounded-[2rem] overflow-hidden">
-          <img 
-            src={content.inspiration.imageUrl} 
-            alt="Inspiration Texture" 
-            className="absolute inset-0 w-full h-full object-cover"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        <div className="w-full md:w-[60%] bg-[#6E2B30] rounded-[2rem] p-8 md:p-16 lg:p-24 flex flex-col justify-center text-[#F9F9F9]">
-          <h3 className="text-sm font-bold tracking-wide mb-8">
-            {content.inspiration.title}
-          </h3>
-          <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif leading-snug mb-8 max-w-3xl">
-            {content.inspiration.subtitle}
-          </h2>
-          <div className="space-y-6 text-[#F9F9F9]/90 max-w-3xl leading-relaxed md:text-lg">
-            <p>{content.inspiration.description1}</p>
-            <p>{content.inspiration.description2}</p>
+      <div className="p-3 md:p-5 flex flex-col gap-3 md:gap-5">
+
+        {/* Our Inspiration Section */}
+        <div className="w-full flex flex-col md:flex-row gap-3 md:gap-5">
+          <div className="w-full md:w-[40%] relative min-h-[40vh] md:min-h-[60vh] rounded-[2rem] overflow-hidden">
+            <img
+              src={content.inspiration.imageUrl}
+              alt="Inspiration Texture"
+              className="absolute inset-0 w-full h-full object-cover"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <div className="w-full md:w-[60%] bg-[#6E2B30] rounded-[2rem] p-8 md:p-16 lg:p-24 flex flex-col justify-center text-[#F9F9F9]">
+            <h3 className="text-sm font-bold tracking-wide mb-8">
+              {content.inspiration.title}
+            </h3>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif leading-snug mb-8 max-w-3xl">
+              {content.inspiration.subtitle}
+            </h2>
+            <div className="space-y-6 text-[#F9F9F9]/90 max-w-3xl leading-relaxed md:text-lg">
+              <p>{content.inspiration.description1}</p>
+              <p>{content.inspiration.description2}</p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Our Mission Section */}
-      <div className="w-full bg-white rounded-[2rem] py-24 md:py-32 px-6 md:px-12 flex flex-col items-center justify-center text-center">
-        <h3 className="text-sm font-bold tracking-wide mb-8 text-[#6E2B30]">
-          {content.mission.title}
-        </h3>
-        <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight max-w-4xl mb-8">
-          {content.mission.subtitle.split('standar').map((part, i, arr) => (
-            <span key={i}>
-              {part}
-              {i < arr.length - 1 && <span className="italic">standar</span>}
-            </span>
-          ))}
-        </h2>
-        <p className="text-lg md:text-xl text-[#6E2B30]/80 max-w-3xl leading-relaxed">
-          {content.mission.description}
-        </p>
+        {/* Our Mission Section */}
+        <div className="w-full bg-white rounded-[2rem] py-24 md:py-32 px-6 md:px-12 flex flex-col items-center justify-center text-center">
+          <h3 className="text-sm font-bold tracking-wide mb-8 text-[#6E2B30]">
+            {content.mission.title}
+          </h3>
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight max-w-4xl mb-8">
+            {content.mission.subtitle.split('standar').map((part, i, arr) => (
+              <span key={i}>
+                {part}
+                {i < arr.length - 1 && <span className="italic">standar</span>}
+              </span>
+            ))}
+          </h2>
+          <p className="text-lg md:text-xl text-[#6E2B30]/80 max-w-3xl leading-relaxed">
+            {content.mission.description}
+          </p>
+        </div>
       </div>
     </div>
   );

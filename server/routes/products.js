@@ -161,6 +161,72 @@ router.put('/:id', authenticate, async (req, res) => {
   }
 });
 
+// PATCH product (partial update)
+router.patch('/:id', authenticate, async (req, res) => {
+  const productId = req.params.id;
+  const updates = { ...req.body };
+  
+  // Separate product fields from nested relations
+  const variants = updates.variants;
+  const images = updates.images;
+  delete updates.variants;
+  delete updates.images;
+  delete updates.id;
+  delete updates.created_at;
+  delete updates.updated_at;
+
+  const connection = await db.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Update product fields dynamically
+    const fields = Object.keys(updates);
+    if (fields.length > 0) {
+      const setClause = fields.map(f => `${f} = ?`).join(', ');
+      const values = fields.map(f => f === 'details' ? JSON.stringify(updates[f]) : updates[f]);
+      await connection.query(
+        `UPDATE products SET ${setClause} WHERE id = ?`,
+        [...values, productId]
+      );
+    }
+
+    // 2. Refresh variants only if provided
+    if (variants !== undefined) {
+      await connection.query('DELETE FROM product_variants WHERE product_id = ?', [productId]);
+      if (Array.isArray(variants) && variants.length > 0) {
+        for (const v of variants) {
+          await connection.query(
+            'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
+          );
+        }
+      }
+    }
+
+    // 3. Refresh images only if provided
+    if (images !== undefined) {
+      await connection.query('DELETE FROM product_images WHERE product_id = ?', [productId]);
+      if (Array.isArray(images) && images.length > 0) {
+        for (let i = 0; i < images.length; i++) {
+          await connection.query(
+            'INSERT INTO product_images (id, product_id, image_url, display_order) VALUES (?, ?, ?, ?)',
+            [uuidv4(), productId, images[i].url || images[i], i]
+          );
+        }
+      }
+    }
+
+    await connection.commit();
+    res.json({ message: 'Product patched successfully' });
+  } catch (err) {
+    await connection.rollback();
+    console.error(err);
+    res.status(500).json({ message: 'Error patching product', error: err.message });
+  } finally {
+    connection.release();
+  }
+});
+
 // DELETE product
 router.delete('/:id', authenticate, async (req, res) => {
   try {

@@ -59,6 +59,7 @@ export default function AdminCMS() {
               title: saved.hero?.title || initialCMSContent.hero.title,
               subtitle: saved.hero?.subtitle || initialCMSContent.hero.subtitle,
               cta: saved.hero?.cta || initialCMSContent.hero.cta,
+              link: saved.hero?.link || initialCMSContent.hero.link || '',
               imageUrl: saved.hero?.imageUrl || initialCMSContent.hero.imageUrl
             },
             showcase: {
@@ -113,6 +114,9 @@ export default function AdminCMS() {
               email: saved.footer?.email || initialCMSContent.footer.email,
               phone: saved.footer?.phone || initialCMSContent.footer.phone,
               copyright: saved.footer?.copyright || initialCMSContent.footer.copyright
+            },
+            marquee: {
+              items: saved.marquee?.items || initialCMSContent.marquee.items
             },
             global: {
               siteTitle: saved.global?.siteTitle || initialCMSContent.global.siteTitle,
@@ -290,6 +294,16 @@ export default function AdminCMS() {
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
                     />
                   </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Link</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.hero.link || ''} 
+                      onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, link: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      placeholder="/shop or https://..."
+                    />
+                  </div>
                 </div>
                 <ImageUpload 
                   label="Hero Image"
@@ -299,7 +313,55 @@ export default function AdminCMS() {
               </div>
             </div>
 
-            {/* CMS: Product Showcase */}
+            {/* CMS: Marquee Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Globe className="w-5 h-5 text-[#722F38]" />
+                <h2 className="text-lg font-bold text-gray-900">Marquee (Scrolling Text)</h2>
+              </div>
+              <button 
+                onClick={() => {
+                  const newItems = [...homeContent.marquee.items, ''];
+                  setHomeContent({ ...homeContent, marquee: { ...homeContent.marquee, items: newItems } });
+                }}
+                className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
+              >
+                <Plus className="w-4 h-4" /> Add Item
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-gray-500 mb-2">These items will scroll horizontally across the home page.</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {homeContent.marquee.items.map((item, index) => (
+                  <div key={index} className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={item}
+                      onChange={(e) => {
+                        const newItems = [...homeContent.marquee.items];
+                        newItems[index] = e.target.value;
+                        setHomeContent({ ...homeContent, marquee: { ...homeContent.marquee, items: newItems } });
+                      }}
+                      className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      placeholder="e.g. Material Premium"
+                    />
+                    <button 
+                      onClick={() => {
+                        const newItems = homeContent.marquee.items.filter((_, i) => i !== index);
+                        setHomeContent({ ...homeContent, marquee: { ...homeContent.marquee, items: newItems } });
+                      }}
+                      className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* CMS: Product Showcase */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -367,115 +429,6 @@ export default function AdminCMS() {
                     ))}
                   </div>
                   <p className="text-xs text-gray-400 mt-2 italic">* Select 4-8 products for best layout.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* CMS: Testimonials Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="w-5 h-5 text-[#722F38]" />
-                  <h2 className="text-lg font-bold text-gray-900">Testimonials Section</h2>
-                </div>
-                <button 
-                  onClick={() => {
-                    const newItems = [...homeContent.testimonials.items, { name: '', role: '', content: '', avatar: '' }];
-                    setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
-                  }}
-                  className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
-                >
-                  <Plus className="w-4 h-4" /> Add Testimonial
-                </button>
-              </div>
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
-                    <input 
-                      type="text" 
-                      value={homeContent.testimonials.title} 
-                      onChange={(e) => setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, title: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Subtitle</label>
-                    <input 
-                      type="text" 
-                      value={homeContent.testimonials.subtitle} 
-                      onChange={(e) => setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, subtitle: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  {homeContent.testimonials.items.map((item, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-xl relative group">
-                      <button 
-                        onClick={() => {
-                          const newItems = homeContent.testimonials.items.filter((_, i) => i !== index);
-                          setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
-                        }}
-                        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Name</label>
-                          <input 
-                            type="text" 
-                            value={item.name} 
-                            onChange={(e) => {
-                              const newItems = [...homeContent.testimonials.items];
-                              newItems[index].name = e.target.value;
-                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
-                            }}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Role / Job</label>
-                          <input 
-                            type="text" 
-                            value={item.role} 
-                            onChange={(e) => {
-                              const newItems = [...homeContent.testimonials.items];
-                              newItems[index].role = e.target.value;
-                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
-                            }}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Testimonial Content</label>
-                          <textarea 
-                            rows={2}
-                            value={item.content} 
-                            onChange={(e) => {
-                              const newItems = [...homeContent.testimonials.items];
-                              newItems[index].content = e.target.value;
-                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
-                            }}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white resize-none" 
-                          />
-                        </div>
-                        <div className="md:col-span-2">
-                          <ImageUpload 
-                            label="User Avatar"
-                            value={item.avatar}
-                            onChange={(url) => {
-                              const newItems = [...homeContent.testimonials.items];
-                              newItems[index].avatar = url;
-                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>

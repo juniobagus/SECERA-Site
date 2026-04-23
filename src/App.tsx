@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
+import SmoothScroll from './components/SmoothScroll';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import GlobalCTA from './components/GlobalCTA';
@@ -24,13 +25,13 @@ import AdminSettings from './pages/admin/AdminSettings';
 
 function StorefrontLayout() {
   return (
-    <>
+    <SmoothScroll>
       <Navbar />
       <CartDrawer />
       <Outlet />
       <GlobalCTA />
       <Footer />
-    </>
+    </SmoothScroll>
   );
 }
 

@@ -34,4 +34,36 @@ router.post('/', async (req, res) => {
   }
 });
 
+// UPDATE category
+router.patch('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ message: 'Name is required' });
+
+  try {
+    const slug = name.toLowerCase()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+      
+    await db.query('UPDATE categories SET name = ?, slug = ? WHERE id = ?', [name, slug, id]);
+    res.json({ id, name, slug });
+  } catch (err) {
+    console.error('Error updating category:', err);
+    res.status(500).json({ message: 'Error updating category' });
+  }
+});
+
+// DELETE category
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await db.query('DELETE FROM categories WHERE id = ?', [id]);
+    res.json({ message: 'Category deleted' });
+  } catch (err) {
+    console.error('Error deleting category:', err);
+    res.status(500).json({ message: 'Error deleting category' });
+  }
+});
+
 module.exports = router;

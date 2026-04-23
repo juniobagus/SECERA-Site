@@ -83,6 +83,15 @@ export default function ProductDetail() {
 
   const [activeImg, setActiveImg] = useState(0);
 
+  const productDetails = useMemo(() => {
+    if (!product) return [];
+    return [
+      { title: 'Material & Perawatan', content: `Dibuat dari ${product.material || 'Ceruty Babydoll Premium'}. Disarankan cuci dengan tangan (hand wash) atau dry clean untuk menjaga kualitas serat kain.` },
+      { title: 'Spesifikasi Produk', content: `Berat: ${product.weight || 100}g. ${product.description || ''}` },
+      { title: 'Informasi Pengiriman', content: 'Pengiriman dilakukan setiap hari Senin-Sabtu. Estimasi pengiriman 2-4 hari kerja tergantung lokasi.' },
+    ];
+  }, [product]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#F9F9F9] flex items-center justify-center">
@@ -107,14 +116,6 @@ export default function ProductDetail() {
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2000);
   }
-
-  const productDetails = useMemo(() => {
-    return [
-      { title: 'Material & Perawatan', content: `Dibuat dari ${product.material || 'Ceruty Babydoll Premium'}. Disarankan cuci dengan tangan (hand wash) atau dry clean untuk menjaga kualitas serat kain.` },
-      { title: 'Spesifikasi Produk', content: `Berat: ${product.weight || 100}g. ${product.description || ''}` },
-      { title: 'Informasi Pengiriman', content: 'Pengiriman dilakukan setiap hari Senin-Sabtu. Estimasi pengiriman 2-4 hari kerja tergantung lokasi.' },
-    ];
-  }, [product]);
 
   return (
     <div className="min-h-screen bg-[#F9F9F9] pt-28 pb-24 px-4 md:px-8 font-sans">

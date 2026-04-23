@@ -1,16 +1,19 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Search, Filter, Plus, Edit2, Trash2, Loader2 } from 'lucide-react';
+import { Search, Filter, Plus, Edit2, Trash2, Loader2, CheckSquare, X } from 'lucide-react';
 import { formatPrice } from '../../data/products';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../../utils/api';
 import ProductModal from '../../components/admin/ProductModal';
+import BulkEditModal from '../../components/admin/BulkEditModal';
 
 export default function AdminProducts() {
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -22,6 +25,47 @@ export default function AdminProducts() {
   useEffect(() => {
     fetchProducts();
   }, []);
+
+  const toggleSelectAll = () => {
+    if (selectedProducts.length === filteredProducts.length) {
+      setSelectedProducts([]);
+    } else {
+      setSelectedProducts(filteredProducts.map(p => p.id));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedProducts(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
+      const loadingToast = toast.loading(`Deleting ${selectedProducts.length} products...`);
+      try {
+        await Promise.all(selectedProducts.map(id => deleteProduct(id)));
+        toast.success(`${selectedProducts.length} products deleted`, { id: loadingToast });
+        setSelectedProducts([]);
+        fetchProducts();
+      } catch (error) {
+        toast.error('Failed to delete some products', { id: loadingToast });
+      }
+    }
+  };
+
+  const handleBulkEdit = async (editData: any) => {
+    const loadingToast = toast.loading(`Updating ${selectedProducts.length} products...`);
+    try {
+      await Promise.all(selectedProducts.map(id => updateProduct(id, editData)));
+      toast.success(`${selectedProducts.length} products updated`, { id: loadingToast });
+      setIsBulkEditOpen(false);
+      setSelectedProducts([]);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update some products', { id: loadingToast });
+    }
+  };
 
   const handleSaveProduct = async (productData: any) => {
     try {
@@ -85,15 +129,46 @@ export default function AdminProducts() {
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
         {/* Toolbar */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-4 bg-gray-50/50">
-          <div className="relative max-w-md w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search by name, category, or SKU..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#722F38] focus:ring-1 focus:ring-[#722F38] outline-none transition-shadow"
-            />
+          <div className="flex items-center gap-4 flex-1">
+            <div className="relative max-w-md w-full">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Search by name, category, or SKU..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#722F38] focus:ring-1 focus:ring-[#722F38] outline-none transition-shadow"
+              />
+            </div>
+            {selectedProducts.length > 0 && (
+              <div className="flex items-center gap-2 px-4 py-1.5 bg-[#722F38]/5 border border-[#722F38]/20 rounded-lg animate-in fade-in slide-in-from-left-2">
+                <span className="text-sm font-semibold text-[#722F38]">{selectedProducts.length} selected</span>
+                <div className="w-px h-4 bg-[#722F38]/20 mx-1" />
+                <button 
+                  onClick={() => setIsBulkEditOpen(true)}
+                  className="p-1 text-[#722F38] hover:bg-[#722F38]/10 rounded transition-colors flex items-center gap-1.5 text-xs font-bold"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                  Edit
+                </button>
+                <div className="w-px h-4 bg-[#722F38]/20 mx-1" />
+                <button 
+                  onClick={handleBulkDelete}
+                  className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors flex items-center gap-1.5 text-xs font-bold"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  Delete
+                </button>
+                <div className="w-px h-4 bg-[#722F38]/20 mx-1" />
+                <button 
+                  onClick={() => setSelectedProducts([])}
+                  className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded transition-colors flex items-center gap-1.5 text-xs font-bold"
+                  title="Cancel selection"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
           <button className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors flex items-center gap-2 shrink-0">
             <Filter className="w-4 h-4" />
@@ -112,6 +187,14 @@ export default function AdminProducts() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-6 py-3 w-10">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedProducts.length === filteredProducts.length && filteredProducts.length > 0}
+                      onChange={toggleSelectAll}
+                      className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
+                    />
+                  </th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Variants</th>
@@ -124,9 +207,18 @@ export default function AdminProducts() {
                   const variants = product.product_variants || product.variants || [];
                   const totalStock = variants.reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
                   const firstVariant = variants[0];
+                  const isSelected = selectedProducts.includes(product.id);
                   
                   return (
-                    <tr key={product.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <tr key={product.id} className={`${isSelected ? 'bg-[#722F38]/5' : 'hover:bg-gray-50/50'} transition-colors group`}>
+                      <td className="px-6 py-4">
+                        <input 
+                          type="checkbox" 
+                          checked={isSelected}
+                          onChange={() => toggleSelect(product.id)}
+                          className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
+                        />
+                      </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
@@ -179,7 +271,7 @@ export default function AdminProducts() {
                 
                 {filteredProducts.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-sm text-gray-500">
+                    <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-500">
                       No products found matching "{searchTerm}"
                     </td>
                   </tr>
@@ -195,6 +287,13 @@ export default function AdminProducts() {
         onClose={() => { setIsModalOpen(false); setEditingProduct(null); }}
         onSave={handleSaveProduct}
         product={editingProduct}
+      />
+
+      <BulkEditModal 
+        isOpen={isBulkEditOpen}
+        onClose={() => setIsBulkEditOpen(false)}
+        onSave={handleBulkEdit}
+        selectedCount={selectedProducts.length}
       />
     </div>
   );

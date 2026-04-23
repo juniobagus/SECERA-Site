@@ -16,12 +16,35 @@ import ProductCard from '../components/ProductCard';
 export default function Home() {
   const { addItem } = useCart();
   const carouselRef = useRef<HTMLDivElement>(null);
+  const ugcRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [activeUgcIndex, setActiveUgcIndex] = useState(0);
   const [cms, setCms] = useState(initialCMSContent);
   const [productsList, setProductsList] = useState<any[]>([]);
+
+  const handleUgcScroll = () => {
+    if (ugcRef.current) {
+      const scrollLeft = ugcRef.current.scrollLeft;
+      const itemWidth = window.innerWidth < 768 ? 280 + 12 : 320 + 12; // width + gap (gap-3 = 12px)
+      const index = Math.round(scrollLeft / itemWidth);
+      if (index !== activeUgcIndex) {
+        setActiveUgcIndex(index);
+      }
+    }
+  };
+
+  const scrollToUgc = (index: number) => {
+    if (ugcRef.current) {
+      const itemWidth = window.innerWidth < 768 ? 280 + 12 : 320 + 12;
+      ugcRef.current.scrollTo({
+        left: index * itemWidth,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   useEffect(() => {
     async function loadCMS() {
@@ -44,7 +67,7 @@ export default function Home() {
 
         // SEO Update
         if (newCms.global.siteTitle) document.title = newCms.global.siteTitle;
-        
+
         let metaDesc = document.querySelector('meta[name="description"]');
         if (!metaDesc) {
           metaDesc = document.createElement('meta');
@@ -62,7 +85,7 @@ export default function Home() {
         metaKeywords.setAttribute('content', newCms.global.seoKeywords);
       }
     }
-    
+
     async function loadProducts() {
       const data = await getProducts();
       if (data && data.length > 0) {
@@ -75,6 +98,19 @@ export default function Home() {
     loadCMS();
     loadProducts();
   }, []);
+
+  // Center UGC on load
+  useEffect(() => {
+    if (cms.ugc.items.length > 0) {
+      const middleIndex = Math.floor(cms.ugc.items.length / 2);
+      // Wait for layout to be ready
+      const timer = setTimeout(() => {
+        scrollToUgc(middleIndex);
+        setActiveUgcIndex(middleIndex);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [cms.ugc.items]);
 
   const handleScroll = () => {
     if (carouselRef.current) {
@@ -121,7 +157,7 @@ export default function Home() {
 
           {/* Hero Content */}
           <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
-            <motion.h2 
+            <motion.h2
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
@@ -130,7 +166,7 @@ export default function Home() {
               {cms.hero.title}
             </motion.h2>
 
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
@@ -139,7 +175,7 @@ export default function Home() {
               {cms.hero.subtitle}
             </motion.p>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
@@ -156,10 +192,10 @@ export default function Home() {
         <div className="w-full py-4 mt-3 md:mt-5 flex items-center overflow-hidden px-4 md:px-8 shrink-0">
           {/* Left side: Rating */}
           <div className="hidden md:flex items-center gap-2 pr-6 md:pr-8 shrink-0 z-10">
-            <div className="flex items-center gap-1">
+            {/* <div className="flex items-center gap-1">
               <Star className="w-6 h-6 fill-[#00b67a] text-[#00b67a]" />
-              <span className="font-bold text-xl tracking-tight">Trustpilot</span>
-            </div>
+              <span className="font-bold text-xl tracking-tight">5 Stars</span>
+            </div> */}
             <div className="flex items-center gap-0.5 ml-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="bg-[#00b67a] p-1 rounded-sm">
@@ -177,16 +213,16 @@ export default function Home() {
           */}
             <div className="flex items-center gap-12 animate-marquee whitespace-nowrap w-max">
               {/* Group 1 */}
-              {cms.features.items.map((feature, i) => (
+              {cms.marquee?.items?.map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="text-zinc-800 font-medium">{feature.title}</span>
+                  <span className="text-zinc-800 font-medium">{item}</span>
                 </div>
               ))}
 
               {/* Group 2 (Duplicate for seamless loop) */}
-              {cms.features.items.map((feature, i) => (
+              {cms.marquee?.items?.map((item, i) => (
                 <div key={`dup-${i}`} className="flex items-center gap-3">
-                  <span className="text-zinc-800 font-medium">{feature.title}</span>
+                  <span className="text-zinc-800 font-medium">{item}</span>
                 </div>
               ))}
             </div>
@@ -369,7 +405,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
-          {(cms.showcase.productIds?.length > 0 
+          {(cms.showcase.productIds?.length > 0
             ? productsList.filter(p => cms.showcase.productIds.includes(p.id))
             : productsList.slice(0, 4)
           ).map((product, index) => (
@@ -378,44 +414,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="py-24 bg-[#F1F2E9]/30">
-        <div className="px-6 md:px-12 max-w-[1600px] mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-serif text-[#6E2B30] mb-4">{cms.testimonials.title}</h2>
-            <p className="text-zinc-500">{cms.testimonials.subtitle}</p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {cms.testimonials.items.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow flex flex-col h-full"
-              >
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-zinc-100">
-                    <img src={item.avatar} alt={item.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-zinc-900 text-sm">{item.name}</h4>
-                    <p className="text-xs text-zinc-500">{item.role}</p>
-                  </div>
-                </div>
-                <p className="text-zinc-600 leading-relaxed italic flex-1">"{item.content}"</p>
-                <div className="flex gap-1 mt-6">
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <Star key={i} className="w-3 h-3 fill-[#6E2B30] text-[#6E2B30]" />
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* UGC Video Section - Infinite Scrolling Carousel */}
       <section className="py-24 overflow-hidden bg-white">
@@ -426,79 +424,101 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative group">
-          {/* Mask for smooth edges */}
-          <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-white to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-white to-transparent z-20 pointer-events-none" />
-
-          {/* Marquee Container */}
-          <div className="flex gap-6 animate-marquee group-hover:[animation-play-state:paused]">
+        <div className="relative">
+          {/* Focal Carousel Container */}
+          <div
+            ref={ugcRef}
+            className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory px-[calc(50%-140px-6px)] md:px-[calc(50%-160px-6px)] py-10"
+            onScroll={handleUgcScroll}
+          >
             {(cms.ugc.items?.length > 0 ? cms.ugc.items : []).map((ugcItem, index) => {
               const product = productsList.find(p => p.id === ugcItem.productId);
               const variants = product?.product_variants || product?.variants || [];
               const firstVariant = variants[0];
               const thumbnail = ugcItem.thumbnailUrl || product?.thumbnail_url || firstVariant?.image_url;
-              
+              const isActive = activeUgcIndex === index;
+
               return (
-                <div
+                <motion.div
                   key={index}
-                  className="flex flex-col shrink-0 w-[280px] md:w-[320px] group/item"
+                  onClick={() => scrollToUgc(index)}
+                  animate={{
+                    scale: isActive ? 1.1 : 0.9,
+                    opacity: isActive ? 1 : 0.5,
+                  }}
+                  transition={{ duration: 0.4 }}
+                  className="flex flex-col shrink-0 w-[280px] md:w-[320px] snap-center cursor-pointer"
                 >
-                  <div className="relative aspect-square bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden cursor-pointer shadow-sm group-hover/item:shadow-xl transition-all duration-500">
-                    <video 
-                      autoPlay 
-                      loop 
-                      muted 
-                      playsInline 
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover/item:scale-105"
+                  <div className="relative aspect-square bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500">
+                    <video
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      className="w-full h-full object-cover"
                       poster={thumbnail}
                     >
                       <source src={ugcItem.videoUrl} type="video/mp4" />
                     </video>
-                    <div className="absolute top-6 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all hover:bg-white/40 z-10 border border-white/30 opacity-0 group-hover/item:opacity-100 scale-90 group-hover/item:scale-100">
+                    <div className="absolute top-6 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white z-10 border border-white/30 opacity-0 group-hover:opacity-100">
                       <VolumeX className="w-5 h-5" />
                     </div>
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 group-hover/item:opacity-80 transition-opacity">
+                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40">
                       <h3 className="text-2xl font-bold text-white tracking-tighter">secera</h3>
                     </div>
                   </div>
-                  
-                  {product && (
-                    <Link to={`/product/${product.id}`} className="flex items-center gap-4 px-2">
-                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#F1F2E9] shrink-0">
-                        <img src={thumbnail} alt={product.name} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">({product.category})</span>
-                        <h4 className="text-sm font-medium text-[#6E2B30] truncate">{product.short_name}</h4>
-                        <div className="flex items-center justify-between gap-4 mt-1">
-                          <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant?.price ?? 0)}</span>
-                          <div className="w-6 h-6 rounded-full bg-[#6E2B30] text-white flex items-center justify-center">
-                            <Plus className="w-3 h-3" />
+
+                  <motion.div
+                    animate={{
+                      opacity: isActive ? 1 : 0,
+                      y: isActive ? 0 : 10
+                    }}
+                  >
+                    {product && (
+                      <Link to={`/product/${product.id}`} className="flex items-center gap-4 px-2">
+                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#F1F2E9] shrink-0">
+                          <img src={thumbnail} alt={product.name} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">({product.category})</span>
+                          <h4 className="text-sm font-medium text-[#6E2B30] truncate">{product.short_name}</h4>
+                          <div className="flex items-center justify-between gap-4 mt-1">
+                            <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant?.price ?? 0)}</span>
+                            <div className="w-6 h-6 rounded-full bg-[#6E2B30] text-white flex items-center justify-center">
+                              <Plus className="w-3 h-3" />
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </Link>
-                  )}
-                </div>
+                      </Link>
+                    )}
+                  </motion.div>
+                </motion.div>
               );
             })}
+          </div>
+
+          {/* Navigation Dots */}
+          <div className="flex justify-center gap-2 mt-8">
+            {cms.ugc.items.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => scrollToUgc(i)}
+                className={`w-2 h-2 rounded-full transition-all ${activeUgcIndex === i ? 'w-8 bg-[#6E2B30]' : 'bg-zinc-200'}`}
+              />
+            ))}
           </div>
         </div>
 
         <style>{`
-          @keyframes marquee {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(calc(-320px * 4 - 24px * 4)); }
+          .mask-image-linear {
+            mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
           }
-          .animate-marquee {
-            animation: marquee 40s linear infinite;
+          .hide-scrollbar::-webkit-scrollbar {
+            display: none;
           }
-          @media (max-width: 768px) {
-             @keyframes marquee {
-              0% { transform: translateX(0); }
-              100% { transform: translateX(calc(-280px * 4 - 24px * 4)); }
-            }
+          .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
           }
         `}</style>
       </section>
@@ -559,42 +579,6 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Global CTA Section */}
-      <section className="px-3 md:px-5 pb-5">
-        <div className="bg-[#6E2B30] rounded-[2rem] py-20 px-6 md:px-12 flex flex-col items-center text-center text-[#F9F9F9]">
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
-            className="text-4xl md:text-5xl font-serif mb-6"
-          >
-            {cms.cta.title}
-          </motion.h2>
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-lg md:text-xl text-[#F9F9F9]/80 max-w-2xl mb-10"
-          >
-            {cms.cta.description}
-          </motion.p>
-          <motion.a
-            href={cms.cta.buttonLink || `https://wa.me/${cms.footer.phone}`}
-            target={cms.cta.buttonLink?.startsWith('http') ? "_blank" : "_self"}
-            rel="noopener noreferrer"
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-[#F9F9F9] text-[#6E2B30] px-8 py-4 rounded-full font-bold hover:bg-white transition-colors flex items-center gap-2"
-          >
-            <ShoppingBag className="w-5 h-5" />
-            {cms.cta.buttonText}
-          </motion.a>
-        </div>
-      </section>
     </>
   );
 }

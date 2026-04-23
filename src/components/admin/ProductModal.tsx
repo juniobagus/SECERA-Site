@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
-import { X, Plus, Trash2, Upload, Search } from 'lucide-react';
+import { X, Plus, Trash2, Upload, Search, CheckSquare, Edit2, Save } from 'lucide-react';
 import ImageUpload from './ImageUpload';
 import { getCategories, createCategory } from '../../utils/api';
 
@@ -27,6 +27,34 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     tiktok_link: '',
     variants: [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
   });
+  const [selectedVariants, setSelectedVariants] = useState<number[]>([]);
+  const [bulkEditValues, setBulkEditValues] = useState({ price: '', promo_price: '', stock: '' });
+  const [showBulkEdit, setShowBulkEdit] = useState(false);
+
+  const handleBulkDeleteVariants = () => {
+    if (window.confirm(`Delete ${selectedVariants.length} variants?`)) {
+      const newVariants = formData.variants.filter((_: any, i: number) => !selectedVariants.includes(i));
+      setFormData({ 
+        ...formData, 
+        variants: newVariants.length > 0 ? newVariants : [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
+      });
+      setSelectedVariants([]);
+      toast.success('Variants removed from list');
+    }
+  };
+
+  const handleApplyBulkEdit = () => {
+    const newVariants = [...formData.variants];
+    selectedVariants.forEach(index => {
+      if (bulkEditValues.price) newVariants[index].price = parseInt(bulkEditValues.price);
+      if (bulkEditValues.promo_price) newVariants[index].promo_price = parseInt(bulkEditValues.promo_price);
+      if (bulkEditValues.stock) newVariants[index].stock = parseInt(bulkEditValues.stock);
+    });
+    setFormData({ ...formData, variants: newVariants });
+    setShowBulkEdit(false);
+    setBulkEditValues({ price: '', promo_price: '', stock: '' });
+    toast.success(`Updated ${selectedVariants.length} variants`);
+  };
 
   const hasInitialized = useRef(false);
 
@@ -322,7 +350,29 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           {/* Variants */}
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">Product Variants</h3>
+              <div className="flex items-center gap-4">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400">Product Variants</h3>
+                {selectedVariants.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <button 
+                      type="button"
+                      onClick={() => setShowBulkEdit(!showBulkEdit)}
+                      className={`text-xs font-bold ${showBulkEdit ? 'text-gray-900 bg-gray-100' : 'text-[#722F38] hover:bg-[#722F38]/5'} px-3 py-1.5 rounded-lg border border-gray-100 transition-all flex items-center gap-2`}
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      {showBulkEdit ? 'Cancel Bulk Edit' : `Edit Selected (${selectedVariants.length})`}
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={handleBulkDeleteVariants}
+                      className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 transition-all flex items-center gap-2"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
               <button 
                 type="button"
                 onClick={handleAddVariant}
@@ -331,17 +381,80 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 <Plus className="w-4 h-4" /> Add Variant
               </button>
             </div>
+
+            {showBulkEdit && (
+              <div className="p-4 bg-[#722F38]/5 border border-[#722F38]/20 rounded-xl animate-in slide-in-from-top-2">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-bold text-[#722F38] uppercase tracking-wider flex items-center gap-2">
+                    <CheckSquare className="w-4 h-4" />
+                    Bulk Edit {selectedVariants.length} Variants
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">New Price</label>
+                    <input 
+                      type="number"
+                      value={bulkEditValues.price}
+                      onChange={e => setBulkEditValues({ ...bulkEditValues, price: e.target.value })}
+                      className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white"
+                      placeholder="No Change"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">New Promo Price</label>
+                    <input 
+                      type="number"
+                      value={bulkEditValues.promo_price}
+                      onChange={e => setBulkEditValues({ ...bulkEditValues, promo_price: e.target.value })}
+                      className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white"
+                      placeholder="No Change"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">New Stock</label>
+                    <input 
+                      type="number"
+                      value={bulkEditValues.stock}
+                      onChange={e => setBulkEditValues({ ...bulkEditValues, stock: e.target.value })}
+                      className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white"
+                      placeholder="No Change"
+                    />
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={handleApplyBulkEdit}
+                    className="h-9 bg-[#722F38] text-white rounded-lg text-sm font-bold hover:bg-[#5a252d] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    Apply to {selectedVariants.length}
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div className="space-y-6">
               {formData.variants.map((variant: any, index: number) => (
-                <div key={index} className="p-4 border border-gray-100 rounded-xl bg-gray-50/30 space-y-4">
+                <div key={index} className={`p-4 border ${selectedVariants.includes(index) ? 'border-[#722F38]/30 bg-[#722F38]/5' : 'border-gray-100 bg-gray-50/30'} rounded-xl transition-all space-y-4`}>
                   <div className="flex justify-between items-start">
-                    <span className="text-xs font-bold text-gray-400">VARIANT #{index + 1}</span>
+                    <div className="flex items-center gap-3">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedVariants.includes(index)}
+                        onChange={() => {
+                          setSelectedVariants(prev => 
+                            prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+                          );
+                        }}
+                        className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
+                      />
+                      <span className="text-xs font-bold text-gray-400 uppercase tracking-tight">VARIANT #{index + 1}</span>
+                    </div>
                     {formData.variants.length > 1 && (
                       <button 
                         type="button"
                         onClick={() => handleRemoveVariant(index)}
-                        className="text-red-400 hover:text-red-600 transition-colors"
+                        className="text-gray-400 hover:text-red-600 transition-colors"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

@@ -58,6 +58,9 @@ export interface CMSContent {
     phone: string;
     copyright: string;
   };
+  marquee: {
+    items: string[];
+  };
   global: {
     siteTitle: string;
     seoDescription: string;
@@ -81,6 +84,15 @@ export const initialCMSContent: CMSContent = {
     title: "Koleksi Terpopuler",
     description: "Pilihan terbaik untuk melengkapi gaya modest modern Anda hari ini.",
     productIds: []
+  },
+  marquee: {
+    items: [
+      "Material Premium",
+      "Desain Eksklusif",
+      "Mudah Dibentuk",
+      "Kualitas Terjamin",
+      "Pengiriman Cepat"
+    ]
   },
   features: {
     title: "Mengapa Memilih Secera?",

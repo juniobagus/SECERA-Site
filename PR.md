@@ -9,8 +9,18 @@
 - [ ] CMS -> Home Page: Product showcase (pilih product yang akan ditampilkan)
 - [ ] CMS -> Home Page: CTA button (edit text dan link)
 - [ ] CMS -> Home Page: FAQ dinamis (tambah dan kurang pertanyaan & jawaban) 
-- [ ] CMS -> Home Page: Testimoni dinamis (tambah dan kurang testimoni)
-- [ ] CMS -> Home Page: UGC Section (tambah dan kurang UGC, video dan product yang ditampilkan)
+- [x] CMS -> Home Page: Testimoni dinamis (tambah dan kurang testimoni)
+- [x] CMS -> Home Page: UGC Section (tambah dan kurang UGC, video dan product yang ditampilkan)
 - [ ] CMS -> Shop Page: edit hero section
 - UI Refinement:
     - Toast notification saat ada action berhasil atau gagal, contoh: berhasil tambah kategori, berhasil simpan produk, dll.
+
+- Products:
+    - Bulk Edit
+    - Bulk Delete
+    - Product Detail:
+        - Bulk Edit Variants
+        - Bulk Delete Variants
+    - Category:
+        - Bulk Edit
+        - Bulk Delete

@@ -10,7 +10,7 @@ router.get('/:key', async (req, res) => {
     const [rows] = await db.query('SELECT value_data FROM cms_settings WHERE key_name = ?', [key]);
     if (rows.length === 0) {
       console.log('CMS content not found for key:', key);
-      return res.status(404).json({ message: 'Content not found' });
+      return res.json(null);
     }
     console.log('CMS content found');
     res.json(rows[0].value_data);

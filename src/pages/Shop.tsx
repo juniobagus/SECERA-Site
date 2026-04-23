@@ -55,27 +55,42 @@ export default function Shop() {
     : products.filter((p) => p.category === activeCategory);
 
   return (
-    <div className="min-h-screen w-full bg-[#F9F9F9] pt-32 pb-24 px-6 md:px-12 font-sans">
-      <div className="max-w-[1600px] mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12 md:mb-16">
+    <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
+      <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[70vh]">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0 scale-105">
+          <img 
+            src={cmsContent?.hero?.imageUrl || "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2000&auto=format&fit=crop"} 
+            alt="Shop Hero" 
+            className="w-full h-full object-cover object-center"
+            referrerPolicy="no-referrer"
+          />
+          {/* Dark overlay for white text readability */}
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+        
+        {/* Hero Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
           <motion.h1
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#722F38] leading-tight mb-4"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tight mb-6 max-w-4xl leading-tight text-white"
           >
-            {cmsContent?.hero?.title || 'Koleksi Kami'}
+            {cmsContent?.hero?.title || 'Koleksi Eksklusif Secera'}
           </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-base md:text-lg text-[#3A3A3A]/70 max-w-2xl mx-auto"
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-light"
           >
-            {cmsContent?.hero?.subtitle || 'Anggun dalam Sekejap — busana modest premium yang dirancang untuk wanita modern.'}
+            {cmsContent?.hero?.subtitle || 'Temukan keanggunan dalam setiap helai pakaian kami yang dirancang khusus untuk Anda.'}
           </motion.p>
         </div>
+      </div>
+
+      <div className="max-w-[1600px] mx-auto px-6 md:px-12 pt-16">
 
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-2 mb-12">
