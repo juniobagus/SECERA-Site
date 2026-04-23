@@ -66,7 +66,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
       {/* Image */}
       <Link
         to={`/product/${product.id}`}
-        className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-white mb-4 block"
+        className="relative aspect-square w-full rounded-2xl overflow-hidden bg-white mb-4 block"
       >
         {hasPromo && (
           <div className="absolute top-3 left-3 z-10 bg-[#722F38] text-white text-[10px] font-bold px-3 py-1 rounded-full">

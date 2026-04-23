@@ -2,21 +2,52 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { CATEGORIES } from '../data/products';
 import ProductCard from '../components/ProductCard';
-import { getProducts } from '../utils/api';
+import { getProducts, getCMSContent, getCategories } from '../utils/api';
 import { Loader2 } from 'lucide-react';
 
 export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('Semua');
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [cmsContent, setCmsContent] = useState<any>(null);
+
   useEffect(() => {
-    async function loadProducts() {
-      const data = await getProducts();
-      setProducts(data);
-      setIsLoading(false);
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const [productsData, categoriesData, shopCms] = await Promise.all([
+          getProducts(),
+          getCategories(),
+          getCMSContent('shop_page')
+        ]);
+        setProducts(productsData);
+        setCategories([{ id: 'all', name: 'Semua' }, ...categoriesData]);
+        if (shopCms) setCmsContent(shopCms);
+      } catch (error) {
+        console.error('Failed to load shop data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    loadProducts();
+    loadData();
+  }, []);
+
+  useEffect(() => {
+    async function loadCMS() {
+      const global = await getCMSContent('main_site');
+      if (global?.global?.siteTitle) {
+        document.title = `${global.global.siteTitle} | Shop`;
+        
+        // Update meta description if exists
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc && global.global.seoDescription) {
+          metaDesc.setAttribute('content', global.global.seoDescription);
+        }
+      }
+    }
+    loadCMS();
   }, []);
 
   const filtered = activeCategory === 'Semua'
@@ -34,7 +65,7 @@ export default function Shop() {
             transition={{ duration: 0.6 }}
             className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#722F38] leading-tight mb-4"
           >
-            Koleksi Kami
+            {cmsContent?.hero?.title || 'Koleksi Kami'}
           </motion.h1>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -42,23 +73,23 @@ export default function Shop() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-base md:text-lg text-[#3A3A3A]/70 max-w-2xl mx-auto"
           >
-            Anggun dalam Sekejap — busana modest premium yang dirancang untuk wanita modern.
+            {cmsContent?.hero?.subtitle || 'Anggun dalam Sekejap — busana modest premium yang dirancang untuk wanita modern.'}
           </motion.p>
         </div>
 
         {/* Category Filter */}
         <div className="flex flex-wrap justify-center gap-2 mb-12">
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.name)}
               className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-                activeCategory === cat
+                activeCategory === cat.name
                   ? 'bg-[#722F38] text-white shadow-md'
                   : 'bg-white/60 text-[#3A3A3A]/70 hover:bg-white hover:text-[#722F38]'
               }`}
             >
-              {cat}
+              {cat.name}
             </button>
           ))}
         </div>

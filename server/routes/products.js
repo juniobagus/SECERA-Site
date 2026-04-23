@@ -22,8 +22,13 @@ const authenticate = async (req, res, next) => {
 // GET all products with variants and images
 router.get('/', async (req, res) => {
   try {
-    // Fetch products
-    const [products] = await db.query('SELECT * FROM products ORDER BY created_at DESC');
+    // Fetch products with category name
+    const [products] = await db.query(`
+      SELECT p.*, c.name as category 
+      FROM products p 
+      LEFT JOIN categories c ON p.category_id = c.id 
+      ORDER BY p.created_at DESC
+    `);
     
     // Fetch variants and images in parallel
     const [variants] = await db.query('SELECT * FROM product_variants');
@@ -65,7 +70,7 @@ router.get('/:id', async (req, res) => {
 // CREATE product
 router.post('/', authenticate, async (req, res) => {
   const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, variants, images } = req.body;
-  const productId = uuidv4();
+  const productId = crypto.randomUUID();
 
   const connection = await db.getConnection();
   try {
@@ -82,7 +87,7 @@ router.post('/', authenticate, async (req, res) => {
       for (const v of variants) {
         await connection.query(
           'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
+          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
         );
       }
     }
@@ -92,7 +97,7 @@ router.post('/', authenticate, async (req, res) => {
       for (let i = 0; i < images.length; i++) {
         await connection.query(
           'INSERT INTO product_images (id, product_id, image_url, display_order) VALUES (?, ?, ?, ?)',
-          [uuidv4(), productId, images[i].url || images[i], i]
+          [crypto.randomUUID(), productId, images[i].url || images[i], i]
         );
       }
     }
@@ -129,7 +134,7 @@ router.put('/:id', authenticate, async (req, res) => {
       for (const v of variants) {
         await connection.query(
           'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
+          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
         );
       }
     }

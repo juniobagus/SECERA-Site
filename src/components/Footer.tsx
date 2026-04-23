@@ -27,7 +27,7 @@ export default function Footer() {
   return (
     <footer className="bg-[#722F38] text-[#F9F9F9] pt-20 relative overflow-hidden">
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative z-10">
-        <h2 className="text-3xl md:text-4xl font-serif mb-12">Secera<span className="text-sm align-top">&trade;</span></h2>
+        <h2 className="text-3xl md:text-4xl font-serif mb-12">{cms.global.siteTitle.split('|')[0].trim()}<span className="text-sm align-top">&trade;</span></h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
           <div className="lg:col-span-2 flex flex-col gap-4">
@@ -106,7 +106,7 @@ export default function Footer() {
 
       <div className="w-full overflow-hidden leading-none pt-4 flex justify-center items-end">
         <h1 className="text-[24vw] font-bold text-[#F9F9F9] leading-[0.72] tracking-tighter select-none">
-          secera
+          {cms.global.siteTitle.split('|')[0].trim().toLowerCase()}
         </h1>
       </div>
     </footer>

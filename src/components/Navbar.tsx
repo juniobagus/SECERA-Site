@@ -1,14 +1,28 @@
 import { ShoppingBag, Menu, X } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
+import { getCMSContent } from '../utils/api';
 
 export default function Navbar() {
   const location = useLocation();
   const path = location.pathname;
   const { totalItems, toggleCart } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [siteTitle, setSiteTitle] = useState('SECERA');
+
+  useEffect(() => {
+    async function loadCMS() {
+      const data = await getCMSContent('main_site');
+      if (data?.global?.siteTitle) {
+        // Use short version if possible or just the first word
+        const title = data.global.siteTitle.split('|')[0].trim();
+        setSiteTitle(title);
+      }
+    }
+    loadCMS();
+  }, []);
 
   const links = [
     { to: '/', label: 'Home' },
@@ -24,7 +38,7 @@ export default function Navbar() {
             to="/"
             className="text-xl md:text-2xl font-bold tracking-[0.25em] text-[#722F38] cursor-pointer"
           >
-            SECERA
+            {siteTitle}
           </Link>
 
           {/* Desktop Nav */}

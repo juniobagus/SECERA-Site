@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -38,6 +39,7 @@ export default function App() {
     <Router>
       <CartProvider>
         <ScrollToTop />
+        <Toaster position="top-center" reverseOrder={false} />
         <Routes>
           {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>

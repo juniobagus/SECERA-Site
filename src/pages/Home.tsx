@@ -31,6 +31,9 @@ export default function Home() {
           ...initialCMSContent,
           ...data,
           hero: { ...initialCMSContent.hero, ...data.hero },
+          showcase: { ...initialCMSContent.showcase, ...data.showcase },
+          testimonials: { ...initialCMSContent.testimonials, ...data.testimonials },
+          ugc: { ...initialCMSContent.ugc, ...data.ugc },
           faq: { ...initialCMSContent.faq, ...data.faq },
           cta: { ...initialCMSContent.cta, ...data.cta },
           features: { ...initialCMSContent.features, ...data.features },
@@ -366,9 +369,51 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
-          {productsList.slice(0, 4).map((product, index) => (
+          {(cms.showcase.productIds?.length > 0 
+            ? productsList.filter(p => cms.showcase.productIds.includes(p.id))
+            : productsList.slice(0, 4)
+          ).map((product, index) => (
             <ProductCard key={product.id} product={product} index={index} />
           ))}
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-24 bg-[#F1F2E9]/30">
+        <div className="px-6 md:px-12 max-w-[1600px] mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-serif text-[#6E2B30] mb-4">{cms.testimonials.title}</h2>
+            <p className="text-zinc-500">{cms.testimonials.subtitle}</p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {cms.testimonials.items.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className="bg-white p-8 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow flex flex-col h-full"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 rounded-full overflow-hidden shrink-0 border border-zinc-100">
+                    <img src={item.avatar} alt={item.name} className="w-full h-full object-cover" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-zinc-900 text-sm">{item.name}</h4>
+                    <p className="text-xs text-zinc-500">{item.role}</p>
+                  </div>
+                </div>
+                <p className="text-zinc-600 leading-relaxed italic flex-1">"{item.content}"</p>
+                <div className="flex gap-1 mt-6">
+                  {[1, 2, 3, 4, 5].map(i => (
+                    <Star key={i} className="w-3 h-3 fill-[#6E2B30] text-[#6E2B30]" />
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -388,18 +433,18 @@ export default function Home() {
 
           {/* Marquee Container */}
           <div className="flex gap-6 animate-marquee group-hover:[animation-play-state:paused]">
-            {[...productsList.slice(0, 4), ...productsList.slice(0, 4), ...productsList.slice(0, 4)].map((item, index) => {
-              const variants = item.product_variants || item.variants || [];
+            {(cms.ugc.items?.length > 0 ? cms.ugc.items : []).map((ugcItem, index) => {
+              const product = productsList.find(p => p.id === ugcItem.productId);
+              const variants = product?.product_variants || product?.variants || [];
               const firstVariant = variants[0];
-              const shortName = item.short_name || item.shortName || '';
-              const thumbnail = item.thumbnail_url || firstVariant?.image_url || firstVariant?.image;
+              const thumbnail = ugcItem.thumbnailUrl || product?.thumbnail_url || firstVariant?.image_url;
+              
               return (
                 <div
-                  key={`${item.id}-${index}`}
+                  key={index}
                   className="flex flex-col shrink-0 w-[280px] md:w-[320px] group/item"
                 >
-                  {/* Video/Image Container */}
-                  <div className="relative aspect-[4/5] bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden cursor-pointer shadow-sm group-hover/item:shadow-xl transition-all duration-500">
+                  <div className="relative aspect-square bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden cursor-pointer shadow-sm group-hover/item:shadow-xl transition-all duration-500">
                     <video 
                       autoPlay 
                       loop 
@@ -408,33 +453,33 @@ export default function Home() {
                       className="w-full h-full object-cover transition-transform duration-1000 group-hover/item:scale-105"
                       poster={thumbnail}
                     >
-                      <source src="https://cdn.joinvoy.com/voyage/video/voytex-MIX-homepage-desktop.mp4" type="video/mp4" />
+                      <source src={ugcItem.videoUrl} type="video/mp4" />
                     </video>
                     <div className="absolute top-6 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white transition-all hover:bg-white/40 z-10 border border-white/30 opacity-0 group-hover/item:opacity-100 scale-90 group-hover/item:scale-100">
                       <VolumeX className="w-5 h-5" />
                     </div>
-                    {/* Overlay brand logo like yuumae */}
                     <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40 group-hover/item:opacity-80 transition-opacity">
                       <h3 className="text-2xl font-bold text-white tracking-tighter">secera</h3>
                     </div>
                   </div>
                   
-                  {/* Product Info Card (Underneath like yuumae) */}
-                  <Link to={`/product/${item.id}`} className="flex items-center gap-4 px-2">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#F1F2E9] shrink-0">
-                      <img src={thumbnail} alt={item.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">({item.category})</span>
-                      <h4 className="text-sm font-medium text-[#6E2B30] truncate">{shortName}</h4>
-                      <div className="flex items-center justify-between gap-4 mt-1">
-                        <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant?.price ?? 0)}</span>
-                        <div className="w-6 h-6 rounded-full bg-[#6E2B30] text-white flex items-center justify-center">
-                          <Plus className="w-3 h-3" />
+                  {product && (
+                    <Link to={`/product/${product.id}`} className="flex items-center gap-4 px-2">
+                      <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#F1F2E9] shrink-0">
+                        <img src={thumbnail} alt={product.name} className="w-full h-full object-cover" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">({product.category})</span>
+                        <h4 className="text-sm font-medium text-[#6E2B30] truncate">{product.short_name}</h4>
+                        <div className="flex items-center justify-between gap-4 mt-1">
+                          <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant?.price ?? 0)}</span>
+                          <div className="w-6 h-6 rounded-full bg-[#6E2B30] text-white flex items-center justify-center">
+                            <Plus className="w-3 h-3" />
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
+                    </Link>
+                  )}
                 </div>
               );
             })}
@@ -536,8 +581,8 @@ export default function Home() {
             {cms.cta.description}
           </motion.p>
           <motion.a
-            href={`https://wa.me/${cms.footer.phone}`}
-            target="_blank"
+            href={cms.cta.buttonLink || `https://wa.me/${cms.footer.phone}`}
+            target={cms.cta.buttonLink?.startsWith('http') ? "_blank" : "_self"}
             rel="noopener noreferrer"
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}

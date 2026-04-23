@@ -3,6 +3,12 @@ export interface CMSContent {
     title: string;
     subtitle: string;
     cta: string;
+    imageUrl?: string;
+  };
+  showcase: {
+    title: string;
+    description: string;
+    productIds: string[];
   };
   features: {
     title: string;
@@ -11,6 +17,25 @@ export interface CMSContent {
       title: string;
       description: string;
       icon: string;
+    }>;
+  };
+  testimonials: {
+    title: string;
+    subtitle: string;
+    items: Array<{
+      name: string;
+      role: string;
+      content: string;
+      avatar: string;
+    }>;
+  };
+  ugc: {
+    title: string;
+    subtitle: string;
+    items: Array<{
+      videoUrl: string;
+      productId?: string;
+      thumbnailUrl?: string;
     }>;
   };
   faq: {
@@ -25,6 +50,7 @@ export interface CMSContent {
     title: string;
     description: string;
     buttonText: string;
+    buttonLink?: string;
   };
   footer: {
     tagline: string;
@@ -51,6 +77,11 @@ export const initialCMSContent: CMSContent = {
     cta: "Lihat Koleksi",
     imageUrl: "/hero-image.jpg"
   },
+  showcase: {
+    title: "Koleksi Terpopuler",
+    description: "Pilihan terbaik untuk melengkapi gaya modest modern Anda hari ini.",
+    productIds: []
+  },
   features: {
     title: "Mengapa Memilih Secera?",
     description: "Kami mengutamakan kualitas material dan kenyamanan dalam setiap desain.",
@@ -72,6 +103,23 @@ export const initialCMSContent: CMSContent = {
       }
     ]
   },
+  testimonials: {
+    title: "Apa Kata Mereka?",
+    subtitle: "Ribuan wanita telah mempercayakan gaya modest mereka pada Secera.",
+    items: [
+      {
+        name: "Sarah Amanda",
+        role: "Fashion Enthusiast",
+        content: "Bahannya bener-bener premium, flowy banget dan gampang dibentuk. Suka banget sama koleksi warnanya!",
+        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop"
+      }
+    ]
+  },
+  ugc: {
+    title: "Gaya Secera Anda",
+    subtitle: "Inspirasi dari komunitas kami. Tag @secera.id untuk kesempatan tampil di sini.",
+    items: []
+  },
   faq: {
     title: "Pertanyaan Populer",
     description: "Temukan jawaban untuk pertanyaan yang sering diajukan seputar produk dan layanan kami.",
@@ -89,7 +137,8 @@ export const initialCMSContent: CMSContent = {
   cta: {
     title: "Penawaran Eksklusif Website",
     description: "Dapatkan potongan harga hingga 15% untuk setiap pembelian langsung melalui website kami hari ini.",
-    buttonText: "Mulai Belanja Sekarang"
+    buttonText: "Mulai Belanja Sekarang",
+    buttonLink: "/shop"
   },
   footer: {
     tagline: "Mendefinisikan ulang gaya modest",

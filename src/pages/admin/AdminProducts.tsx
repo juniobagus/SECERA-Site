@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { Search, Filter, Plus, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { formatPrice } from '../../data/products';
 import { getProducts, createProduct, updateProduct, deleteProduct } from '../../utils/api';
@@ -39,11 +40,17 @@ export default function AdminProducts() {
 
   const handleDeleteProduct = async (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
-      const success = await deleteProduct(id);
-      if (success) {
-        fetchProducts();
-      } else {
-        alert('Failed to delete product.');
+      const loadingToast = toast.loading('Deleting product...');
+      try {
+        const success = await deleteProduct(id);
+        if (success) {
+          toast.success('Product deleted', { id: loadingToast });
+          fetchProducts();
+        } else {
+          toast.error('Failed to delete product', { id: loadingToast });
+        }
+      } catch (error) {
+        toast.error('Error deleting product', { id: loadingToast });
       }
     }
   };

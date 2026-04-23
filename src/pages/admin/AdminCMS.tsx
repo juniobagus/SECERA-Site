@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Save, Globe, Home, Info } from 'lucide-react';
+import { Save, Globe, Home, Info, Plus, Trash2, Video, MessageSquare, Star, Search } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { initialCMSContent } from '../../data/cms';
-import { getCMSContent, saveCMSContent } from '../../utils/api';
+import { getCMSContent, saveCMSContent, getProducts } from '../../utils/api';
 import ImageUpload from '../../components/admin/ImageUpload';
+import { formatPrice } from '../../data/products';
 
 const initialAboutContent = {
   hero: {
@@ -23,11 +25,29 @@ const initialAboutContent = {
   }
 };
 
+const initialShopContent = {
+  hero: {
+    title: "Koleksi Eksklusif Secera",
+    subtitle: "Temukan keanggunan dalam setiap helai pakaian kami yang dirancang khusus untuk Anda.",
+    imageUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2000&auto=format&fit=crop"
+  }
+};
+
 export default function AdminCMS() {
-  const [activeTab, setActiveTab] = useState<'home' | 'about'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'about' | 'shop' | 'global'>('home');
   const [isSaving, setIsSaving] = useState(false);
   const [homeContent, setHomeContent] = useState(initialCMSContent);
   const [aboutContent, setAboutContent] = useState(initialAboutContent);
+  const [shopContent, setShopContent] = useState(initialShopContent);
+  const [products, setProducts] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadProducts() {
+      const data = await getProducts();
+      setProducts(data);
+    }
+    loadProducts();
+  }, []);
 
   useEffect(() => {
     async function loadContent() {
@@ -41,6 +61,11 @@ export default function AdminCMS() {
               cta: saved.hero?.cta || initialCMSContent.hero.cta,
               imageUrl: saved.hero?.imageUrl || initialCMSContent.hero.imageUrl
             },
+            showcase: {
+              title: saved.showcase?.title || initialCMSContent.showcase.title,
+              description: saved.showcase?.description || initialCMSContent.showcase.description,
+              productIds: saved.showcase?.productIds || initialCMSContent.showcase.productIds
+            },
             features: { 
               title: saved.features?.title || initialCMSContent.features.title,
               description: saved.features?.description || initialCMSContent.features.description,
@@ -48,6 +73,25 @@ export default function AdminCMS() {
                 title: item.title || initialCMSContent.features.items[i]?.title || '',
                 description: item.description || initialCMSContent.features.items[i]?.description || '',
                 icon: item.icon || initialCMSContent.features.items[i]?.icon || ''
+              }))
+            },
+            testimonials: {
+              title: saved.testimonials?.title || initialCMSContent.testimonials.title,
+              subtitle: saved.testimonials?.subtitle || initialCMSContent.testimonials.subtitle,
+              items: (saved.testimonials?.items || initialCMSContent.testimonials.items).map((item: any, i: number) => ({
+                name: item.name || '',
+                role: item.role || '',
+                content: item.content || '',
+                avatar: item.avatar || ''
+              }))
+            },
+            ugc: {
+              title: saved.ugc?.title || initialCMSContent.ugc.title,
+              subtitle: saved.ugc?.subtitle || initialCMSContent.ugc.subtitle,
+              items: (saved.ugc?.items || initialCMSContent.ugc.items).map((item: any, i: number) => ({
+                videoUrl: item.videoUrl || '',
+                productId: item.productId || '',
+                thumbnailUrl: item.thumbnailUrl || ''
               }))
             },
             faq: { 
@@ -61,7 +105,8 @@ export default function AdminCMS() {
             cta: { 
               title: saved.cta?.title || initialCMSContent.cta.title,
               description: saved.cta?.description || initialCMSContent.cta.description,
-              buttonText: saved.cta?.buttonText || initialCMSContent.cta.buttonText
+              buttonText: saved.cta?.buttonText || initialCMSContent.cta.buttonText,
+              buttonLink: saved.cta?.buttonLink || initialCMSContent.cta.buttonLink
             },
             footer: { 
               tagline: saved.footer?.tagline || initialCMSContent.footer.tagline,
@@ -103,6 +148,17 @@ export default function AdminCMS() {
             }
           });
         }
+      } else if (activeTab === 'shop') {
+        const saved = await getCMSContent('shop_page');
+        if (saved) {
+          setShopContent({
+            hero: {
+              title: saved.hero?.title || initialShopContent.hero.title,
+              subtitle: saved.hero?.subtitle || initialShopContent.hero.subtitle,
+              imageUrl: saved.hero?.imageUrl || initialShopContent.hero.imageUrl
+            }
+          });
+        }
       }
     }
     loadContent();
@@ -110,15 +166,28 @@ export default function AdminCMS() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    const key = (activeTab === 'home' || activeTab === 'global') ? 'main_site' : 'about_page';
-    const content = (activeTab === 'home' || activeTab === 'global') ? homeContent : aboutContent;
+    const loadingToast = toast.loading('Saving CMS changes...');
+    const keyMap = {
+      home: 'main_site',
+      global: 'main_site',
+      about: 'about_page',
+      shop: 'shop_page'
+    };
+    const contentMap = {
+      home: homeContent,
+      global: homeContent,
+      about: aboutContent,
+      shop: shopContent
+    };
+    const key = keyMap[activeTab];
+    const content = contentMap[activeTab];
     
     const success = await saveCMSContent(key, content);
     setIsSaving(false);
     if (success) {
-      alert('CMS Content saved successfully!');
+      toast.success('CMS Content saved successfully!', { id: loadingToast });
     } else {
-      alert('Failed to save CMS content.');
+      toast.error('Failed to save CMS content.', { id: loadingToast });
     }
   };
 
@@ -162,6 +231,16 @@ export default function AdminCMS() {
           {activeTab === 'about' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#722F38]" />}
         </button>
         <button 
+          onClick={() => setActiveTab('shop')}
+          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'shop' ? 'text-[#722F38]' : 'text-gray-500 hover:text-gray-700'}`}
+        >
+          <div className="flex items-center gap-2">
+            <Search className="w-4 h-4" />
+            Shop Page
+          </div>
+          {activeTab === 'shop' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#722F38]" />}
+        </button>
+        <button 
           onClick={() => setActiveTab('global')}
           className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'global' ? 'text-[#722F38]' : 'text-gray-500 hover:text-gray-700'}`}
         >
@@ -201,23 +280,355 @@ export default function AdminCMS() {
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
                   />
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.hero.cta} 
+                      onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, cta: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                </div>
                 <ImageUpload 
                   label="Hero Image"
-                  value={homeContent.hero.imageUrl}
+                  value={homeContent.hero.imageUrl || ''}
                   onChange={(url) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, imageUrl: url } })}
                 />
               </div>
             </div>
 
-            {/* CMS: FAQ Section */}
+            {/* CMS: Product Showcase */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">FAQ Section</h2>
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Star className="w-5 h-5 text-[#722F38]" />
+                  <h2 className="text-lg font-bold text-gray-900">Product Showcase</h2>
+                </div>
               </div>
               <div className="p-6 space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.showcase.title} 
+                      onChange={(e) => setHomeContent({ ...homeContent, showcase: { ...homeContent.showcase, title: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Description</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.showcase.description} 
+                      onChange={(e) => setHomeContent({ ...homeContent, showcase: { ...homeContent.showcase, description: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-3">Featured Products</label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-80 overflow-y-auto p-1">
+                    {products.map(product => (
+                      <label 
+                        key={product.id} 
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer ${
+                          homeContent.showcase.productIds.includes(product.id) 
+                            ? 'border-[#722F38] bg-[#722F38]/5 ring-1 ring-[#722F38]' 
+                            : 'border-gray-100 hover:border-gray-200'
+                        }`}
+                      >
+                        <input 
+                          type="checkbox" 
+                          className="hidden"
+                          checked={homeContent.showcase.productIds.includes(product.id)}
+                          onChange={(e) => {
+                            const ids = [...homeContent.showcase.productIds];
+                            if (e.target.checked) {
+                              ids.push(product.id);
+                            } else {
+                              const index = ids.indexOf(product.id);
+                              if (index > -1) ids.splice(index, 1);
+                            }
+                            setHomeContent({ ...homeContent, showcase: { ...homeContent.showcase, productIds: ids } });
+                          }}
+                        />
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 shrink-0">
+                          <img src={product.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{product.short_name}</p>
+                          <p className="text-xs text-gray-500">{formatPrice(product.product_variants?.[0]?.price || 0)}</p>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2 italic">* Select 4-8 products for best layout.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* CMS: Testimonials Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-[#722F38]" />
+                  <h2 className="text-lg font-bold text-gray-900">Testimonials Section</h2>
+                </div>
+                <button 
+                  onClick={() => {
+                    const newItems = [...homeContent.testimonials.items, { name: '', role: '', content: '', avatar: '' }];
+                    setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
+                  }}
+                  className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
+                >
+                  <Plus className="w-4 h-4" /> Add Testimonial
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.testimonials.title} 
+                      onChange={(e) => setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, title: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Subtitle</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.testimonials.subtitle} 
+                      onChange={(e) => setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, subtitle: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {homeContent.testimonials.items.map((item, index) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-xl relative group">
+                      <button 
+                        onClick={() => {
+                          const newItems = homeContent.testimonials.items.filter((_, i) => i !== index);
+                          setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
+                        }}
+                        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Name</label>
+                          <input 
+                            type="text" 
+                            value={item.name} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.testimonials.items];
+                              newItems[index].name = e.target.value;
+                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Role / Job</label>
+                          <input 
+                            type="text" 
+                            value={item.role} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.testimonials.items];
+                              newItems[index].role = e.target.value;
+                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Testimonial Content</label>
+                          <textarea 
+                            rows={2}
+                            value={item.content} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.testimonials.items];
+                              newItems[index].content = e.target.value;
+                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white resize-none" 
+                          />
+                        </div>
+                        <div className="md:col-span-2">
+                          <ImageUpload 
+                            label="User Avatar"
+                            value={item.avatar}
+                            onChange={(url) => {
+                              const newItems = [...homeContent.testimonials.items];
+                              newItems[index].avatar = url;
+                              setHomeContent({ ...homeContent, testimonials: { ...homeContent.testimonials, items: newItems } });
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* CMS: UGC Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Video className="w-5 h-5 text-[#722F38]" />
+                  <h2 className="text-lg font-bold text-gray-900">UGC Section (Video Gallery)</h2>
+                </div>
+                <button 
+                  onClick={() => {
+                    const newItems = [...homeContent.ugc.items, { videoUrl: '', productId: '', thumbnailUrl: '' }];
+                    setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, items: newItems } });
+                  }}
+                  className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
+                >
+                  <Plus className="w-4 h-4" /> Add Video
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.ugc.title} 
+                      onChange={(e) => setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, title: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Subtitle</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.ugc.subtitle} 
+                      onChange={(e) => setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, subtitle: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {homeContent.ugc.items.map((item, index) => (
+                    <div key={index} className="p-4 bg-gray-50 rounded-xl relative group">
+                      <button 
+                        onClick={() => {
+                          const newItems = homeContent.ugc.items.filter((_, i) => i !== index);
+                          setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, items: newItems } });
+                        }}
+                        className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Video URL (Shopee/TikTok/Direct)</label>
+                          <input 
+                            type="text" 
+                            value={item.videoUrl} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.ugc.items];
+                              newItems[index].videoUrl = e.target.value;
+                              setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, items: newItems } });
+                            }}
+                            placeholder="https://..."
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Linked Product</label>
+                          <select 
+                            value={item.productId}
+                            onChange={(e) => {
+                              const newItems = [...homeContent.ugc.items];
+                              newItems[index].productId = e.target.value;
+                              setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white"
+                          >
+                            <option value="">No Linked Product</option>
+                            {products.map(p => (
+                              <option key={p.id} value={p.id}>{p.short_name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <ImageUpload 
+                          label="Video Thumbnail"
+                          value={item.thumbnailUrl || ''}
+                          onChange={(url) => {
+                            const newItems = [...homeContent.ugc.items];
+                            newItems[index].thumbnailUrl = url;
+                            setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, items: newItems } });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* CMS: FAQ Section */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-[#722F38]" />
+                  <h2 className="text-lg font-bold text-gray-900">FAQ Section</h2>
+                </div>
+                <button 
+                  onClick={() => {
+                    const newItems = [...homeContent.faq.items, { question: '', answer: '' }];
+                    setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
+                  }}
+                  className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
+                >
+                  <Plus className="w-4 h-4" /> Add FAQ
+                </button>
+              </div>
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.faq.title} 
+                      onChange={(e) => setHomeContent({ ...homeContent, faq: { ...homeContent.faq, title: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Section Description</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.faq.description} 
+                      onChange={(e) => setHomeContent({ ...homeContent, faq: { ...homeContent.faq, description: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                </div>
+
                 {homeContent.faq.items.map((item, index) => (
-                  <div key={index} className="p-4 bg-gray-50 rounded-xl space-y-3">
+                  <div key={index} className="p-4 bg-gray-50 rounded-xl relative group space-y-3">
+                    <button 
+                      onClick={() => {
+                        const newItems = homeContent.faq.items.filter((_, i) => i !== index);
+                        setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
+                      }}
+                      className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                     <div>
                       <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Question {index + 1}</label>
                       <input 
@@ -253,26 +664,47 @@ export default function AdminCMS() {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
               <div className="p-6 border-b border-gray-100 flex items-center gap-3">
                 <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Global CTA (WhatsApp Promo)</h2>
+                <h2 className="text-lg font-bold text-gray-900">Bottom CTA Banner</h2>
               </div>
               <div className="p-6 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">CTA Title</label>
-                  <input 
-                    type="text" 
-                    value={homeContent.cta.title} 
-                    onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, title: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">CTA Description</label>
-                  <textarea 
-                    rows={2}
-                    value={homeContent.cta.description} 
-                    onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, description: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CTA Title</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.cta.title} 
+                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, title: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CTA Description</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.cta.description} 
+                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, description: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.cta.buttonText} 
+                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonText: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Link</label>
+                    <input 
+                      type="text" 
+                      value={homeContent.cta.buttonLink || ''} 
+                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonLink: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      placeholder="/shop or https://..."
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -370,6 +802,41 @@ export default function AdminCMS() {
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
                   />
                 </div>
+              </div>
+            </div>
+          </>
+        ) : activeTab === 'shop' ? (
+          <>
+            {/* Shop Page: Hero */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+                <Globe className="w-5 h-5 text-[#722F38]" />
+                <h2 className="text-lg font-bold text-gray-900">Hero Section</h2>
+              </div>
+              <div className="p-6 space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title</label>
+                  <input 
+                    type="text" 
+                    value={shopContent.hero.title} 
+                    onChange={(e) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, title: e.target.value } })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hero Subtitle</label>
+                  <textarea 
+                    rows={2}
+                    value={shopContent.hero.subtitle} 
+                    onChange={(e) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, subtitle: e.target.value } })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                  />
+                </div>
+                <ImageUpload 
+                  label="Hero Image"
+                  value={shopContent.hero.imageUrl}
+                  onChange={(url) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, imageUrl: url } })}
+                />
               </div>
             </div>
           </>

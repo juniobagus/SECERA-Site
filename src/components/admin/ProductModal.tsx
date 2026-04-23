@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Upload } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { toast } from 'react-hot-toast';
+import { X, Plus, Trash2, Upload, Search } from 'lucide-react';
 import ImageUpload from './ImageUpload';
-import { CATEGORIES } from '../../data/products';
+import { getCategories, createCategory } from '../../utils/api';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -11,11 +12,14 @@ interface ProductModalProps {
 }
 
 export default function ProductModal({ isOpen, onClose, onSave, product }: ProductModalProps) {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
   const [formData, setFormData] = useState<any>({
     name: '',
     short_name: '',
     thumbnail_url: '',
-    category: 'Selendang Kebaya',
+    category_id: '',
     material: 'Ceruty Babydoll Premium',
     weight: 100,
     description: '',
@@ -24,49 +28,71 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     variants: [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
   });
 
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
-    if (product) {
-      setFormData({
-        id: product.id,
-        name: product.name || '',
-        short_name: product.short_name || product.shortName || '',
-        thumbnail_url: product.thumbnail_url || '',
-        category: product.category || 'Selendang Kebaya',
-        material: product.material || '',
-        weight: product.weight || 100,
-        description: product.description || '',
-        shopee_link: product.shopee_link || '',
-        tiktok_link: product.tiktok_link || '',
-        variants: (product.product_variants || product.variants || []).map((v: any) => ({
-          sku: v.sku || '',
-          color: v.color || '',
-          option_name: v.option_name || v.option || '',
-          price: v.price || 0,
-          promo_price: v.promo_price || v.promoPrice || 0,
-          stock: v.stock || 0,
-          image_url: v.image_url || v.image || ''
-        }))
-      });
-      
-      // Ensure at least one variant exists
-      setFormData((prev: any) => ({
-        ...prev,
-        variants: prev.variants.length > 0 ? prev.variants : [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
-      }));
-    } else {
-      setFormData({
-        name: '',
-        short_name: '',
-        category: 'Selendang Kebaya',
-        material: 'Ceruty Babydoll Premium',
-        weight: 100,
-        description: '',
-        shopee_link: '',
-        tiktok_link: '',
-        variants: [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
-      });
+    async function loadCategories() {
+      const data = await getCategories();
+      setCategories(data);
     }
-  }, [product, isOpen]);
+    if (isOpen) {
+      loadCategories();
+    }
+  }, [isOpen]);
+
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (product) {
+        setFormData({
+          id: product.id,
+          name: product.name || '',
+          short_name: product.short_name || product.shortName || '',
+          thumbnail_url: product.thumbnail_url || '',
+          category_id: product.category_id || '',
+          material: product.material || '',
+          weight: product.weight || 100,
+          description: product.description || '',
+          shopee_link: product.shopee_link || '',
+          tiktok_link: product.tiktok_link || '',
+          variants: (product.product_variants || product.variants || []).map((v: any) => ({
+            sku: v.sku || '',
+            color: v.color || '',
+            option_name: v.option_name || v.option || '',
+            price: v.price || 0,
+            promo_price: v.promo_price || v.promoPrice || 0,
+            stock: v.stock || 0,
+            image_url: v.image_url || v.image || ''
+          }))
+        });
+      } else {
+        setFormData({
+          name: '',
+          short_name: '',
+          thumbnail_url: '',
+          category_id: categories.length > 0 ? categories[0].id : '',
+          material: 'Ceruty Babydoll Premium',
+          weight: 100,
+          description: '',
+          shopee_link: '',
+          tiktok_link: '',
+          variants: [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
+        });
+      }
+      setIsAddingNewCategory(false);
+      setNewCategoryName('');
+      setShowDropdown(false);
+      hasInitialized.current = true;
+    }
+  }, [isOpen, product, categories]);
+
+  // Set default category if empty when categories load
+  useEffect(() => {
+    if (!product && categories.length > 0 && !formData.category_id) {
+      setFormData(prev => ({ ...prev, category_id: categories[0].id }));
+    }
+  }, [categories, product]);
 
   if (!isOpen) return null;
 
@@ -90,9 +116,25 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     setFormData({ ...formData, variants: newVariants });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    
+    let finalCategoryId = formData.category_id;
+    const loadingToast = toast.loading('Saving product...');
+    
+    try {
+      if (isAddingNewCategory && newCategoryName.trim()) {
+        const newCat = await createCategory(newCategoryName.trim());
+        finalCategoryId = newCat.id;
+        toast.success(`Category "${newCategoryName}" created`, { id: loadingToast });
+      }
+      
+      await onSave({ ...formData, category_id: finalCategoryId });
+      toast.success('Product saved successfully', { id: loadingToast });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error.message || 'Failed to save product', { id: loadingToast });
+    }
   };
 
   return (
@@ -144,17 +186,79 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none"
                   />
                 </div>
-                <div>
+                <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                  <select 
-                    value={formData.category}
-                    onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none"
-                  >
-                    {CATEGORIES.filter(c => c !== 'Semua').map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <input 
+                      type="text" 
+                      placeholder="Search or add category..."
+                      value={isAddingNewCategory ? newCategoryName : (categories.find(c => c.id === formData.category_id)?.name || '')}
+                      onChange={e => {
+                        const val = e.target.value;
+                        const match = categories.find(c => c.name.toLowerCase() === val.toLowerCase());
+                        if (match) {
+                          setFormData({ ...formData, category_id: match.id });
+                          setIsAddingNewCategory(false);
+                          setNewCategoryName('');
+                        } else {
+                          setIsAddingNewCategory(true);
+                          setNewCategoryName(val);
+                          setFormData({ ...formData, category_id: '' });
+                        }
+                        setShowDropdown(true);
+                      }}
+                      onFocus={() => setShowDropdown(true)}
+                      onBlur={() => {
+                        // Delay blur to allow button clicks
+                        setTimeout(() => setShowDropdown(false), 200);
+                      }}
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white"
+                    />
+                    <div className="absolute right-3 top-2.5 flex items-center gap-1 pointer-events-none text-gray-400">
+                      <Search className="w-4 h-4" />
+                    </div>
+
+                    {showDropdown && newCategoryName && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl max-h-60 overflow-y-auto">
+                        {categories.filter(c => c.name.toLowerCase().includes(newCategoryName.toLowerCase())).map(cat => (
+                          <button
+                            key={cat.id}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, category_id: cat.id });
+                              setIsAddingNewCategory(false);
+                              setNewCategoryName('');
+                              setShowDropdown(false);
+                            }}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center justify-between group"
+                          >
+                            <span className="text-gray-700">{cat.name}</span>
+                            <span className="text-xs text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">Select</span>
+                          </button>
+                        ))}
+                        {!categories.find(c => c.name.toLowerCase() === newCategoryName.toLowerCase()) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsAddingNewCategory(true);
+                              setShowDropdown(false);
+                            }}
+                            className="w-full px-4 py-3 text-left hover:bg-[#722F38]/5 border-t border-gray-50"
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-full bg-[#722F38]/10 flex items-center justify-center">
+                                <Plus className="w-3 h-3 text-[#722F38]" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-bold text-[#722F38]">Add New Category</p>
+                                <p className="text-xs text-gray-500">Create "{newCategoryName}"</p>
+                              </div>
+                            </div>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
