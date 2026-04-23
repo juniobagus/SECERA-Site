@@ -3609,9 +3609,10 @@ export const products: Product[] = [
 ];
 
 
-export function formatPrice(price: number | null | undefined): string {
-  if (price === null || price === undefined) return 'Rp 0';
-  return `Rp ${price.toLocaleString('id-ID')}`;
+export function formatPrice(price: number | string | null | undefined): string {
+  const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+  if (numericPrice === null || numericPrice === undefined || isNaN(numericPrice)) return 'Rp. 0';
+  return `Rp. ${Math.floor(numericPrice).toLocaleString('id-ID')}`;
 }
 
 export function getProductById(id: string): Product | undefined {

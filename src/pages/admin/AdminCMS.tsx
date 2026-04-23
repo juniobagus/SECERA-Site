@@ -35,10 +35,34 @@ export default function AdminCMS() {
         const saved = await getCMSContent('main_site');
         if (saved) {
           setHomeContent({
-            hero: { ...initialCMSContent.hero, ...saved.hero },
-            features: { ...initialCMSContent.features, ...saved.features },
-            faq: { ...initialCMSContent.faq, ...saved.faq },
-            cta: { ...initialCMSContent.cta, ...saved.cta },
+            hero: { 
+              title: saved.hero?.title || initialCMSContent.hero.title,
+              subtitle: saved.hero?.subtitle || initialCMSContent.hero.subtitle,
+              cta: saved.hero?.cta || initialCMSContent.hero.cta,
+              imageUrl: saved.hero?.imageUrl || initialCMSContent.hero.imageUrl
+            },
+            features: { 
+              title: saved.features?.title || initialCMSContent.features.title,
+              description: saved.features?.description || initialCMSContent.features.description,
+              items: (saved.features?.items || initialCMSContent.features.items).map((item: any, i: number) => ({
+                title: item.title || initialCMSContent.features.items[i]?.title || '',
+                description: item.description || initialCMSContent.features.items[i]?.description || '',
+                icon: item.icon || initialCMSContent.features.items[i]?.icon || ''
+              }))
+            },
+            faq: { 
+              title: saved.faq?.title || initialCMSContent.faq.title,
+              description: saved.faq?.description || initialCMSContent.faq.description,
+              items: (saved.faq?.items || initialCMSContent.faq.items).map((item: any, i: number) => ({
+                question: item.question || initialCMSContent.faq.items[i]?.question || '',
+                answer: item.answer || initialCMSContent.faq.items[i]?.answer || ''
+              }))
+            },
+            cta: { 
+              title: saved.cta?.title || initialCMSContent.cta.title,
+              description: saved.cta?.description || initialCMSContent.cta.description,
+              buttonText: saved.cta?.buttonText || initialCMSContent.cta.buttonText
+            },
             footer: { 
               tagline: saved.footer?.tagline || initialCMSContent.footer.tagline,
               email: saved.footer?.email || initialCMSContent.footer.email,

@@ -21,7 +21,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     description: '',
     shopee_link: '',
     tiktok_link: '',
-    variants: [{ sku: '', color: '', option_name: '', price: 0, stock: 0, image_url: '' }]
+    variants: [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
   });
 
   useEffect(() => {
@@ -42,6 +42,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           color: v.color || '',
           option_name: v.option_name || v.option || '',
           price: v.price || 0,
+          promo_price: v.promo_price || v.promoPrice || 0,
           stock: v.stock || 0,
           image_url: v.image_url || v.image || ''
         }))
@@ -50,7 +51,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
       // Ensure at least one variant exists
       setFormData((prev: any) => ({
         ...prev,
-        variants: prev.variants.length > 0 ? prev.variants : [{ sku: '', color: '', option_name: '', price: 0, stock: 0, image_url: '' }]
+        variants: prev.variants.length > 0 ? prev.variants : [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
       }));
     } else {
       setFormData({
@@ -62,7 +63,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
         description: '',
         shopee_link: '',
         tiktok_link: '',
-        variants: [{ sku: '', color: '', option_name: '', price: 0, stock: 0, image_url: '' }]
+        variants: [{ sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
       });
     }
   }, [product, isOpen]);
@@ -72,7 +73,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
   const handleAddVariant = () => {
     setFormData({
       ...formData,
-      variants: [...formData.variants, { sku: '', color: '', option_name: '', price: 0, stock: 0, image_url: '' }]
+      variants: [...formData.variants, { sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
     });
   };
 
@@ -275,20 +276,44 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                         <label className="block text-xs font-medium text-gray-500 mb-1">Option (e.g. Size)</label>
                         <input 
                           type="text" 
-                          value={variant.option_name || variant.option}
+                          value={variant.option_name || variant.option || ''}
                           onChange={e => handleVariantChange(index, 'option_name', e.target.value)}
                           className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:border-[#722F38] outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Price</label>
-                        <input 
-                          type="number" 
-                          required
-                          value={variant.price}
-                          onChange={e => handleVariantChange(index, 'price', parseInt(e.target.value))}
-                          className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-lg focus:border-[#722F38] outline-none"
-                        />
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Normal Price</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1.5 text-sm text-gray-400">Rp.</span>
+                          <input 
+                            type="text" 
+                            inputMode="numeric"
+                            required
+                            value={variant.price ? Math.floor(Number(variant.price)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/\./g, '').replace(/\D/g, '');
+                              handleVariantChange(index, 'price', val ? parseInt(val) : 0);
+                            }}
+                            className="w-full pl-10 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg focus:border-[#722F38] outline-none"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Promo Price (Optional)</label>
+                        <div className="relative">
+                          <span className="absolute left-3 top-1.5 text-sm text-gray-400">Rp.</span>
+                          <input 
+                            type="text" 
+                            inputMode="numeric"
+                            value={(variant.promo_price || variant.promoPrice) ? Math.floor(Number(variant.promo_price || variant.promoPrice)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") : ''}
+                            onChange={e => {
+                              const val = e.target.value.replace(/\./g, '').replace(/\D/g, '');
+                              handleVariantChange(index, 'promo_price', val ? parseInt(val) : 0);
+                            }}
+                            placeholder="0"
+                            className="w-full pl-10 pr-4 py-1.5 text-sm border border-gray-200 rounded-lg focus:border-[#722F38] outline-none"
+                          />
+                        </div>
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Stock</label>
