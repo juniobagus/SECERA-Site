@@ -20,6 +20,7 @@ export interface Product {
   details: { title: string; content: string }[];
   shopeeLink: string;
   tiktokLink: string;
+  thumbnail_url?: string;
 }
 
 export const CATEGORIES = [

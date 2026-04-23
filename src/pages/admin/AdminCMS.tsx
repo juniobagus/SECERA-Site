@@ -35,25 +35,48 @@ export default function AdminCMS() {
         const saved = await getCMSContent('main_site');
         if (saved) {
           setHomeContent({
-            ...initialCMSContent,
-            ...saved,
             hero: { ...initialCMSContent.hero, ...saved.hero },
+            features: { ...initialCMSContent.features, ...saved.features },
             faq: { ...initialCMSContent.faq, ...saved.faq },
             cta: { ...initialCMSContent.cta, ...saved.cta },
-            features: { ...initialCMSContent.features, ...saved.features },
-            footer: { ...initialCMSContent.footer, ...saved.footer },
-            global: { ...initialCMSContent.global, ...saved.global }
+            footer: { 
+              tagline: saved.footer?.tagline || initialCMSContent.footer.tagline,
+              email: saved.footer?.email || initialCMSContent.footer.email,
+              phone: saved.footer?.phone || initialCMSContent.footer.phone,
+              copyright: saved.footer?.copyright || initialCMSContent.footer.copyright
+            },
+            global: {
+              siteTitle: saved.global?.siteTitle || initialCMSContent.global.siteTitle,
+              seoDescription: saved.global?.seoDescription || initialCMSContent.global.seoDescription,
+              seoKeywords: saved.global?.seoKeywords || initialCMSContent.global.seoKeywords,
+              socialMedia: {
+                instagram: saved.global?.socialMedia?.instagram || initialCMSContent.global.socialMedia.instagram,
+                linkedin: saved.global?.socialMedia?.linkedin || initialCMSContent.global.socialMedia.linkedin,
+                twitter: saved.global?.socialMedia?.twitter || initialCMSContent.global.socialMedia.twitter,
+              }
+            }
           });
         }
       } else if (activeTab === 'about') {
         const saved = await getCMSContent('about_page');
         if (saved) {
           setAboutContent({
-            ...initialAboutContent,
-            ...saved,
-            hero: { ...initialAboutContent.hero, ...saved.hero },
-            inspiration: { ...initialAboutContent.inspiration, ...saved.inspiration },
-            mission: { ...initialAboutContent.mission, ...saved.mission }
+            hero: { 
+              title: saved.hero?.title || initialAboutContent.hero.title,
+              imageUrl: saved.hero?.imageUrl || initialAboutContent.hero.imageUrl
+            },
+            inspiration: {
+              title: saved.inspiration?.title || initialAboutContent.inspiration.title,
+              subtitle: saved.inspiration?.subtitle || initialAboutContent.inspiration.subtitle,
+              description1: saved.inspiration?.description1 || initialAboutContent.inspiration.description1,
+              description2: saved.inspiration?.description2 || initialAboutContent.inspiration.description2,
+              imageUrl: saved.inspiration?.imageUrl || initialAboutContent.inspiration.imageUrl
+            },
+            mission: {
+              title: saved.mission?.title || initialAboutContent.mission.title,
+              subtitle: saved.mission?.subtitle || initialAboutContent.mission.subtitle,
+              description: saved.mission?.description || initialAboutContent.mission.description
+            }
           });
         }
       }

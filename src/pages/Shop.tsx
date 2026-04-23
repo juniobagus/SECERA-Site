@@ -1,10 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { products, CATEGORIES } from '../data/products';
+import { CATEGORIES } from '../data/products';
 import ProductCard from '../components/ProductCard';
+import { getProducts } from '../utils/api';
+import { Loader2 } from 'lucide-react';
 
 export default function Shop() {
   const [activeCategory, setActiveCategory] = useState('Semua');
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProducts() {
+      const data = await getProducts();
+      setProducts(data);
+      setIsLoading(false);
+    }
+    loadProducts();
+  }, []);
 
   const filtered = activeCategory === 'Semua'
     ? products
@@ -51,10 +64,25 @@ export default function Shop() {
         </div>
 
         {/* Product Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-14">
-          {filtered.map((product, index) => (
-            <ProductCard key={product.id} product={product} index={index} />
-          ))}
+        <div className="min-h-[400px]">
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3">
+              <Loader2 className="w-10 h-10 text-[#722F38] animate-spin" />
+              <p className="text-[#3A3A3A]/60">Memuat produk...</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-6 gap-y-10 md:gap-y-14">
+              {filtered.map((product, index) => (
+                <ProductCard key={product.id} product={product} index={index} />
+              ))}
+            </div>
+          )}
+          
+          {!isLoading && filtered.length === 0 && (
+            <div className="text-center py-20">
+              <p className="text-[#3A3A3A]/60 text-lg">Tidak ada produk dalam kategori ini.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

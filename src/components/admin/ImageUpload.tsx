@@ -53,6 +53,7 @@ export default function ImageUpload({ value, onChange, label, className = '' }: 
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
               <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="p-2 bg-white rounded-full text-gray-700 hover:text-[#722F38] transition-colors"
                 title="Change Image"
@@ -60,6 +61,7 @@ export default function ImageUpload({ value, onChange, label, className = '' }: 
                 <Upload className="w-5 h-5" />
               </button>
               <button
+                type="button"
                 onClick={() => onChange('')}
                 className="p-2 bg-white rounded-full text-gray-700 hover:text-red-600 transition-colors"
                 title="Remove Image"
@@ -70,6 +72,7 @@ export default function ImageUpload({ value, onChange, label, className = '' }: 
           </div>
         ) : (
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
             className="w-full aspect-video rounded-xl border-2 border-dashed border-gray-300 hover:border-[#722F38]/50 hover:bg-gray-50 transition-all flex flex-col items-center justify-center gap-3 text-gray-500 disabled:opacity-50"

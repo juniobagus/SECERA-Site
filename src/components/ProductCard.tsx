@@ -11,9 +11,15 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, index }: ProductCardProps) {
   const { addItem } = useCart();
-  const firstVariant = product.variants[0];
-  const hasPromo = product.variants.some((v) => v.promoPrice);
-  const colors = [...new Set(product.variants.map((v) => v.color))];
+  
+  // Normalize data from API or static source
+  const variants = product.product_variants || product.variants || [];
+  const firstVariant = variants[0];
+  const shortName = product.short_name || product.shortName || '';
+  const thumbnail = product.thumbnail_url || firstVariant?.image_url || firstVariant?.image;
+  
+  const hasPromo = variants.some((v: any) => v.promo_price || v.promoPrice);
+  const colors = [...new Set(variants.map((v: any) => v.color))];
 
   const getColorHex = (colorName: string) => {
     const colors_map: Record<string, string> = {
@@ -39,13 +45,13 @@ export default function ProductCard({ product, index }: ProductCardProps) {
     addItem({
       sku: firstVariant.sku,
       productId: product.id,
-      productName: product.shortName,
+      productName: shortName,
       color: firstVariant.color,
-      option: firstVariant.option,
+      option: firstVariant.option_name || firstVariant.option,
       price: firstVariant.price,
-      promoPrice: firstVariant.promoPrice,
+      promoPrice: firstVariant.promo_price || firstVariant.promoPrice,
       quantity: 1,
-      image: firstVariant.image,
+      image: firstVariant.image_url || firstVariant.image,
     });
   };
 
@@ -68,8 +74,8 @@ export default function ProductCard({ product, index }: ProductCardProps) {
           </div>
         )}
         <img
-          src={firstVariant?.image}
-          alt={product.shortName}
+          src={thumbnail}
+          alt={shortName}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           referrerPolicy="no-referrer"
           loading="lazy"
@@ -95,7 +101,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
           {product.category}
         </span>
         <h3 className="text-sm md:text-base font-serif text-[#722F38] mb-1.5 hover:opacity-80 transition-opacity leading-snug">
-          {product.shortName}
+          {shortName}
         </h3>
         <div className="flex items-center gap-2 mb-2">
           {hasPromo && (
@@ -104,12 +110,12 @@ export default function ProductCard({ product, index }: ProductCardProps) {
             </span>
           )}
           <span className="text-sm font-semibold text-[#722F38]">
-            {formatPrice(hasPromo ? firstVariant.promoPrice! : firstVariant?.price ?? 0)}
+            {formatPrice((hasPromo ? (firstVariant.promo_price || firstVariant.promoPrice) : firstVariant?.price) ?? 0)}
           </span>
         </div>
         {/* Color dots */}
         <div className="flex items-center gap-1.5 mt-auto">
-          {colors.slice(0, 5).map((color) => (
+          {colors.slice(0, 5).map((color: any) => (
             <span
               key={color}
               title={color}

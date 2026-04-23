@@ -43,8 +43,62 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
 }
 
 export async function getProducts() {
-  const response = await fetch(`${API_BASE_URL}/products`);
-  return response.json();
+  try {
+    const response = await fetch(`${API_BASE_URL}/products`);
+    if (!response.ok) throw new Error('Failed to fetch products');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getProducts):', error);
+    return [];
+  }
+}
+
+export async function createProduct(productData: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productData),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server error (${response.status}): ${errorText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (createProduct):', error);
+    throw error;
+  }
+}
+
+export async function updateProduct(productId: string, productData: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productData),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Server error (${response.status}): ${errorText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (updateProduct):', error);
+    throw error;
+  }
+}
+
+export async function deleteProduct(productId: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
+      method: 'DELETE',
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (deleteProduct):', error);
+    return false;
+  }
 }
 
 export async function createOrder(orderData: any, items: any[]) {

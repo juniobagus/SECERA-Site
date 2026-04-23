@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 import { products, formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { initialCMSContent } from '../data/cms';
-import { getCMSContent } from '../utils/api';
+import { getCMSContent, getProducts } from '../utils/api';
 import ProductCard from '../components/ProductCard';
 
 export default function Home() {
@@ -21,6 +21,7 @@ export default function Home() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [cms, setCms] = useState(initialCMSContent);
+  const [productsList, setProductsList] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadCMS() {
@@ -58,7 +59,18 @@ export default function Home() {
         metaKeywords.setAttribute('content', newCms.global.seoKeywords);
       }
     }
+    
+    async function loadProducts() {
+      const data = await getProducts();
+      if (data && data.length > 0) {
+        setProductsList(data);
+      } else {
+        setProductsList(products); // Fallback to static data if API is empty
+      }
+    }
+
     loadCMS();
+    loadProducts();
   }, []);
 
   const handleScroll = () => {
@@ -354,7 +366,7 @@ export default function Home() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
-          {products.slice(0, 4).map((product, index) => (
+          {productsList.slice(0, 4).map((product, index) => (
             <ProductCard key={product.id} product={product} index={index} />
           ))}
         </div>
@@ -376,8 +388,11 @@ export default function Home() {
 
           {/* Marquee Container */}
           <div className="flex gap-6 animate-marquee group-hover:[animation-play-state:paused]">
-            {[...products.slice(0, 4), ...products.slice(0, 4), ...products.slice(0, 4)].map((item, index) => {
-              const firstVariant = item.variants[0];
+            {[...productsList.slice(0, 4), ...productsList.slice(0, 4), ...productsList.slice(0, 4)].map((item, index) => {
+              const variants = item.product_variants || item.variants || [];
+              const firstVariant = variants[0];
+              const shortName = item.short_name || item.shortName || '';
+              const thumbnail = item.thumbnail_url || firstVariant?.image_url || firstVariant?.image;
               return (
                 <div
                   key={`${item.id}-${index}`}
@@ -391,7 +406,7 @@ export default function Home() {
                       muted 
                       playsInline 
                       className="w-full h-full object-cover transition-transform duration-1000 group-hover/item:scale-105"
-                      poster={firstVariant.image}
+                      poster={thumbnail}
                     >
                       <source src="https://cdn.joinvoy.com/voyage/video/voytex-MIX-homepage-desktop.mp4" type="video/mp4" />
                     </video>
@@ -407,13 +422,13 @@ export default function Home() {
                   {/* Product Info Card (Underneath like yuumae) */}
                   <Link to={`/product/${item.id}`} className="flex items-center gap-4 px-2">
                     <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#F1F2E9] shrink-0">
-                      <img src={firstVariant.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img src={thumbnail} alt={item.name} className="w-full h-full object-cover" />
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">({item.category})</span>
-                      <h4 className="text-sm font-medium text-[#6E2B30] truncate">{item.shortName}</h4>
+                      <h4 className="text-sm font-medium text-[#6E2B30] truncate">{shortName}</h4>
                       <div className="flex items-center justify-between gap-4 mt-1">
-                        <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant.price)}</span>
+                        <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant?.price ?? 0)}</span>
                         <div className="w-6 h-6 rounded-full bg-[#6E2B30] text-white flex items-center justify-center">
                           <Plus className="w-3 h-3" />
                         </div>
