@@ -9,7 +9,8 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { products, formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
-import { initialCMSContent as cms } from '../data/cms';
+import { initialCMSContent } from '../data/cms';
+import { getCMSContent } from '../utils/api';
 import ProductCard from '../components/ProductCard';
 
 export default function Home() {
@@ -19,6 +20,46 @@ export default function Home() {
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
+  const [cms, setCms] = useState(initialCMSContent);
+
+  useEffect(() => {
+    async function loadCMS() {
+      const data = await getCMSContent('main_site');
+      if (data) {
+        const newCms = {
+          ...initialCMSContent,
+          ...data,
+          hero: { ...initialCMSContent.hero, ...data.hero },
+          faq: { ...initialCMSContent.faq, ...data.faq },
+          cta: { ...initialCMSContent.cta, ...data.cta },
+          features: { ...initialCMSContent.features, ...data.features },
+          footer: { ...initialCMSContent.footer, ...data.footer },
+          global: { ...initialCMSContent.global, ...data.global }
+        };
+        setCms(newCms);
+
+        // SEO Update
+        if (newCms.global.siteTitle) document.title = newCms.global.siteTitle;
+        
+        let metaDesc = document.querySelector('meta[name="description"]');
+        if (!metaDesc) {
+          metaDesc = document.createElement('meta');
+          metaDesc.setAttribute('name', 'description');
+          document.head.appendChild(metaDesc);
+        }
+        metaDesc.setAttribute('content', newCms.global.seoDescription);
+
+        let metaKeywords = document.querySelector('meta[name="keywords"]');
+        if (!metaKeywords) {
+          metaKeywords = document.createElement('meta');
+          metaKeywords.setAttribute('name', 'keywords');
+          document.head.appendChild(metaKeywords);
+        }
+        metaKeywords.setAttribute('content', newCms.global.seoKeywords);
+      }
+    }
+    loadCMS();
+  }, []);
 
   const handleScroll = () => {
     if (carouselRef.current) {
@@ -53,12 +94,8 @@ export default function Home() {
         <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[80vh]">
           {/* Background Image */}
           <div className="absolute inset-0 z-0">
-            {/* 
-            Note: Please upload your image to the 'public' folder 
-            in the file explorer and name it 'hero-image.jpg' 
-          */}
             <img
-              src="/hero-image.jpg"
+              src={cms.hero.imageUrl}
               alt="SECERA women wearing maroon scarves"
               className="w-full h-full object-cover object-center"
               referrerPolicy="no-referrer"
@@ -460,6 +497,43 @@ export default function Home() {
         >
           <a href="#" className="text-sm text-zinc-900 underline underline-offset-4 hover:text-zinc-600 transition-colors">See more</a>
         </motion.div>
+      </section>
+
+      {/* Global CTA Section */}
+      <section className="px-3 md:px-5 pb-5">
+        <div className="bg-[#6E2B30] rounded-[2rem] py-20 px-6 md:px-12 flex flex-col items-center text-center text-[#F9F9F9]">
+          <motion.h2 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7 }}
+            className="text-4xl md:text-5xl font-serif mb-6"
+          >
+            {cms.cta.title}
+          </motion.h2>
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="text-lg md:text-xl text-[#F9F9F9]/80 max-w-2xl mb-10"
+          >
+            {cms.cta.description}
+          </motion.p>
+          <motion.a
+            href={`https://wa.me/${cms.footer.phone}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="bg-[#F9F9F9] text-[#6E2B30] px-8 py-4 rounded-full font-bold hover:bg-white transition-colors flex items-center gap-2"
+          >
+            <ShoppingBag className="w-5 h-5" />
+            {cms.cta.buttonText}
+          </motion.a>
+        </div>
       </section>
     </>
   );

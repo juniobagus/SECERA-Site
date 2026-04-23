@@ -30,6 +30,17 @@ export interface CMSContent {
     tagline: string;
     email: string;
     phone: string;
+    copyright: string;
+  };
+  global: {
+    siteTitle: string;
+    seoDescription: string;
+    seoKeywords: string;
+    socialMedia: {
+      instagram: string;
+      linkedin: string;
+      twitter: string;
+    };
   };
 }
 
@@ -37,7 +48,8 @@ export const initialCMSContent: CMSContent = {
   hero: {
     title: "Timeless Elegance in Every Thread",
     subtitle: "Mendefinisikan ulang gaya modest dengan sentuhan modern dan kualitas premium.",
-    cta: "Lihat Koleksi"
+    cta: "Lihat Koleksi",
+    imageUrl: "/hero-image.jpg"
   },
   features: {
     title: "Mengapa Memilih Secera?",
@@ -82,6 +94,17 @@ export const initialCMSContent: CMSContent = {
   footer: {
     tagline: "Mendefinisikan ulang gaya modest",
     email: "care@secera.id",
-    phone: "6285750990000"
+    phone: "6285750990000",
+    copyright: "©Copyright 2026 Secera"
+  },
+  global: {
+    siteTitle: "SECERA | Modern Modest Fashion",
+    seoDescription: "Secera menghadirkan koleksi modest fashion modern dengan kualitas premium dan desain eksklusif.",
+    seoKeywords: "fashion, modest, hijab, busana muslim, premium",
+    socialMedia: {
+      instagram: "https://instagram.com/secera.id",
+      linkedin: "https://linkedin.com/company/secera",
+      twitter: "https://twitter.com/seceraid"
+    }
   }
 };

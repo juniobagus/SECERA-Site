@@ -23,6 +23,11 @@ CREATE TABLE IF NOT EXISTS products (
     description TEXT,
     category_id VARCHAR(36),
     thumbnail_url TEXT,
+    material VARCHAR(255),
+    weight VARCHAR(255),
+    shopee_link TEXT,
+    tiktok_link TEXT,
+    details JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
@@ -35,6 +40,7 @@ CREATE TABLE IF NOT EXISTS product_variants (
     color VARCHAR(100),
     option_name VARCHAR(100),
     price DECIMAL(15, 2) NOT NULL,
+    promo_price DECIMAL(15, 2),
     cost_price DECIMAL(15, 2) DEFAULT 0,
     stock INT DEFAULT 0,
     is_bundle BOOLEAN DEFAULT FALSE,
@@ -99,3 +105,10 @@ CREATE TABLE IF NOT EXISTS order_items (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS cms_settings (
+    key_name VARCHAR(100) PRIMARY KEY,
+    value_data JSON NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+

@@ -71,7 +71,7 @@ router.post('/', authenticate, async (req, res) => {
     // 1. Insert product
     await connection.query(
       'INSERT INTO products (id, name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [productId, name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, JSON.stringify(details)]
+      [productId, name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null]
     );
 
     // 2. Insert variants
@@ -79,7 +79,7 @@ router.post('/', authenticate, async (req, res) => {
       for (const v of variants) {
         await connection.query(
           'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), productId, v.sku, v.color, v.option_name || v.option, v.price, v.promo_price || v.promoPrice, v.cost_price || 0, v.stock, v.is_bundle || false, v.image_url || v.image]
+          [uuidv4(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
         );
       }
     }
@@ -117,7 +117,7 @@ router.put('/:id', authenticate, async (req, res) => {
     // 1. Update product
     await connection.query(
       'UPDATE products SET name = ?, short_name = ?, description = ?, category_id = ?, thumbnail_url = ?, material = ?, weight = ?, shopee_link = ?, tiktok_link = ?, details = ? WHERE id = ?',
-      [name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, JSON.stringify(details), productId]
+      [name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null, productId]
     );
 
     // 2. Refresh variants
@@ -126,7 +126,7 @@ router.put('/:id', authenticate, async (req, res) => {
       for (const v of variants) {
         await connection.query(
           'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), productId, v.sku, v.color, v.option_name || v.option, v.price, v.promo_price || v.promoPrice, v.cost_price || 0, v.stock, v.is_bundle || false, v.image_url || v.image]
+          [uuidv4(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
         );
       }
     }

@@ -24,6 +24,7 @@ const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
 const categoryRoutes = require('./routes/categories');
 const orderRoutes = require('./routes/orders');
+const cmsRoutes = require('./routes/cms');
 const uploadRoutes = require('./routes/uploads');
 const path = require('path');
 
@@ -31,6 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/cms', cmsRoutes);
 app.use('/api/uploads', uploadRoutes);
 
 // Serve static files

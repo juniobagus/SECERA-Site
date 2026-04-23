@@ -1,7 +1,29 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { initialCMSContent as cms } from '../data/cms';
+import { initialCMSContent } from '../data/cms';
+import { getCMSContent } from '../utils/api';
 
 export default function GlobalCTA() {
+  const [cms, setCms] = useState(initialCMSContent);
+
+  useEffect(() => {
+    async function loadCMS() {
+      const data = await getCMSContent('main_site');
+      if (data) {
+        setCms({
+          ...initialCMSContent,
+          ...data,
+          hero: { ...initialCMSContent.hero, ...data.hero },
+          faq: { ...initialCMSContent.faq, ...data.faq },
+          cta: { ...initialCMSContent.cta, ...data.cta },
+          features: { ...initialCMSContent.features, ...data.features },
+          footer: { ...initialCMSContent.footer, ...data.footer }
+        });
+      }
+    }
+    loadCMS();
+  }, []);
+
   return (
     <section className="w-full px-4 md:px-6 lg:px-8 py-12 md:py-24 bg-[#F9F9F9]">
       <div className="max-w-[1600px] mx-auto">

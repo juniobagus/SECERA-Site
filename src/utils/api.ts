@@ -73,3 +73,50 @@ export async function createOrder(orderData: any, items: any[]) {
     throw error;
   }
 }
+
+export async function getCMSContent(key: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cms/${key}`);
+    if (!response.ok) return null;
+    return await response.json();
+  } catch (error) {
+    console.error(`API Error (getCMSContent ${key}):`, error);
+    return null;
+  }
+}
+
+export async function saveCMSContent(key: string, content: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/cms/${key}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(content),
+    });
+    return response.ok;
+  } catch (error) {
+    console.error(`API Error (saveCMSContent ${key}):`, error);
+    return false;
+  }
+}
+export async function uploadImage(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/uploads`, {
+      method: 'POST',
+      body: formData,
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      return data.url;
+    }
+    return null;
+  } catch (error) {
+    console.error('API Error (uploadImage):', error);
+    return null;
+  }
+}

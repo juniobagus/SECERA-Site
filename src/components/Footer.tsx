@@ -1,7 +1,29 @@
+import { useState, useEffect } from 'react';
 import { Instagram, Linkedin, Twitter, ArrowRight, MessageCircle } from 'lucide-react';
-import { initialCMSContent as cms } from '../data/cms';
+import { initialCMSContent } from '../data/cms';
+import { getCMSContent } from '../utils/api';
 
 export default function Footer() {
+  const [cms, setCms] = useState(initialCMSContent);
+
+  useEffect(() => {
+    async function loadCMS() {
+      const data = await getCMSContent('main_site');
+      if (data) {
+        setCms({
+          ...initialCMSContent,
+          ...data,
+          hero: { ...initialCMSContent.hero, ...data.hero },
+          faq: { ...initialCMSContent.faq, ...data.faq },
+          cta: { ...initialCMSContent.cta, ...data.cta },
+          features: { ...initialCMSContent.features, ...data.features },
+          footer: { ...initialCMSContent.footer, ...data.footer }
+        });
+      }
+    }
+    loadCMS();
+  }, []);
+
   return (
     <footer className="bg-[#722F38] text-[#F9F9F9] pt-20 relative overflow-hidden">
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative z-10">
@@ -32,9 +54,9 @@ export default function Footer() {
             </a>
             <a href={`mailto:${cms.footer.email}`} className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors mb-4">{cms.footer.email}</a>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-white/70 transition-colors"><Instagram className="w-5 h-5" /></a>
-              <a href="#" className="hover:text-white/70 transition-colors"><Linkedin className="w-5 h-5" /></a>
-              <a href="#" className="hover:text-white/70 transition-colors"><Twitter className="w-5 h-5" /></a>
+              <a href={cms.global.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors"><Instagram className="w-5 h-5" /></a>
+              <a href={cms.global.socialMedia.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors"><Linkedin className="w-5 h-5" /></a>
+              <a href={cms.global.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors"><Twitter className="w-5 h-5" /></a>
             </div>
           </div>
 
@@ -58,7 +80,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 text-xs text-[#F9F9F9]/70 mb-8">
           <span>{cms.footer.tagline}</span>
           <span className="hidden md:inline">|</span>
-          <span>©Copyright 2026 Secera</span>
+          <span>{cms.footer.copyright}</span>
           <span className="hidden md:inline">|</span>
           <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
         </div>

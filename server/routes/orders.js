@@ -5,55 +5,60 @@ const { v4: uuidv4 } = require('uuid');
 
 // CREATE order
 router.post('/', async (req, res) => {
-  const { 
-    total_amount, 
-    shipping_cost, 
-    discount_amount, 
-    shipping_name, 
-    shipping_phone, 
-    shipping_address, 
-    shipping_city, 
-    shipping_postal_code, 
-    notes,
-    items 
-  } = req.body;
-
-  const orderId = uuidv4();
-  const connection = await db.getConnection();
-
   try {
-    await connection.beginTransaction();
+    const { 
+      total_amount, 
+      shipping_cost, 
+      discount_amount, 
+      shipping_name, 
+      shipping_phone, 
+      shipping_address, 
+      shipping_city, 
+      shipping_postal_code, 
+      notes,
+      items 
+    } = req.body;
 
-    // 1. Insert order
-    await connection.query(
-      'INSERT INTO orders (id, total_amount, shipping_cost, discount_amount, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [orderId, total_amount, shipping_cost || 0, discount_amount || 0, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, notes]
-    );
+    const orderId = uuidv4();
+    const connection = await db.getConnection();
 
-    // 2. Insert items
-    if (items && items.length > 0) {
-      for (const item of items) {
-        await connection.query(
-          'INSERT INTO order_items (id, order_id, product_id, variant_sku, quantity, price, cost_price, promo_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-          [uuidv4(), orderId, item.productId, item.sku, item.quantity, item.price, item.cost_price || 0, item.promoPrice]
-        );
-        
-        // 3. Update stock
-        await connection.query(
-          'UPDATE product_variants SET stock = stock - ? WHERE sku = ?',
-          [item.quantity, item.sku]
-        );
+    try {
+      await connection.beginTransaction();
+
+      // 1. Insert order
+      await connection.query(
+        'INSERT INTO orders (id, total_amount, shipping_cost, discount_amount, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [orderId, total_amount, shipping_cost || 0, discount_amount || 0, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, notes || '']
+      );
+
+      // 2. Insert items
+      if (items && items.length > 0) {
+        for (const item of items) {
+          await connection.query(
+            'INSERT INTO order_items (id, order_id, product_id, variant_sku, quantity, price, cost_price, promo_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+            [uuidv4(), orderId, item.productId || null, item.sku, item.quantity, item.price, item.cost_price || 0, item.promoPrice !== undefined ? item.promoPrice : null]
+          );
+          
+          // 3. Update stock
+          await connection.query(
+            'UPDATE product_variants SET stock = stock - ? WHERE sku = ?',
+            [item.quantity, item.sku]
+          );
+        }
       }
-    }
 
-    await connection.commit();
-    res.status(201).json({ id: orderId, message: 'Order created successfully' });
+      await connection.commit();
+      res.status(201).json({ id: orderId, message: 'Order created successfully' });
+    } catch (err) {
+      if (connection) await connection.rollback();
+      console.error('Error creating order:', err);
+      res.status(500).json({ message: 'Error creating order', error: err.message });
+    } finally {
+      if (connection) connection.release();
+    }
   } catch (err) {
-    await connection.rollback();
-    console.error(err);
-    res.status(500).json({ message: 'Error creating order', error: err.message });
-  } finally {
-    connection.release();
+    console.error('Internal server error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 });
 
