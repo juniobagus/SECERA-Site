@@ -4,6 +4,8 @@ export interface CMSContent {
     subtitle: string;
     cta: string;
     imageUrl?: string;
+    link?: string;
+    videoUrl?: string;
   };
   showcase: {
     title: string;
@@ -42,6 +44,7 @@ export interface CMSContent {
     title: string;
     description: string;
     items: Array<{
+      id?: string;
       question: string;
       answer: string;
     }>;
@@ -57,6 +60,10 @@ export interface CMSContent {
     email: string;
     phone: string;
     copyright: string;
+    links: Array<{
+      title: string;
+      items: Array<{ label: string; url: string }>;
+    }>;
   };
   marquee: {
     items: string[];
@@ -78,7 +85,9 @@ export const initialCMSContent: CMSContent = {
     title: "Timeless Elegance in Every Thread",
     subtitle: "Mendefinisikan ulang gaya modest dengan sentuhan modern dan kualitas premium.",
     cta: "Lihat Koleksi",
-    imageUrl: "/hero-image.jpg"
+    link: "/shop",
+    imageUrl: "/hero-image.jpg",
+    videoUrl: ""
   },
   showcase: {
     title: "Kualitas premium yang terasa personal, bukan sekadar busana",
@@ -100,7 +109,7 @@ export const initialCMSContent: CMSContent = {
     items: [
       {
         title: "Material Premium",
-        description: "Menggunakan bahan Ceruty Babydoll kualitas terbaik yang flowy dan nyaman.",
+        description: "Menggunakan bahan Ceruty Babydoll kualitas terbaik yang flowy and nyaman.",
         icon: "Layers"
       },
       {
@@ -156,7 +165,28 @@ export const initialCMSContent: CMSContent = {
     tagline: "Mendefinisikan ulang gaya modest",
     email: "care@secera.id",
     phone: "6285750990000",
-    copyright: "©Copyright 2026 Secera"
+    copyright: "©Copyright 2026 Secera",
+    links: [
+      {
+        title: "Belanja",
+        items: [
+          { label: "Koleksi Baru", url: "#" },
+          { label: "Signature Outer", url: "#" },
+          { label: "Aksesoris", url: "#" },
+          { label: "Ulasan Pelanggan", url: "#" },
+          { label: "Panduan Ukuran", url: "#" }
+        ]
+      },
+      {
+        title: "Tentang",
+        items: [
+          { label: "Tentang Kami", url: "#" },
+          { label: "Jurnal", url: "#" },
+          { label: "Karir", url: "#" },
+          { label: "Syarat & Ketentuan", url: "#" }
+        ]
+      }
+    ]
   },
   global: {
     siteTitle: "SECERA | Modern Modest Fashion",

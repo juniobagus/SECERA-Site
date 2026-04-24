@@ -14,6 +14,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'paid': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
       case 'processing': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
       case 'completed': return 'bg-green-100 text-green-800';
@@ -130,6 +131,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                       className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#722F38] outline-none bg-gray-50/50"
                     >
                       <option value="pending">Pending</option>
+                      <option value="paid">Paid</option>
                       <option value="processing">Processing</option>
                       <option value="shipped">Shipped</option>
                       <option value="completed">Completed</option>

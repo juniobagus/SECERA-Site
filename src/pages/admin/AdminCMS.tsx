@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Save, Globe, Home, Info, Plus, Trash2, Video, MessageSquare, Star, Search } from 'lucide-react';
+import { Save, Globe, Home, Info, Plus, Trash2, Video, MessageSquare, Star, Search, GripVertical } from 'lucide-react';
+import { motion, Reorder } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { initialCMSContent } from '../../data/cms';
 import { getCMSContent, saveCMSContent, getProducts } from '../../utils/api';
@@ -8,24 +9,23 @@ import { formatPrice } from '../../data/products';
 
 const initialAboutContent = {
   hero: {
-    title: "Tentang Secera",
-    subtitle: "Secera adalah tim desainer, pengrajin, dan visioner yang berdedikasi untuk mendefinisikan ulang gaya modest modern.",
-    imageUrl: "https://images.unsplash.com/photo-1529156069898-49953eb1b5a4?q=80&w=2000&auto=format&fit=crop"
+    title: 'Tentang Secera',
+    subtitle: 'Secera adalah tim desainer, pengrajin, dan visioner yang berdedikasi untuk mendefinisikan ulang gaya modest modern.',
+    imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953eb1b5a4?q=80&w=2000&auto=format&fit=crop'
   },
   inspiration: {
-    title: "Inspirasi Kami",
-    subtitle: "Dalam keanggunan yang sederhana, Secera menemukan makna dari kecantikan yang tak lekang oleh waktu.",
-    description1: "Kami terinspirasi oleh harmoni alam and kelembutan material premium. Secera adalah simbol dari kebangkitan gaya yang mengutamakan kenyamanan tanpa mengorbankan estetika.",
-    description2: "Pada akhirnya, kami merancang setiap helai pakaian untuk memberikan rasa percaya diri, ketenangan, dan keindahan bagi setiap wanita yang mengenakannya.",
-    imageUrl: "https://images.unsplash.com/photo-1600091166971-7f9faad6c1e2?q=80&w=2000&auto=format&fit=crop"
+    title: 'Inspirasi Kami',
+    subtitle: 'Dalam keanggunan yang sederhana, Secera menemukan makna dari kecantikan yang tak lekang oleh waktu.',
+    description1: 'Kami terinspirasi oleh harmoni alam and kelembutan material premium. Secera adalah simbol dari kebangkitan gaya yang mengutamakan kenyamanan tanpa mengorbankan estetika.',
+    description2: 'Pada akhirnya, kami merancang setiap helai pakaian untuk memberikan rasa percaya diri, ketenangan, dan keindahan bagi setiap wanita yang mengenakannya.',
+    imageUrl: 'https://images.unsplash.com/photo-1600091166971-7f9faad6c1e2?q=80&w=2000&auto=format&fit=crop'
   },
   mission: {
-    title: "Misi Kami",
-    subtitle: "Misi kami adalah menetapkan standar baru dalam keanggunan gaya modest modern.",
-    description: "Kami mewujudkannya melalui dedikasi pada kualitas material, desain yang tak lekang oleh waktu, dan komitmen untuk memberdayakan setiap wanita agar tampil percaya diri."
+    title: 'Misi Kami',
+    subtitle: 'Misi kami adalah menetapkan standar baru dalam keanggunan gaya modest modern.',
+    description: 'Kami mewujudkannya melalui dedikasi pada kualitas material, desain yang tak lekang oleh waktu, dan komitmen untuk memberdayakan setiap wanita agar tampil percaya diri.'
   }
 };
-
 const initialShopContent = {
   hero: {
     title: "Koleksi Eksklusif Secera",
@@ -101,6 +101,7 @@ export default function AdminCMS() {
               title: saved.faq?.title || initialCMSContent.faq.title,
               description: saved.faq?.description || initialCMSContent.faq.description,
               items: (saved.faq?.items || initialCMSContent.faq.items).map((item: any, i: number) => ({
+                id: item.id || `faq-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 9)}`,
                 question: item.question || initialCMSContent.faq.items[i]?.question || '',
                 answer: item.answer || initialCMSContent.faq.items[i]?.answer || ''
               }))
@@ -115,7 +116,8 @@ export default function AdminCMS() {
               tagline: saved.footer?.tagline || initialCMSContent.footer.tagline,
               email: saved.footer?.email || initialCMSContent.footer.email,
               phone: saved.footer?.phone || initialCMSContent.footer.phone,
-              copyright: saved.footer?.copyright || initialCMSContent.footer.copyright
+              copyright: saved.footer?.copyright || initialCMSContent.footer.copyright,
+              links: saved.footer?.links || initialCMSContent.footer.links
             },
             marquee: {
               items: saved.marquee?.items || initialCMSContent.marquee.items
@@ -562,7 +564,7 @@ export default function AdminCMS() {
                 </div>
                 <button 
                   onClick={() => {
-                    const newItems = [...homeContent.faq.items, { question: '', answer: '' }];
+                    const newItems = [...homeContent.faq.items, { id: `faq-${Date.now()}`, question: '', answer: '' }];
                     setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
                   }}
                   className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
@@ -592,45 +594,65 @@ export default function AdminCMS() {
                   </div>
                 </div>
 
-                {homeContent.faq.items.map((item, index) => (
-                  <div key={index} className="p-4 bg-gray-50 rounded-xl relative group space-y-3">
-                    <button 
-                      onClick={() => {
-                        const newItems = homeContent.faq.items.filter((_, i) => i !== index);
-                        setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
-                      }}
-                      className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                <Reorder.Group 
+                  axis="y" 
+                  values={homeContent.faq.items} 
+                  onReorder={(newItems) => setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } })}
+                  className="space-y-4"
+                >
+                  {homeContent.faq.items.map((item, index) => (
+                    <Reorder.Item 
+                      key={item.id || `faq-${index}`} 
+                      value={item}
+                      className="p-4 bg-gray-50 rounded-xl relative group flex gap-4 items-start"
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Question {index + 1}</label>
-                      <input 
-                        type="text" 
-                        value={item.question} 
-                        onChange={(e) => {
-                          const newItems = [...homeContent.faq.items];
-                          newItems[index].question = e.target.value;
-                          setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
-                        }}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Answer</label>
-                      <textarea 
-                        rows={2}
-                        value={item.answer} 
-                        onChange={(e) => {
-                          const newItems = [...homeContent.faq.items];
-                          newItems[index].answer = e.target.value;
-                          setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
-                        }}
-                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white resize-none" 
-                      />
-                    </div>
-                  </div>
-                ))}
+                      <div className="mt-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
+                        <GripVertical className="w-5 h-5" />
+                      </div>
+                      
+                      <div className="flex-1 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <label className="block text-xs font-bold text-gray-500 uppercase">Question {index + 1}</label>
+                          <button 
+                            onClick={() => {
+                              const newItems = homeContent.faq.items.filter((_, i) => i !== index);
+                              setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        <div>
+                          <input 
+                            type="text" 
+                            value={item.question} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.faq.items];
+                              newItems[index].question = e.target.value;
+                              setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Answer</label>
+                          <textarea 
+                            rows={2}
+                            value={item.answer} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.faq.items];
+                              newItems[index].answer = e.target.value;
+                              setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white resize-none" 
+                          />
+                        </div>
+                      </div>
+                    </Reorder.Item>
+                  ))}
+                </Reorder.Group>
               </div>
             </div>
 
@@ -990,6 +1012,106 @@ export default function AdminCMS() {
                       onChange={(e) => setHomeContent({ ...homeContent, footer: { ...homeContent.footer, phone: e.target.value } })}
                       className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
                     />
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wider">Link Groups</h3>
+                    <button 
+                      onClick={() => {
+                        const newLinks = [...homeContent.footer.links, { title: 'New Group', items: [] }];
+                        setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
+                      }}
+                      className="text-xs font-bold text-[#722F38] flex items-center gap-1 hover:underline"
+                    >
+                      <Plus className="w-3 h-3" /> Add Group
+                    </button>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    {homeContent.footer.links.map((group, groupIdx) => (
+                      <div key={groupIdx} className="bg-gray-50 rounded-xl p-4 relative group/item">
+                        <button 
+                          onClick={() => {
+                            const newLinks = homeContent.footer.links.filter((_, i) => i !== groupIdx);
+                            setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
+                          }}
+                          className="absolute top-2 right-2 p-1.5 text-gray-400 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        
+                        <div className="space-y-4">
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Group Title</label>
+                            <input 
+                              type="text" 
+                              value={group.title} 
+                              onChange={(e) => {
+                                const newLinks = [...homeContent.footer.links];
+                                newLinks[groupIdx].title = e.target.value;
+                                setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
+                              }}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white font-bold" 
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="block text-xs font-bold text-gray-400 uppercase">Links</label>
+                              <button 
+                                onClick={() => {
+                                  const newLinks = [...homeContent.footer.links];
+                                  newLinks[groupIdx].items = [...newLinks[groupIdx].items, { label: '', url: '#' }];
+                                  setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
+                                }}
+                                className="text-[10px] font-bold text-[#722F38] hover:underline"
+                              >
+                                + Add Link
+                              </button>
+                            </div>
+                            
+                            {group.items.map((item, itemIdx) => (
+                              <div key={itemIdx} className="flex items-center gap-2">
+                                <input 
+                                  type="text" 
+                                  placeholder="Label"
+                                  value={item.label} 
+                                  onChange={(e) => {
+                                    const newLinks = [...homeContent.footer.links];
+                                    newLinks[groupIdx].items[itemIdx].label = e.target.value;
+                                    setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
+                                  }}
+                                  className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-[#722F38]" 
+                                />
+                                <input 
+                                  type="text" 
+                                  placeholder="URL"
+                                  value={item.url} 
+                                  onChange={(e) => {
+                                    const newLinks = [...homeContent.footer.links];
+                                    newLinks[groupIdx].items[itemIdx].url = e.target.value;
+                                    setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
+                                  }}
+                                  className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-[#722F38]" 
+                                />
+                                <button 
+                                  onClick={() => {
+                                    const newLinks = [...homeContent.footer.links];
+                                    newLinks[groupIdx].items = newLinks[groupIdx].items.filter((_, i) => i !== itemIdx);
+                                    setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
+                                  }}
+                                  className="p-1.5 text-gray-400 hover:text-red-500"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

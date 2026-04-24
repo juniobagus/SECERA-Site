@@ -15,7 +15,7 @@ export default function AdminOrders() {
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   
-  const statusOptions = ['All', 'pending', 'processing', 'shipped', 'completed', 'cancelled'];
+  const statusOptions = ['All', 'pending', 'paid', 'processing', 'shipped', 'completed', 'cancelled'];
 
   useEffect(() => {
     loadOrders();
@@ -71,6 +71,7 @@ export default function AdminOrders() {
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'paid': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
       case 'processing': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
       case 'completed': return 'bg-green-100 text-green-800';
@@ -99,45 +100,38 @@ export default function AdminOrders() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
         {/* Toolbar */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-4 bg-gray-50/50">
-          <div className="relative max-w-md w-full">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Search by Order ID or Customer Name..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#722F38] focus:ring-1 focus:ring-[#722F38] outline-none transition-shadow"
-            />
+        <div className="p-4 border-b border-gray-200 flex flex-col gap-4 bg-gray-50/50">
+          <div className="flex items-center justify-between gap-4">
+            <div className="relative max-w-md w-full">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Search by Order ID or Customer Name..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#722F38] focus:ring-1 focus:ring-[#722F38] outline-none transition-shadow bg-white"
+              />
+            </div>
+            <div className="text-xs text-gray-500 font-medium">
+              Showing {filteredOrders.length} orders
+            </div>
           </div>
-          <div className="relative">
-            <button 
-              onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
-              className={`px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shrink-0 ${filterStatus !== 'All' ? 'bg-[#722F38] text-white border-[#722F38]' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
-            >
-              <Filter className="w-4 h-4" />
-              {filterStatus === 'All' ? 'Filter Status' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
-            </button>
-            {isFilterMenuOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95">
-                <div className="p-2 border-b border-gray-50 bg-gray-50/50">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">Order Status</span>
-                </div>
-                {statusOptions.map(status => (
-                  <button
-                    key={status}
-                    onClick={() => {
-                      setFilterStatus(status);
-                      setIsFilterMenuOpen(false);
-                    }}
-                    className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center justify-between group capitalize ${filterStatus === status ? 'bg-[#722F38]/5 text-[#722F38] font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
-                  >
-                    {status}
-                    {filterStatus === status && <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" />}
-                  </button>
-                ))}
-              </div>
-            )}
+
+          {/* Status Tabs */}
+          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+            {statusOptions.map(status => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${
+                  filterStatus === status 
+                    ? 'bg-white text-[#722F38] shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
+                }`}
+              >
+                {status}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -190,6 +184,7 @@ export default function AdminOrders() {
                           onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
                         >
                           <option value="pending">Pending</option>
+                          <option value="paid">Paid</option>
                           <option value="processing">Processing</option>
                           <option value="shipped">Shipped</option>
                           <option value="completed">Completed</option>

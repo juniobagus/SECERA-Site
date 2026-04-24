@@ -32,22 +32,20 @@ export default function Footer() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            <h4 className="font-bold text-lg mb-2">Belanja</h4>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Koleksi Baru</a>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Signature Outer</a>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Aksesoris</a>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Ulasan Pelanggan</a>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Panduan Ukuran</a>
-          </div>
-
-          <div className="lg:col-span-2 flex flex-col gap-4">
-            <h4 className="font-bold text-lg mb-2">Tentang</h4>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Tentang Kami</a>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Jurnal</a>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Karir</a>
-            <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Syarat & Ketentuan</a>
-          </div>
+          {cms.footer.links?.map((group, idx) => (
+            <div key={idx} className="lg:col-span-2 flex flex-col gap-4">
+              <h4 className="font-bold text-lg mb-2">{group.title}</h4>
+              {group.items.map((item, itemIdx) => (
+                <a 
+                  key={itemIdx} 
+                  href={item.url} 
+                  className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors"
+                >
+                  {item.label}
+                </a>
+              ))}
+            </div>
+          ))}
 
           <div className="lg:col-span-3 flex flex-col gap-4">
             <h4 className="text-label text-white mb-2">Hubungi Kami</h4>
