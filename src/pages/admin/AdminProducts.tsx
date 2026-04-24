@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Search, Filter, Plus, Edit2, Trash2, Loader2, CheckSquare, X } from 'lucide-react';
+import { motion } from 'motion/react';
+import { Search, Filter, Plus, Edit2, Trash2, Loader2, CheckSquare, X, Archive, RotateCcw, XCircle, ArrowUpCircle } from 'lucide-react';
 import { formatPrice } from '../../data/products';
 import { getProducts, getCategories, createProduct, updateProduct, deleteProduct } from '../../utils/api';
 import ProductModal from '../../components/admin/ProductModal';
@@ -21,13 +22,14 @@ export default function AdminProducts() {
   const [editValue, setEditValue] = useState<string>('');
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   const [allCategories, setAllCategories] = useState<any[]>([]);
+  const [currentTab, setCurrentTab] = useState<'active' | 'archived' | 'trash'>('active');
   
   const categories = ['All', ...allCategories.map(c => c.name)];
   
   const fetchProducts = async () => {
     setIsLoading(true);
     const [productsData, categoriesData] = await Promise.all([
-      getProducts(),
+      getProducts(currentTab),
       getCategories()
     ]);
     setProducts(productsData);
@@ -37,7 +39,7 @@ export default function AdminProducts() {
 
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [currentTab]);
 
   const toggleSelectAll = () => {
     if (selectedProducts.length === filteredProducts.length) {
@@ -53,17 +55,31 @@ export default function AdminProducts() {
     );
   };
 
-  const handleBulkDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedProducts.length} products?`)) {
-      const loadingToast = toast.loading(`Deleting ${selectedProducts.length} products...`);
+  const handleBulkTrash = async () => {
+    if (window.confirm(`Move ${selectedProducts.length} products to trash?`)) {
+      const loadingToast = toast.loading(`Moving to trash...`);
       try {
         await Promise.all(selectedProducts.map(id => deleteProduct(id)));
-        toast.success(`${selectedProducts.length} products deleted`, { id: loadingToast });
+        toast.success(`${selectedProducts.length} products moved to trash`, { id: loadingToast });
         setSelectedProducts([]);
         fetchProducts();
       } catch (error) {
-        toast.error('Failed to delete some products', { id: loadingToast });
+        toast.error('Failed to move some products to trash', { id: loadingToast });
       }
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    const newStatus = currentTab === 'archived' ? 'active' : 'archived';
+    const actionLabel = currentTab === 'archived' ? 'restoring' : 'archiving';
+    const loadingToast = toast.loading(`${actionLabel.charAt(0).toUpperCase() + actionLabel.slice(1)} ${selectedProducts.length} products...`);
+    try {
+      await Promise.all(selectedProducts.map(id => updateProduct(id, { status: newStatus })));
+      toast.success(`${selectedProducts.length} products updated`, { id: loadingToast });
+      setSelectedProducts([]);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update some products', { id: loadingToast });
     }
   };
 
@@ -96,12 +112,17 @@ export default function AdminProducts() {
   };
 
   const handleDeleteProduct = async (id: string) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      const loadingToast = toast.loading('Deleting product...');
+    const isPermanent = currentTab === 'trash';
+    const confirmMsg = isPermanent 
+      ? 'Are you sure you want to PERMANENTLY delete this product? This action cannot be undone.' 
+      : 'Move this product to trash?';
+    
+    if (window.confirm(confirmMsg)) {
+      const loadingToast = toast.loading(isPermanent ? 'Deleting permanently...' : 'Moving to trash...');
       try {
         const success = await deleteProduct(id);
         if (success) {
-          toast.success('Product deleted', { id: loadingToast });
+          toast.success(isPermanent ? 'Product permanently deleted' : 'Product moved to trash', { id: loadingToast });
           fetchProducts();
         } else {
           toast.error('Failed to delete product', { id: loadingToast });
@@ -109,6 +130,17 @@ export default function AdminProducts() {
       } catch (error) {
         toast.error('Error deleting product', { id: loadingToast });
       }
+    }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    const loadingToast = toast.loading('Updating status...');
+    try {
+      await updateProduct(id, { status: newStatus });
+      toast.success('Status updated', { id: loadingToast });
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update status', { id: loadingToast });
     }
   };
 
@@ -207,6 +239,33 @@ export default function AdminProducts() {
         </button>
       </div>
 
+      {/* Tabs */}
+      <div className="flex items-center gap-1 mb-6 border-b border-gray-200">
+        {[
+          { id: 'active', label: 'Active', count: null },
+          { id: 'archived', label: 'Archived', count: null },
+          { id: 'trash', label: 'Trash', count: null }
+        ].map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setCurrentTab(tab.id as any)}
+            className={`px-6 py-3 text-sm font-medium transition-all relative ${
+              currentTab === tab.id 
+                ? 'text-[#722F38]' 
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            {tab.label}
+            {currentTab === tab.id && (
+              <motion.div 
+                layoutId="activeTab"
+                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#722F38]" 
+              />
+            )}
+          </button>
+        ))}
+      </div>
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
         {/* Toolbar */}
         <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-4 bg-gray-50/50">
@@ -226,19 +285,19 @@ export default function AdminProducts() {
                 <span className="text-sm font-semibold text-[#722F38]">{selectedProducts.length} selected</span>
                 <div className="w-px h-4 bg-[#722F38]/20 mx-1" />
                 <button 
-                  onClick={() => setIsBulkEditOpen(true)}
+                  onClick={handleBulkArchive}
                   className="p-1 text-[#722F38] hover:bg-[#722F38]/10 rounded transition-colors flex items-center gap-1.5 text-xs font-bold"
                 >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  Edit
+                  {currentTab === 'archived' ? <RotateCcw className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
+                  {currentTab === 'archived' ? 'Restore' : 'Archive'}
                 </button>
                 <div className="w-px h-4 bg-[#722F38]/20 mx-1" />
                 <button 
-                  onClick={handleBulkDelete}
+                  onClick={handleBulkTrash}
                   className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors flex items-center gap-1.5 text-xs font-bold"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  Delete
+                  {currentTab === 'trash' ? <XCircle className="w-3.5 h-3.5" /> : <Trash2 className="w-3.5 h-3.5" />}
+                  {currentTab === 'trash' ? 'Delete Permanently' : 'Move to Trash'}
                 </button>
                 <div className="w-px h-4 bg-[#722F38]/20 mx-1" />
                 <button 
@@ -397,17 +456,37 @@ export default function AdminProducts() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          {currentTab === 'active' && (
+                            <button 
+                              onClick={() => handleStatusChange(product.id, 'archived')}
+                              className="p-1.5 text-gray-400 hover:text-[#722F38] bg-white rounded-md shadow-sm border border-gray-200 hover:border-[#722F38]/30 transition-all"
+                              title="Archive Product"
+                            >
+                              <Archive className="w-4 h-4" />
+                            </button>
+                          )}
+                          {(currentTab === 'archived' || currentTab === 'trash') && (
+                            <button 
+                              onClick={() => handleStatusChange(product.id, 'active')}
+                              className="p-1.5 text-gray-400 hover:text-green-600 bg-white rounded-md shadow-sm border border-gray-200 hover:border-green-200 transition-all"
+                              title="Restore to Active"
+                            >
+                              <RotateCcw className="w-4 h-4" />
+                            </button>
+                          )}
                           <button 
                             onClick={() => handleEdit(product)}
-                            className="p-1.5 text-gray-400 hover:text-[#722F38] bg-white rounded-md shadow-sm border border-gray-200 hover:border-[#722F38]/30 transition-all"
+                            className="p-1.5 text-gray-400 hover:text-blue-600 bg-white rounded-md shadow-sm border border-gray-200 hover:border-blue-200 transition-all"
+                            title="Edit Product"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
                             onClick={() => handleDeleteProduct(product.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 bg-white rounded-md shadow-sm border border-gray-200 hover:border-red-200 transition-all"
+                            className={`p-1.5 text-gray-400 hover:text-red-600 bg-white rounded-md shadow-sm border border-gray-200 hover:border-red-200 transition-all`}
+                            title={currentTab === 'trash' ? "Delete Permanently" : "Move to Trash"}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {currentTab === 'trash' ? <XCircle className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
                           </button>
                         </div>
                       </td>

@@ -28,7 +28,7 @@ export default function Footer() {
     <footer className="bg-[#722F38] text-[#F9F9F9] pt-20 relative overflow-hidden">
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative z-10">
         <div className="mb-12">
-          <img src="/Logo/LogoType-light.svg" alt={cms.global.siteTitle} className="h-10 md:h-12 w-auto object-contain" />
+          <img src="/Logo/LogoType-light.svg" alt={cms.global.siteTitle} className="h-8 md:h-10 w-auto object-contain" />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
@@ -50,7 +50,7 @@ export default function Footer() {
           </div>
 
           <div className="lg:col-span-3 flex flex-col gap-4">
-            <h4 className="font-bold text-lg mb-2">Hubungi Kami</h4>
+            <h4 className="text-label text-white mb-2">Hubungi Kami</h4>
             <a href={`https://wa.me/${cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors mb-1 flex items-center gap-2">
               <MessageCircle className="w-4 h-4" /> +{cms.footer.phone}
             </a>
@@ -64,7 +64,7 @@ export default function Footer() {
 
           <div className="lg:col-span-5">
             <div className="bg-[#7b5455] rounded-2xl p-8 lg:p-10 shadow-xl">
-              <h3 className="text-2xl md:text-3xl font-serif mb-8 leading-snug">Dapatkan berita dan penawaran terbaru dari kami</h3>
+              <h3 className="text-2xl md:text-3xl font-serif mb-8 leading-snug text-white">Dapatkan berita dan penawaran terbaru dari kami</h3>
               <div className="relative border-b border-[#F9F9F9]/30 pb-2 flex items-center">
                 <input
                   type="email"

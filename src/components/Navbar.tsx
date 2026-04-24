@@ -59,9 +59,9 @@ export default function Navbar() {
         >
           {/* Subtle reflection effect */}
           <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent pointer-events-none" />
-          
+
           <Link to="/" className="relative z-10 block">
-            <img src="/Logo/LogoType-dark.svg" alt={siteTitle} className="h-6 md:h-8 w-auto object-contain" />
+            <img src="/Logo/LogoType-dark.svg" alt={siteTitle} className="h-5 md:h-4 w-auto object-contain" />
           </Link>
 
           {/* Desktop Nav */}
@@ -70,9 +70,9 @@ export default function Navbar() {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:tracking-[0.4em] ${path === link.to
-                    ? 'text-[#722F38]'
-                    : 'text-[#722F38]/50 hover:text-[#722F38]'
+                className={`text-label transition-all hover:opacity-70 ${path === link.to
+                  ? 'text-[#722F38]'
+                  : 'text-[#722F38]/50 hover:text-[#722F38]'
                   }`}
               >
                 {link.label}
@@ -121,8 +121,8 @@ export default function Navbar() {
                   to={link.to}
                   onClick={() => setMobileOpen(false)}
                   className={`text-base font-medium transition-colors py-2 ${path === link.to
-                      ? 'text-[#722F38]'
-                      : 'text-[#3A3A3A]/70 hover:text-[#722F38]'
+                    ? 'text-[#722F38]'
+                    : 'text-[#3A3A3A]/70 hover:text-[#722F38]'
                     }`}
                 >
                   {link.label}

@@ -15,8 +15,13 @@ router.get('/:key', async (req, res) => {
     console.log('CMS content found');
     res.json(rows[0].value_data);
   } catch (err) {
-    console.error('Error fetching CMS content:', err);
-    res.status(500).json({ message: 'Error fetching CMS content', error: err.message });
+    console.error(`Error fetching CMS content for key ${key}:`, err);
+    res.status(500).json({ 
+      message: 'Error fetching CMS content', 
+      key,
+      error: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined 
+    });
   }
 });
 

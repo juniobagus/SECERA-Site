@@ -156,8 +156,8 @@ export default function ProductDetail() {
 
           {/* Info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
-            <span className="text-xs font-medium tracking-widest text-[#722F38]/50 uppercase">{product.category}</span>
-            <h1 className="text-2xl md:text-3xl font-serif text-[#722F38] mt-2 mb-3 leading-tight">{productName}</h1>
+            <span className="text-label text-[#722F38]/50">{product.category}</span>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-serif text-[#722F38] mt-2 mb-3 leading-tight">{productName}</h1>
 
             <div className="flex items-center gap-3 mb-4">
               {(activeVariant?.promo_price || activeVariant?.promoPrice) && (

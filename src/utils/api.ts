@@ -53,9 +53,10 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
   }
 }
 
-export async function getProducts() {
+export async function getProducts(status?: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/products`);
+    const url = status ? `${API_BASE_URL}/products?status=${status}` : `${API_BASE_URL}/products`;
+    const response = await fetch(url);
     if (!response.ok) throw new Error('Failed to fetch products');
     return await response.json();
   } catch (error) {

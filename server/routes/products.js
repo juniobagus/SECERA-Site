@@ -22,13 +22,26 @@ const authenticate = async (req, res, next) => {
 // GET all products with variants and images
 router.get('/', async (req, res) => {
   try {
-    // Fetch products with category name
-    const [products] = await db.query(`
+    const { status } = req.query;
+    
+    let query = `
       SELECT p.*, c.name as category 
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id 
-      ORDER BY p.created_at DESC
-    `);
+    `;
+    let queryParams = [];
+
+    if (status) {
+      query += ` WHERE p.status = ? `;
+      queryParams.push(status);
+    } else {
+      // Default behavior: show active and archived, hide trash
+      query += ` WHERE p.status != 'trash' `;
+    }
+
+    query += ` ORDER BY p.created_at DESC `;
+
+    const [products] = await db.query(query, queryParams);
     
     // Fetch variants and images in parallel
     const [variants] = await db.query('SELECT * FROM product_variants ORDER BY display_order ASC');
@@ -233,9 +246,25 @@ router.patch('/:id', authenticate, async (req, res) => {
 // DELETE product
 router.delete('/:id', authenticate, async (req, res) => {
   try {
-    await db.query('DELETE FROM products WHERE id = ?', [req.params.id]);
-    res.json({ message: 'Product deleted' });
+    const productId = req.params.id;
+    
+    // Check current status
+    const [products] = await db.query('SELECT status FROM products WHERE id = ?', [productId]);
+    if (products.length === 0) return res.status(404).json({ message: 'Product not found' });
+    
+    const currentStatus = products[0].status;
+    
+    if (currentStatus === 'trash') {
+      // Permanent delete if already in trash
+      await db.query('DELETE FROM products WHERE id = ?', [productId]);
+      res.json({ message: 'Product permanently deleted' });
+    } else {
+      // Move to trash
+      await db.query("UPDATE products SET status = 'trash' WHERE id = ?", [productId]);
+      res.json({ message: 'Product moved to trash' });
+    }
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: 'Error deleting product' });
   }
 });

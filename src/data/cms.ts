@@ -81,7 +81,7 @@ export const initialCMSContent: CMSContent = {
     imageUrl: "/hero-image.jpg"
   },
   showcase: {
-    title: "Koleksi Terpopuler",
+    title: "Kualitas premium yang terasa personal, bukan sekadar busana",
     description: "Pilihan terbaik untuk melengkapi gaya modest modern Anda hari ini.",
     productIds: []
   },

@@ -87,7 +87,7 @@ export default function Home() {
     }
 
     async function loadProducts() {
-      const data = await getProducts();
+      const data = await getProducts('active');
       if (data && data.length > 0) {
         setProductsList(data);
       } else {
@@ -170,14 +170,14 @@ export default function Home() {
 
           {/* Hero Content */}
           <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
-            <motion.h2
+            <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tight mb-6 max-w-4xl leading-tight text-white"
+              className="text-5xl md:text-7xl lg:text-8xl font-serif mb-6 max-w-4xl leading-tight text-white"
             >
               {cms.hero.title}
-            </motion.h2>
+            </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 30 }}
@@ -241,166 +241,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-
-
-        {/* Carousel Section */}
-        <div className="w-full bg-[#F9F9F9] py-20 px-4 md:px-12 flex flex-col mt-3 md:mt-5 rounded-[2rem]">
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
-            <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] max-w-2xl leading-tight">
-              Kualitas premium yang <span className="text-zinc-400">terasa personal, bukan sekadar busana</span>
-            </h2>
-            <div className="flex items-center gap-3 shrink-0">
-              <button
-                onClick={() => scroll('left')}
-                disabled={!canScrollLeft}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${canScrollLeft ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900' : 'bg-zinc-50 text-zinc-300 cursor-not-allowed'
-                  }`}
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={() => scroll('right')}
-                disabled={!canScrollRight}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${canScrollRight ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-900' : 'bg-zinc-50 text-zinc-300 cursor-not-allowed'
-                  }`}
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </div>
-          </div>
-
-          <div
-            ref={carouselRef}
-            onScroll={handleScroll}
-            className="flex gap-6 overflow-x-auto snap-x snap-mandatory hide-scrollbar pb-8"
-          >
-            {/* Card 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              whileHover={{ y: -8 }}
-              transition={{ duration: 0.5, ease: "easeOut" }}
-              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-            >
-              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">MATERIAL</span>
-                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                  Ceruty Babydoll Premium
-                </h3>
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-64 bg-[#6E2B30] rounded-t-lg shadow-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                  <span className="text-white font-serif text-2xl -rotate-90 tracking-widest">SECERA</span>
-                </div>
-              </div>
-              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-                Material flowy yang jatuh sempurna, memberikan tampilan mewah dan kenyamanan maksimal.
-              </p>
-            </motion.div>
-
-            {/* Card 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              whileHover={{ y: -8 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
-              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-            >
-              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">CRAFTSMANSHIP</span>
-                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                  Kualitas Butik Presisi
-                </h3>
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                  <img src="https://images.unsplash.com/photo-1589465885855-44224b203439?q=80&w=400&auto=format&fit=crop" alt="Craftsmanship" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-                Dikerjakan oleh tangan ahli untuk jahitan rapi, kuat, dan tahan lama di setiap helainya.
-              </p>
-            </motion.div>
-
-            {/* Card 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              whileHover={{ y: -8 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.2 }}
-              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-            >
-              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">VERSATILITY</span>
-                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                  1 Outer, 3 Looks
-                </h3>
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full px-8 flex flex-col gap-3 transition-transform duration-500 group-hover:-translate-y-2">
-                  <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Gaya Formal</div>
-                  <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Gaya Kasual</div>
-                  <div className="bg-white/80 backdrop-blur-sm rounded-full py-3 px-6 text-center text-sm font-medium text-zinc-800 shadow-sm transition-colors duration-300 group-hover:bg-white">Acara Spesial</div>
-                </div>
-              </div>
-              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-                Desain inovatif untuk transformasi gaya instan. Cocok untuk acara formal maupun kasual.
-              </p>
-            </motion.div>
-
-            {/* Card 4 (Dummy) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              whileHover={{ y: -8 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.3 }}
-              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-            >
-              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">COMFORT</span>
-                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                  Ringan & Breathable
-                </h3>
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-48 h-64 rounded-3xl overflow-hidden shadow-xl border-4 border-white transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                  <img src="https://images.unsplash.com/photo-1515347619152-14123c126839?q=80&w=400&auto=format&fit=crop" alt="Comfort" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </div>
-              </div>
-              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-                Tetap segar dan bebas gerak dari pagi hingga malam tanpa rasa gerah.
-              </p>
-            </motion.div>
-
-            {/* Card 5 (Dummy) */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              whileHover={{ y: -8 }}
-              transition={{ duration: 0.5, ease: "easeOut", delay: 0.4 }}
-              className="carousel-card min-w-[300px] md:min-w-[400px] flex flex-col gap-6 snap-start cursor-pointer group"
-            >
-              <div className="bg-[#ffffff] rounded-[2rem] p-8 h-[450px] flex flex-col relative overflow-hidden transition-shadow duration-300 group-hover:shadow-xl">
-                <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-800 mb-4">ELEGANCE</span>
-                <h3 className="text-2xl md:text-3xl font-medium text-zinc-900 leading-snug">
-                  Timeless Elegance
-                </h3>
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-48 h-64 bg-[#6E2B30] rounded-t-lg shadow-2xl flex items-center justify-center transition-transform duration-500 group-hover:scale-105 group-hover:-translate-y-2">
-                  <span className="text-white font-serif text-2xl -rotate-90 tracking-widest">TIMELESS</span>
-                </div>
-              </div>
-              <p className="text-zinc-600 text-sm md:text-base leading-relaxed transition-colors duration-300 group-hover:text-zinc-900">
-                Siluet klasik dengan sentuhan modern. Gaya anggun yang selalu relevan di setiap momen.
-              </p>
-            </motion.div>
-          </div>
-
-          {/* Progress Slider */}
-          <div className="w-full max-w-md mx-auto mt-8 bg-zinc-200 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-[#6E2B30] h-full transition-all duration-300 ease-out"
-              style={{ width: `${scrollProgress}%` }}
-            />
-          </div>
-        </div>
       </div>
 
       {/* Product Grid Section */}
@@ -411,9 +251,15 @@ export default function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-2xl md:text-4xl lg:text-[40px] font-serif text-[#6E2B30] leading-snug md:leading-relaxed"
+            className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight"
           >
-            Secera adalah merek yang menggabungkan keanggunan dan kepraktisan. Terinspirasi oleh kebutuhan wanita modern, kami percaya bahwa tampil memukau tidak harus rumit. Setiap helai dirancang untuk menyelaraskan kenyamanan dan gaya, menghadirkan <span className="italic">timeless elegance</span> dalam setiap detik berharga Anda.
+            {cms.showcase.title.includes(' yang ') ? (
+              <>
+                {cms.showcase.title.split(' yang ')[0]} yang <span className="text-zinc-400">{cms.showcase.title.split(' yang ')[1]}</span>
+              </>
+            ) : (
+              cms.showcase.title
+            )}
           </motion.h2>
         </div>
 
@@ -493,7 +339,7 @@ export default function Home() {
                           <img src={thumbnail} alt={product.name} className="w-full h-full object-cover" />
                         </div>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">({product.category})</span>
+                          <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">{product.category}</span>
                           <h4 className="text-sm font-medium text-[#6E2B30] truncate">{product.short_name}</h4>
                           <div className="flex items-center justify-between gap-4 mt-1">
                             <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant?.price ?? 0)}</span>

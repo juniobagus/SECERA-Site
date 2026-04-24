@@ -18,7 +18,7 @@ export default function Shop() {
       setIsLoading(true);
       try {
         const [productsData, categoriesData, shopCms] = await Promise.all([
-          getProducts(),
+          getProducts('active'),
           getCategories(),
           getCMSContent('shop_page')
         ]);
@@ -88,7 +88,7 @@ export default function Shop() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-5xl md:text-7xl lg:text-8xl font-serif font-light tracking-tight mb-6 max-w-4xl leading-tight text-white"
+            className="text-5xl md:text-7xl lg:text-8xl font-serif mb-6 max-w-4xl leading-tight text-white"
           >
             {cmsContent?.hero?.title || 'Koleksi Eksklusif Secera'}
           </motion.h1>

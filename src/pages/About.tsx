@@ -4,7 +4,8 @@ import { getCMSContent } from '../utils/api';
 
 const initialAboutContent = {
   hero: {
-    title: "Secera adalah tim desainer, pengrajin, dan visioner yang berdedikasi untuk mendefinisikan ulang gaya modest modern.",
+    title: "Tentang Secera",
+    subtitle: "Secera adalah tim desainer, pengrajin, dan visioner yang berdedikasi untuk mendefinisikan ulang gaya modest modern.",
     imageUrl: "https://images.unsplash.com/photo-1529156069898-49953eb1b5a4?q=80&w=2000&auto=format&fit=crop"
   },
   inspiration: {
@@ -80,14 +81,22 @@ export default function About() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-4xl md:text-6xl lg:text-7xl font-serif font-light tracking-tight mb-6 max-w-5xl leading-tight text-white"
+            className="text-4xl md:text-6xl lg:text-7xl font-serif mb-6 max-w-5xl leading-tight text-white"
           >
             {content.hero.title}
           </motion.h1>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-light"
+          >
+            {content.hero.subtitle}
+          </motion.p>
         </div>
       </div>
 
-      <div className="p-3 md:p-5 flex flex-col gap-3 md:gap-5">
+      <div className="flex flex-col gap-3 md:gap-5 mt-3 md:mt-5">
 
         {/* Our Inspiration Section */}
         <div className="w-full flex flex-col md:flex-row gap-3 md:gap-5">
@@ -100,13 +109,13 @@ export default function About() {
             />
           </div>
           <div className="w-full md:w-[60%] bg-[#6E2B30] rounded-[2rem] p-8 md:p-16 lg:p-24 flex flex-col justify-center text-[#F9F9F9]">
-            <h3 className="text-sm font-bold tracking-wide mb-8">
+            <span className="text-[10px] font-medium tracking-widest mb-1 uppercase">
               {content.inspiration.title}
-            </h3>
+            </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-serif leading-snug mb-8 max-w-3xl">
               {content.inspiration.subtitle}
             </h2>
-            <div className="space-y-6 text-[#F9F9F9]/90 max-w-3xl leading-relaxed md:text-lg">
+            <div className="space-y-6 leading-relaxed text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-light">
               <p>{content.inspiration.description1}</p>
               <p>{content.inspiration.description2}</p>
             </div>
@@ -115,9 +124,9 @@ export default function About() {
 
         {/* Our Mission Section */}
         <div className="w-full bg-white rounded-[2rem] py-24 md:py-32 px-6 md:px-12 flex flex-col items-center justify-center text-center">
-          <h3 className="text-sm font-bold tracking-wide mb-8 text-[#6E2B30]">
+          <span className="text-[10px] text-[#6E2B30] font-medium tracking-widest mb-1 uppercase">
             {content.mission.title}
-          </h3>
+          </span>
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight max-w-4xl mb-8">
             {content.mission.subtitle.split('standar').map((part, i, arr) => (
               <span key={i}>

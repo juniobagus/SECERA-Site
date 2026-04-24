@@ -8,7 +8,8 @@ import { formatPrice } from '../../data/products';
 
 const initialAboutContent = {
   hero: {
-    title: "Secera adalah tim desainer, pengrajin, dan visioner yang berdedikasi untuk mendefinisikan ulang gaya modest modern.",
+    title: "Tentang Secera",
+    subtitle: "Secera adalah tim desainer, pengrajin, dan visioner yang berdedikasi untuk mendefinisikan ulang gaya modest modern.",
     imageUrl: "https://images.unsplash.com/photo-1529156069898-49953eb1b5a4?q=80&w=2000&auto=format&fit=crop"
   },
   inspiration: {
@@ -137,6 +138,7 @@ export default function AdminCMS() {
           setAboutContent({
             hero: { 
               title: saved.hero?.title || initialAboutContent.hero.title,
+              subtitle: saved.hero?.subtitle || initialAboutContent.hero.subtitle,
               imageUrl: saved.hero?.imageUrl || initialAboutContent.hero.imageUrl,
               videoUrl: saved.hero?.videoUrl || ''
             },
@@ -392,11 +394,11 @@ export default function AdminCMS() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
-                    <input 
-                      type="text" 
+                    <textarea 
+                      rows={2}
                       value={homeContent.showcase.title} 
                       onChange={(e) => setHomeContent({ ...homeContent, showcase: { ...homeContent.showcase, title: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
                     />
                   </div>
                   <div>
@@ -692,10 +694,19 @@ export default function AdminCMS() {
               <div className="p-6 space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title</label>
-                  <textarea 
-                    rows={3}
+                  <input 
+                    type="text" 
                     value={aboutContent.hero.title} 
                     onChange={(e) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, title: e.target.value } })}
+                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Hero Subtitle</label>
+                  <textarea 
+                    rows={3}
+                    value={aboutContent.hero.subtitle} 
+                    onChange={(e) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, subtitle: e.target.value } })}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
                   />
                 </div>
