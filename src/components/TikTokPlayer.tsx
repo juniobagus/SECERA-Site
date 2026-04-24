@@ -9,51 +9,89 @@ interface TikTokPlayerProps {
 
 export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
   const [isMuted, setIsMuted] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Synchronize playback state with isActive prop
-  useEffect(() => {
-    if (iframeRef.current?.contentWindow) {
-      // Toggle mute based on active state and user preference
-      const muteMessage = {
-        'x-tiktok-player': true,
-        type: isActive && !isMuted ? 'unmute' : 'mute'
-      };
-      iframeRef.current.contentWindow.postMessage(muteMessage, '*');
-      
-      // We send play command to ensure it's running, 
-      // but we do it slightly after to avoid state conflicts
-      const playMessage = {
-        'x-tiktok-player': true,
-        type: 'play'
-      };
-      iframeRef.current.contentWindow.postMessage(playMessage, '*');
-    }
-  }, [isActive, isMuted]);
+  // Track player readiness
+  const [isReady, setIsReady] = useState(false);
 
-  // Kita gunakan satu URL tetap agar tidak reload
-  // Kita set muted=1 di awal karena kebijakan autoplay browser
-  const embedUrl = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&muted=1&loop=1&controls=0`;
+  // 1. Play/Pause Sync
+  useEffect(() => {
+    if (isReady && iframeRef.current?.contentWindow) {
+      const shouldBePlaying = isActive && !isPaused;
+      iframeRef.current.contentWindow.postMessage({
+        'x-tiktok-player': true,
+        type: shouldBePlaying ? 'play' : 'pause'
+      }, '*');
+    }
+  }, [isReady, isActive, isPaused]);
+
+  // 2. Mute/UnMute Sync
+  useEffect(() => {
+    if (isReady && iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({
+        'x-tiktok-player': true,
+        type: isMuted ? 'mute' : 'unMute'
+      }, '*');
+    }
+  }, [isReady, isMuted]);
+
+  // 3. Sync everything when player becomes ready
+  useEffect(() => {
+    if (isReady && iframeRef.current?.contentWindow) {
+      // Send initial states
+      iframeRef.current.contentWindow.postMessage({ 'x-tiktok-player': true, type: isMuted ? 'mute' : 'unMute' }, '*');
+      iframeRef.current.contentWindow.postMessage({ 'x-tiktok-player': true, type: (isActive && !isPaused) ? 'play' : 'pause' }, '*');
+    }
+  }, [isReady]);
+
+  // Listen for messages from TikTok player
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      // Security: Only accept messages from tiktok.com
+      if (!event.origin.includes('tiktok.com')) return;
+
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+
+        if (data['x-tiktok-player']) {
+          if (data.type === 'onPlayerReady') {
+            setIsReady(true);
+          }
+        }
+      } catch (e) {
+        // Not a JSON message or other error, ignore
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+  // Reset pause state when becoming active/inactive if needed
+  useEffect(() => {
+    if (!isActive) {
+      setIsPaused(false); // Reset to play when scrolled away so it loops clean
+    }
+  }, [isActive]);
+
+  const embedUrl = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&muted=1&loop=1&volume_control=0&controls=0&volume=100`;
 
   const toggleMute = (e: React.MouseEvent) => {
     e.stopPropagation();
-    
     const newMuted = !isMuted;
     setIsMuted(newMuted);
+  };
 
-    if (iframeRef.current?.contentWindow) {
-      // TikTok player v1 requires the 'x-tiktok-player' flag in the message object
-      const message = {
-        'x-tiktok-player': true,
-        type: newMuted ? 'mute' : 'unmute'
-      };
-      
-      iframeRef.current.contentWindow.postMessage(message, '*');
-    }
+  const togglePlay = () => {
+    setIsPaused(!isPaused);
   };
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-black flex items-center justify-center">
+    <div
+      className="relative w-full h-full overflow-hidden bg-black flex items-center justify-center cursor-pointer group"
+      onClick={togglePlay}
+    >
       {/* Skeleton / Placeholder */}
       <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
         <div className="w-12 h-12 border-4 border-white/10 border-t-white/30 rounded-full animate-spin" />
@@ -68,11 +106,23 @@ export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
           title="TikTok Video Player"
           sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-scripts allow-top-navigation allow-same-origin"
         />
+
+        {/* Visual feedback for Pause state */}
+        <motion.div
+          animate={{ opacity: isPaused ? 1 : 0 }}
+          className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]"
+        >
+          <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30">
+            <svg className="w-10 h-10 fill-current" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </motion.div>
       </div>
 
       {/* Overlay UI */}
       <div className="absolute inset-0 z-10 pointer-events-none">
-        <motion.button 
+        <motion.button
           whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.4)' }}
           whileTap={{ scale: 0.9 }}
           onClick={toggleMute}
@@ -81,8 +131,8 @@ export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
           {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
         </motion.button>
 
-        <motion.div 
-          animate={{ 
+        <motion.div
+          animate={{
             opacity: isActive ? 0.4 : 1,
             y: isActive ? 0 : -10
           }}
