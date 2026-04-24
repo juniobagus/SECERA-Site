@@ -25,8 +25,8 @@ export default function GlobalCTA() {
   }, []);
 
   return (
-    <section className="w-full px-4 md:px-6 lg:px-8 py-12 md:py-24 bg-[#F9F9F9]">
-      <div className="max-w-[1600px] mx-auto">
+    <section className="w-full px-3 md:px-5 py-12 md:py-24 bg-[#F9F9F9]">
+      <div className="w-full">
         <div className="relative w-full rounded-[2rem] overflow-hidden py-24 md:py-32 px-6 flex flex-col items-center justify-center text-center">
           {/* Background Video */}
           <div className="absolute inset-0 bg-[#F4F5F0]"></div>
