@@ -11,13 +11,13 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, index }: ProductCardProps) {
   const { addItem } = useCart();
-  
+
   // Normalize data from API or static source
   const variants = product.product_variants || product.variants || [];
   const firstVariant = variants[0];
   const shortName = product.short_name || product.shortName || '';
   const thumbnail = product.thumbnail_url || firstVariant?.image_url || firstVariant?.image;
-  
+
   const hasPromo = variants.some((v: any) => v.promo_price || v.promoPrice);
   const colors = [...new Set(variants.map((v: any) => v.color))];
 
@@ -69,7 +69,7 @@ export default function ProductCard({ product, index }: ProductCardProps) {
         className="relative aspect-square w-full rounded-2xl overflow-hidden bg-white mb-4 block"
       >
         {hasPromo && (
-          <div className="absolute top-4 left-4 z-10 bg-white/40 backdrop-blur-xl text-[#722F38] text-[9px] font-black tracking-widest px-3 py-1.5 rounded-full shadow-sm border border-white/60 uppercase">
+          <div className="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur-xl text-[#722F38] text-[9px] font-black tracking-widest px-3 py-1.5 rounded-full shadow-sm border border-white/60 uppercase">
             Promo
           </div>
         )}

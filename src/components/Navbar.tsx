@@ -49,13 +49,13 @@ export default function Navbar() {
       >
         <motion.nav
           animate={{
-            backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.65)',
+            backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.80)',
             boxShadow: scrolled ? '0 25px 50px -12px rgba(114, 47, 56, 0.15)' : '0 10px 30px -5px rgba(114, 47, 56, 0.05)',
             paddingTop: scrolled ? '10px' : '14px',
             paddingBottom: scrolled ? '10px' : '14px',
             scale: scrolled ? 0.99 : 1
           }}
-          className="backdrop-blur-3xl rounded-full px-8 flex items-center justify-between border border-white/40 relative overflow-hidden shadow-2xl"
+          className="backdrop-blur-sm rounded-full px-8 flex items-center justify-between border border-white/40 relative overflow-hidden shadow-2xl"
         >
           {/* Subtle reflection effect */}
           <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent pointer-events-none" />

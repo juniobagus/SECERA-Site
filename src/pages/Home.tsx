@@ -4,7 +4,7 @@
  */
 
 import { useRef, useState, useEffect } from 'react';
-import { Star, Clock, Layers, Gem, Sparkles, ChevronLeft, ChevronRight, VolumeX, Plus, ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react';
+import { Star, Clock, Layers, Gem, Sparkles, ChevronLeft, ChevronRight, Volume2, VolumeX, Plus, ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { products, formatPrice } from '../data/products';
@@ -12,6 +12,78 @@ import { useCart } from '../context/CartContext';
 import { initialCMSContent } from '../data/cms';
 import { getCMSContent, getProducts } from '../utils/api';
 import ProductCard from '../components/ProductCard';
+import TikTokPlayer from '../components/TikTokPlayer';
+
+const getTikTokId = (url: string) => {
+  const match = url.match(/\/video\/(\d+)/);
+  if (match) return match[1];
+  
+  // Alternative: v/ID or /v/ID
+  const matchV = url.match(/\/v\/(\d+)/);
+  return matchV ? matchV[1] : null;
+};
+
+// Sub-component for standard video player with controls
+function CustomVideoPlayer({ src, poster, isActive }: { src: string, poster?: string, isActive: boolean }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isMuted, setIsMuted] = useState(true);
+
+  // Inisialisasi muted melalui DOM saat pertama kali mount
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = isMuted;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isActive) {
+        videoRef.current.play().catch(e => console.log("Autoplay blocked", e));
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isActive]);
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      const newMuted = !isMuted;
+      // Langsung ubah property DOM untuk menghindari re-render tag video
+      videoRef.current.muted = newMuted;
+      setIsMuted(newMuted);
+    }
+  };
+
+  return (
+    <>
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        playsInline
+        className="w-full h-full object-cover"
+        poster={poster}
+        // Kita tidak menaruh 'muted' di sini sebagai reactive prop 
+        // agar React tidak me-refresh elemen saat state berubah
+        defaultValue={undefined} 
+      >
+        <source src={src} type="video/mp4" />
+      </video>
+      <motion.button 
+        whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.4)' }}
+        whileTap={{ scale: 0.9 }}
+        onClick={toggleMute}
+        className="absolute top-6 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white z-10 border border-white/30 transition-colors outline-none pointer-events-auto"
+      >
+        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+      </motion.button>
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40">
+        <h3 className="text-2xl font-bold text-white tracking-tighter font-sans uppercase">secera</h3>
+      </div>
+    </>
+  );
+}
 
 export default function Home() {
   const { addItem } = useCart();
@@ -296,6 +368,7 @@ export default function Home() {
               const firstVariant = variants[0];
               const thumbnail = ugcItem.thumbnailUrl || product?.thumbnail_url || firstVariant?.image_url;
               const isActive = activeUgcIndex === index;
+              const tiktokId = getTikTokId(ugcItem.videoUrl);
 
               return (
                 <motion.div
@@ -308,23 +381,12 @@ export default function Home() {
                   transition={{ duration: 0.4 }}
                   className="flex flex-col shrink-0 w-[280px] md:w-[320px] snap-center cursor-pointer"
                 >
-                  <div className="relative aspect-square bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500">
-                    <video
-                      autoPlay
-                      loop
-                      muted
-                      playsInline
-                      className="w-full h-full object-cover"
-                      poster={thumbnail}
-                    >
-                      <source src={ugcItem.videoUrl} type="video/mp4" />
-                    </video>
-                    <div className="absolute top-6 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white z-10 border border-white/30 opacity-0 group-hover:opacity-100">
-                      <VolumeX className="w-5 h-5" />
-                    </div>
-                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40">
-                      <h3 className="text-2xl font-bold text-white tracking-tighter">secera</h3>
-                    </div>
+                  <div className="relative aspect-[9/16] bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500">
+                    {tiktokId ? (
+                      <TikTokPlayer videoId={tiktokId} isActive={isActive} />
+                    ) : (
+                      <CustomVideoPlayer src={ugcItem.videoUrl} poster={thumbnail} isActive={isActive} />
+                    )}
                   </div>
 
                   <motion.div
@@ -434,7 +496,6 @@ export default function Home() {
           transition={{ duration: 0.5, delay: 0.5 }}
           className="text-center mt-12"
         >
-          <a href="#" className="text-sm text-zinc-900 underline underline-offset-4 hover:text-zinc-600 transition-colors">See more</a>
         </motion.div>
       </section>
 
