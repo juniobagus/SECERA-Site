@@ -49,14 +49,27 @@ export default function About() {
   return (
     <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
       <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[70vh]">
-        {/* Background Image */}
+        {/* Background Media (Image or Video) */}
         <div className="absolute inset-0 z-0 scale-105">
-          <img
-            src={content.hero.imageUrl}
-            alt="About Secera"
-            className="w-full h-full object-cover object-center"
-            referrerPolicy="no-referrer"
-          />
+          {content.hero.videoUrl ? (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              className="w-full h-full object-cover object-center"
+              poster={content.hero.imageUrl}
+            >
+              <source src={content.hero.videoUrl} type="video/mp4" />
+            </video>
+          ) : (
+            <img
+              src={content.hero.imageUrl}
+              alt="About Secera"
+              className="w-full h-full object-cover object-center"
+              referrerPolicy="no-referrer"
+            />
+          )}
           {/* Dark overlay for white text readability */}
           <div className="absolute inset-0 bg-black/40" />
         </div>

@@ -69,8 +69,8 @@ export default function ProductCard({ product, index }: ProductCardProps) {
         className="relative aspect-square w-full rounded-2xl overflow-hidden bg-white mb-4 block"
       >
         {hasPromo && (
-          <div className="absolute top-3 left-3 z-10 bg-[#722F38] text-white text-[10px] font-bold px-3 py-1 rounded-full">
-            PROMO
+          <div className="absolute top-4 left-4 z-10 bg-white/40 backdrop-blur-xl text-[#722F38] text-[9px] font-black tracking-widest px-3 py-1.5 rounded-full shadow-sm border border-white/60 uppercase">
+            Promo
           </div>
         )}
         <img

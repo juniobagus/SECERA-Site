@@ -27,7 +27,9 @@ export default function Footer() {
   return (
     <footer className="bg-[#722F38] text-[#F9F9F9] pt-20 relative overflow-hidden">
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative z-10">
-        <h2 className="text-3xl md:text-4xl font-serif mb-12">{cms.global.siteTitle.split('|')[0].trim()}<span className="text-sm align-top">&trade;</span></h2>
+        <div className="mb-12">
+          <img src="/Logo/LogoType-light.svg" alt={cms.global.siteTitle} className="h-10 md:h-12 w-auto object-contain" />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
           <div className="lg:col-span-2 flex flex-col gap-4">
@@ -38,7 +40,7 @@ export default function Footer() {
             <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Ulasan Pelanggan</a>
             <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Panduan Ukuran</a>
           </div>
-          
+
           <div className="lg:col-span-2 flex flex-col gap-4">
             <h4 className="font-bold text-lg mb-2">Tentang</h4>
             <a href="#" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors">Tentang Kami</a>
@@ -64,9 +66,9 @@ export default function Footer() {
             <div className="bg-[#7b5455] rounded-2xl p-8 lg:p-10 shadow-xl">
               <h3 className="text-2xl md:text-3xl font-serif mb-8 leading-snug">Dapatkan berita dan penawaran terbaru dari kami</h3>
               <div className="relative border-b border-[#F9F9F9]/30 pb-2 flex items-center">
-                <input 
-                  type="email" 
-                  placeholder="Email" 
+                <input
+                  type="email"
+                  placeholder="Email"
                   className="bg-transparent w-full outline-none text-[#F9F9F9] placeholder:text-[#F9F9F9]/50 pr-8 text-lg"
                 />
                 <button className="absolute right-0 hover:translate-x-1 transition-transform">

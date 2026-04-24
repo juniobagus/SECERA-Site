@@ -31,7 +31,7 @@ router.get('/', async (req, res) => {
     `);
     
     // Fetch variants and images in parallel
-    const [variants] = await db.query('SELECT * FROM product_variants');
+    const [variants] = await db.query('SELECT * FROM product_variants ORDER BY display_order ASC');
     const [images] = await db.query('SELECT * FROM product_images ORDER BY display_order ASC');
 
     // Map them together
@@ -54,7 +54,7 @@ router.get('/:id', async (req, res) => {
     const [products] = await db.query('SELECT * FROM products WHERE id = ?', [req.params.id]);
     if (products.length === 0) return res.status(404).json({ message: 'Product not found' });
 
-    const [variants] = await db.query('SELECT * FROM product_variants WHERE product_id = ?', [req.params.id]);
+    const [variants] = await db.query('SELECT * FROM product_variants WHERE product_id = ? ORDER BY display_order ASC', [req.params.id]);
     const [images] = await db.query('SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order ASC', [req.params.id]);
 
     res.json({
@@ -69,7 +69,7 @@ router.get('/:id', async (req, res) => {
 
 // CREATE product
 router.post('/', authenticate, async (req, res) => {
-  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, variants, images } = req.body;
+  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content, variants, images } = req.body;
   const productId = crypto.randomUUID();
 
   const connection = await db.getConnection();
@@ -78,16 +78,17 @@ router.post('/', authenticate, async (req, res) => {
 
     // 1. Insert product
     await connection.query(
-      'INSERT INTO products (id, name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [productId, name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null]
+      'INSERT INTO products (id, name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [productId, name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null, cms_content ? JSON.stringify(cms_content) : null]
     );
 
     // 2. Insert variants
     if (variants && variants.length > 0) {
-      for (const v of variants) {
+      for (let i = 0; i < variants.length; i++) {
+        const v = variants[i];
         await connection.query(
-          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
+          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
         );
       }
     }
@@ -116,7 +117,7 @@ router.post('/', authenticate, async (req, res) => {
 // UPDATE product
 router.put('/:id', authenticate, async (req, res) => {
   const productId = req.params.id;
-  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, variants, images } = req.body;
+  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content, variants, images } = req.body;
 
   const connection = await db.getConnection();
   try {
@@ -124,17 +125,18 @@ router.put('/:id', authenticate, async (req, res) => {
 
     // 1. Update product
     await connection.query(
-      'UPDATE products SET name = ?, short_name = ?, description = ?, category_id = ?, thumbnail_url = ?, material = ?, weight = ?, shopee_link = ?, tiktok_link = ?, details = ? WHERE id = ?',
-      [name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null, productId]
+      'UPDATE products SET name = ?, short_name = ?, description = ?, category_id = ?, thumbnail_url = ?, material = ?, weight = ?, shopee_link = ?, tiktok_link = ?, details = ?, cms_content = ? WHERE id = ?',
+      [name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null, cms_content ? JSON.stringify(cms_content) : null, productId]
     );
 
     // 2. Refresh variants
     await connection.query('DELETE FROM product_variants WHERE product_id = ?', [productId]);
     if (variants && variants.length > 0) {
-      for (const v of variants) {
+      for (let i = 0; i < variants.length; i++) {
+        const v = variants[i];
         await connection.query(
-          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
+          'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
         );
       }
     }
@@ -183,7 +185,7 @@ router.patch('/:id', authenticate, async (req, res) => {
     const fields = Object.keys(updates);
     if (fields.length > 0) {
       const setClause = fields.map(f => `${f} = ?`).join(', ');
-      const values = fields.map(f => f === 'details' ? JSON.stringify(updates[f]) : updates[f]);
+      const values = fields.map(f => (f === 'details' || f === 'cms_content') ? JSON.stringify(updates[f]) : updates[f]);
       await connection.query(
         `UPDATE products SET ${setClause} WHERE id = ?`,
         [...values, productId]
@@ -194,10 +196,11 @@ router.patch('/:id', authenticate, async (req, res) => {
     if (variants !== undefined) {
       await connection.query('DELETE FROM product_variants WHERE product_id = ?', [productId]);
       if (Array.isArray(variants) && variants.length > 0) {
-        for (const v of variants) {
+        for (let i = 0; i < variants.length; i++) {
+          const v = variants[i];
           await connection.query(
-            'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null]
+            'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
           );
         }
       }

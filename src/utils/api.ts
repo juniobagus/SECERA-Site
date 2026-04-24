@@ -26,6 +26,17 @@ export async function getOrders(): Promise<Order[]> {
   }
 }
 
+export async function getOrderById(orderId: string): Promise<any> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}`);
+    if (!response.ok) throw new Error('Failed to fetch order detail');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getOrderById):', error);
+    return null;
+  }
+}
+
 export async function updateOrderStatus(orderId: string, status: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
@@ -141,7 +152,7 @@ export async function createProduct(productData: any) {
 export async function updateProduct(productId: string, productData: any) {
   try {
     const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(productData),
     });

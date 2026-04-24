@@ -66,9 +66,39 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   try {
     const [orders] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
+    
+    // For each order, get item count (minimal for list view)
+    for (const order of orders) {
+      const [items] = await db.query('SELECT COUNT(*) as count FROM order_items WHERE order_id = ?', [order.id]);
+      order.item_count = items[0].count;
+    }
+    
     res.json(orders);
   } catch (err) {
     res.status(500).json({ message: 'Error fetching orders' });
+  }
+});
+
+// GET order detail
+router.get('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [orders] = await db.query('SELECT * FROM orders WHERE id = ?', [id]);
+    if (orders.length === 0) return res.status(404).json({ message: 'Order not found' });
+    
+    const order = orders[0];
+    const [items] = await db.query(`
+      SELECT oi.*, p.short_name as product_name, p.thumbnail_url 
+      FROM order_items oi
+      LEFT JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ?
+    `, [id]);
+    
+    order.items = items;
+    res.json(order);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Error fetching order detail' });
   }
 });
 

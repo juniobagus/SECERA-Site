@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, ShoppingBag, Minus, Plus, Truck, Shield, Star, Loader2 } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Minus, Plus, Truck, Shield, Star, Loader2, Package, Layers, Gem, Sparkles, Heart } from 'lucide-react';
 import { formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { getProductById } from '../utils/api';
@@ -118,8 +118,10 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] pt-28 pb-24 px-4 md:px-8 font-sans">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen font-sans bg-white">
+      {/* Basic Information Section */}
+      <section className="bg-[#F9F9F9] pt-28 pb-24 px-4 md:px-8 border-b border-gray-100">
+        <div className="max-w-6xl mx-auto">
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-[#722F38] mb-8 hover:opacity-70 transition-opacity">
           <ArrowLeft className="w-4 h-4" /> Kembali ke Koleksi
         </Link>
@@ -295,6 +297,121 @@ export default function ProductDetail() {
           </motion.div>
         </div>
       </div>
+    </section>
+
+      {/* CMS Rich Content Section */}
+      {product.cms_content && (
+        <section className="w-full bg-white py-24 md:py-32">
+          <div className="max-w-6xl mx-auto px-4 md:px-8 space-y-32">
+              {/* Features Grid */}
+              {product.cms_content.features && product.cms_content.features.items?.length > 0 && (
+                <section>
+                  <div className="text-center mb-16">
+                    <motion.span 
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      className="text-[10px] font-bold text-[#722F38]/40 uppercase tracking-[0.3em] mb-4 block"
+                    >
+                      Specifications & Details
+                    </motion.span>
+                    <motion.h2 
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: 0.1 }}
+                      className="text-3xl md:text-4xl font-serif text-[#722F38]"
+                    >
+                      {product.cms_content.features.title || "What's in the box"}
+                    </motion.h2>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {product.cms_content.features.items.map((item: any, idx: number) => {
+                      const IconMap: any = { Package, Truck, Shield, Star, Layers, Gem, Sparkles, Heart };
+                      const Icon = IconMap[item.icon] || Package;
+                      return (
+                        <motion.div 
+                          key={idx}
+                          initial={{ opacity: 0, y: 20 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: idx * 0.05 }}
+                          className="group p-8 bg-gray-50/50 rounded-2xl border border-gray-100 hover:border-[#722F38]/20 hover:bg-white hover:shadow-xl hover:shadow-[#722F38]/5 transition-all duration-500 text-center"
+                        >
+                          <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 mx-auto group-hover:scale-110 group-hover:rotate-3 transition-transform duration-500">
+                            <Icon className="w-6 h-6 text-[#722F38]" />
+                          </div>
+                          <h3 className="text-sm font-bold text-[#722F38] mb-3 uppercase tracking-wide">{item.title}</h3>
+                          <p className="text-xs text-[#3A3A3A]/60 leading-relaxed font-medium">{item.description}</p>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Editorial Sections */}
+              {product.cms_content.editorial && product.cms_content.editorial.sections?.length > 0 && (
+                <div className="space-y-48 lg:space-y-64 pt-12">
+                  {product.cms_content.editorial.sections.map((section: any, idx: number) => (
+                    <section key={idx} className={`flex flex-col ${section.imagePosition === 'left' ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12 lg:gap-32`}>
+                      <motion.div 
+                        initial={{ opacity: 0 }}
+                        whileInView={{ opacity: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 1 }}
+                        className="flex-1 w-full"
+                      >
+                        <div className="aspect-[4/3] overflow-hidden bg-gray-50 rounded-2xl">
+                          {section.videoUrl ? (
+                            <video
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              className="w-full h-full object-cover"
+                              poster={section.imageUrl}
+                            >
+                              <source src={section.videoUrl} type="video/mp4" />
+                            </video>
+                          ) : (
+                            <img 
+                              src={section.imageUrl} 
+                              alt={section.title} 
+                              className="w-full h-full object-cover"
+                              referrerPolicy="no-referrer"
+                            />
+                          )}
+                        </div>
+                      </motion.div>
+                      
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="flex-1 flex flex-col justify-center space-y-6"
+                      >
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold text-[#3A3A3A] uppercase tracking-[0.2em]">
+                            Product Showcase
+                          </span>
+                          <h2 className="text-4xl lg:text-5xl font-serif text-[#722F38] leading-tight">
+                            {section.title}
+                          </h2>
+                        </div>
+                        <p className="text-base lg:text-lg text-[#3A3A3A]/70 leading-relaxed max-w-lg">
+                          {section.description}
+                        </p>
+                      </motion.div>
+                    </section>
+                  ))}
+                </div>
+              )}
+            </div>
+        </section>
+      )}
     </div>
   );
 }

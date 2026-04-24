@@ -143,14 +143,27 @@ export default function Home() {
     <>
       <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
         <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[80vh]">
-          {/* Background Image */}
+          {/* Background Media (Image or Video) */}
           <div className="absolute inset-0 z-0">
-            <img
-              src={cms.hero.imageUrl}
-              alt="SECERA women wearing maroon scarves"
-              className="w-full h-full object-cover object-center"
-              referrerPolicy="no-referrer"
-            />
+            {cms.hero.videoUrl ? (
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover object-center"
+                poster={cms.hero.imageUrl}
+              >
+                <source src={cms.hero.videoUrl} type="video/mp4" />
+              </video>
+            ) : (
+              <img
+                src={cms.hero.imageUrl}
+                alt={cms.hero.title}
+                className="w-full h-full object-cover object-center"
+                referrerPolicy="no-referrer"
+              />
+            )}
             {/* Dark overlay for white text readability */}
             <div className="absolute inset-0 bg-black/40" />
           </div>

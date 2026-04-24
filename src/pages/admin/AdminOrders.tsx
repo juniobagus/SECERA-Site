@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 import { Search, Filter, Eye, Edit2, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
 import { formatPrice } from '../../data/products';
-import { getOrders, updateOrderStatus } from '../../utils/api';
+import { getOrders, updateOrderStatus, getOrderById } from '../../utils/api';
+import OrderDetailModal from '../../components/admin/OrderDetailModal';
 
 export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<string>('All');
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  
+  const statusOptions = ['All', 'pending', 'processing', 'shipped', 'completed', 'cancelled'];
 
   useEffect(() => {
     loadOrders();
@@ -24,6 +32,9 @@ export default function AdminOrders() {
     setUpdatingId(id);
     try {
       await updateOrderStatus(id, newStatus);
+      if (selectedOrder && selectedOrder.id === id) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus });
+      }
       await loadOrders();
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -32,11 +43,30 @@ export default function AdminOrders() {
       setUpdatingId(null);
     }
   };
+
+  const handleViewDetail = async (id: string) => {
+    const loadingToast = toast.loading('Loading order details...');
+    try {
+      const orderDetail = await getOrderById(id);
+      if (orderDetail) {
+        setSelectedOrder(orderDetail);
+        setIsDetailOpen(true);
+        toast.dismiss(loadingToast);
+      } else {
+        toast.error('Failed to load order details', { id: loadingToast });
+      }
+    } catch (err) {
+      toast.error('Error loading order details', { id: loadingToast });
+    }
+  };
   
-  const filteredOrders = orders.filter(o => 
-    o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    o.shipping_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredOrders = orders
+    .filter(o => {
+      const matchesSearch = o.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        o.shipping_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = filterStatus === 'All' || o.status === filterStatus;
+      return matchesSearch && matchesStatus;
+    });
 
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -80,10 +110,35 @@ export default function AdminOrders() {
               className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#722F38] focus:ring-1 focus:ring-[#722F38] outline-none transition-shadow"
             />
           </div>
-          <button className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors flex items-center gap-2 shrink-0">
-            <Filter className="w-4 h-4" />
-            Filter Status
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+              className={`px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shrink-0 ${filterStatus !== 'All' ? 'bg-[#722F38] text-white border-[#722F38]' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              <Filter className="w-4 h-4" />
+              {filterStatus === 'All' ? 'Filter Status' : filterStatus.charAt(0).toUpperCase() + filterStatus.slice(1)}
+            </button>
+            {isFilterMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95">
+                <div className="p-2 border-b border-gray-50 bg-gray-50/50">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">Order Status</span>
+                </div>
+                {statusOptions.map(status => (
+                  <button
+                    key={status}
+                    onClick={() => {
+                      setFilterStatus(status);
+                      setIsFilterMenuOpen(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center justify-between group capitalize ${filterStatus === status ? 'bg-[#722F38]/5 text-[#722F38] font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    {status}
+                    {filterStatus === status && <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Table */}
@@ -124,7 +179,7 @@ export default function AdminOrders() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900">{formatPrice(order.total_amount)}</div>
-                      <div className="text-xs text-gray-500">{order.order_items?.length || 0} items</div>
+                      <div className="text-xs text-gray-500">{order.item_count || 0} items</div>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -140,7 +195,11 @@ export default function AdminOrders() {
                           <option value="completed">Completed</option>
                           <option value="cancelled">Cancelled</option>
                         </select>
-                        <button className="p-1.5 text-gray-400 hover:text-blue-600 bg-white rounded-md shadow-sm border border-gray-200 hover:border-blue-200 transition-all" title="View Details">
+                        <button 
+                          onClick={() => handleViewDetail(order.id)}
+                          className="p-1.5 text-gray-400 hover:text-blue-600 bg-white rounded-md shadow-sm border border-gray-200 hover:border-blue-200 transition-all" 
+                          title="View Details"
+                        >
                           <Eye className="w-4 h-4" />
                         </button>
                       </div>
@@ -160,6 +219,13 @@ export default function AdminOrders() {
           )}
         </div>
       </div>
+
+      <OrderDetailModal 
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        order={selectedOrder}
+        onStatusUpdate={handleStatusUpdate}
+      />
     </div>
   );
 }

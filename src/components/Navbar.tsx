@@ -11,6 +11,15 @@ export default function Navbar() {
   const { totalItems, toggleCart } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [siteTitle, setSiteTitle] = useState('SECERA');
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   useEffect(() => {
     async function loadCMS() {
@@ -32,41 +41,54 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-4xl">
-        <nav className="bg-white/95 backdrop-blur-md rounded-full px-6 py-4 flex items-center justify-between shadow-lg border border-white/50">
-          <Link
-            to="/"
-            className="text-xl md:text-2xl font-bold tracking-[0.25em] text-[#722F38] cursor-pointer"
-          >
-            {siteTitle}
+      <motion.div
+        initial={{ y: -100, x: '-50%', opacity: 0 }}
+        animate={{ y: 0, x: '-50%', opacity: 1 }}
+        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed top-8 left-1/2 z-50 w-[94%] max-w-5xl"
+      >
+        <motion.nav
+          animate={{
+            backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'rgba(255, 255, 255, 0.65)',
+            boxShadow: scrolled ? '0 25px 50px -12px rgba(114, 47, 56, 0.15)' : '0 10px 30px -5px rgba(114, 47, 56, 0.05)',
+            paddingTop: scrolled ? '10px' : '14px',
+            paddingBottom: scrolled ? '10px' : '14px',
+            scale: scrolled ? 0.99 : 1
+          }}
+          className="backdrop-blur-3xl rounded-full px-8 flex items-center justify-between border border-white/40 relative overflow-hidden shadow-2xl"
+        >
+          {/* Subtle reflection effect */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/40 to-transparent pointer-events-none" />
+          
+          <Link to="/" className="relative z-10 block">
+            <img src="/Logo/LogoType-dark.svg" alt={siteTitle} className="h-6 md:h-8 w-auto object-contain" />
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden md:flex items-center gap-10 relative z-10">
             {links.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`text-sm font-medium transition-colors ${
-                  path === link.to
+                className={`text-[10px] font-black uppercase tracking-[0.25em] transition-all hover:tracking-[0.4em] ${path === link.to
                     ? 'text-[#722F38]'
-                    : 'text-[#3A3A3A]/70 hover:text-[#722F38]'
-                }`}
+                    : 'text-[#722F38]/50 hover:text-[#722F38]'
+                  }`}
               >
                 {link.label}
               </Link>
             ))}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-5 relative z-10">
             {/* Cart */}
             <button
               onClick={toggleCart}
-              className="relative text-[#722F38] hover:opacity-70 transition-opacity"
+              className="relative text-[#722F38] hover:scale-110 transition-transform p-2.5 bg-[#722F38]/5 rounded-full hover:bg-[#722F38]/10 border border-[#722F38]/5"
             >
-              <ShoppingBag className="w-5 h-5" />
+              <ShoppingBag className="w-4 h-4" />
               {totalItems > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4.5 h-4.5 bg-[#722F38] text-white text-[10px] font-bold rounded-full flex items-center justify-center min-w-[18px] min-h-[18px]">
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#722F38] text-white text-[8px] font-black rounded-full flex items-center justify-center shadow-lg">
                   {totalItems}
                 </span>
               )}
@@ -75,13 +97,13 @@ export default function Navbar() {
             {/* Mobile Menu Toggle */}
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
-              className="md:hidden text-[#722F38] hover:opacity-70 transition-opacity"
+              className="md:hidden text-[#722F38] hover:opacity-70 transition-opacity p-2"
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
-        </nav>
-      </div>
+        </motion.nav>
+      </motion.div>
 
       {/* Mobile Menu */}
       <AnimatePresence>
@@ -98,11 +120,10 @@ export default function Navbar() {
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileOpen(false)}
-                  className={`text-base font-medium transition-colors py-2 ${
-                    path === link.to
+                  className={`text-base font-medium transition-colors py-2 ${path === link.to
                       ? 'text-[#722F38]'
                       : 'text-[#3A3A3A]/70 hover:text-[#722F38]'
-                  }`}
+                    }`}
                 >
                   {link.label}
                 </Link>

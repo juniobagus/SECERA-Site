@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { Search, Filter, Plus, Edit2, Trash2, Loader2, CheckSquare, X } from 'lucide-react';
 import { formatPrice } from '../../data/products';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '../../utils/api';
+import { getProducts, getCategories, createProduct, updateProduct, deleteProduct } from '../../utils/api';
 import ProductModal from '../../components/admin/ProductModal';
 import BulkEditModal from '../../components/admin/BulkEditModal';
 
@@ -14,11 +14,24 @@ export default function AdminProducts() {
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [sortBy, setSortBy] = useState<string>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [filterCategory, setFilterCategory] = useState<string>('All');
+  const [editingCell, setEditingCell] = useState<{ id: string, field: string } | null>(null);
+  const [editValue, setEditValue] = useState<string>('');
+  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
+  const [allCategories, setAllCategories] = useState<any[]>([]);
+  
+  const categories = ['All', ...allCategories.map(c => c.name)];
   
   const fetchProducts = async () => {
     setIsLoading(true);
-    const data = await getProducts();
-    setProducts(data);
+    const [productsData, categoriesData] = await Promise.all([
+      getProducts(),
+      getCategories()
+    ]);
+    setProducts(productsData);
+    setAllCategories(categoriesData);
     setIsLoading(false);
   };
 
@@ -104,11 +117,79 @@ export default function AdminProducts() {
     setIsModalOpen(true);
   };
 
-  const filteredProducts = products.filter(p => 
-    p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.short_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleInlineSave = async (id: string, field: string, value?: string) => {
+    try {
+      const updates: any = {};
+      const finalValue = value || editValue;
+      
+      if (field === 'category') {
+        const cat = allCategories.find(c => c.name === finalValue);
+        if (cat) {
+          updates['category_id'] = cat.id;
+        } else {
+          toast.error('Invalid category');
+          return;
+        }
+      } else if (field === 'price') {
+        const product = products.find(p => p.id === id);
+        const variants = product.product_variants || product.variants || [];
+        if (variants.length > 0) {
+          // Update first variant's price
+          await updateProduct(id, {
+            variants: variants.map((v: any, i: number) => i === 0 ? { ...v, price: parseInt(finalValue) } : v)
+          });
+        }
+        return;
+      } else {
+        updates[field] = finalValue;
+      }
+      
+      await updateProduct(id, updates);
+      toast.success('Updated successfully');
+      setEditingCell(null);
+      fetchProducts();
+    } catch (error) {
+      toast.error('Failed to update');
+    }
+  };
+
+  const filteredProducts = products
+    .filter(p => {
+      const matchesSearch = p.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.short_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.category?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = filterCategory === 'All' || p.category === filterCategory;
+      return matchesSearch && matchesCategory;
+    })
+    .sort((a, b) => {
+      let valA, valB;
+      if (sortBy === 'name') {
+        valA = a.short_name || a.name;
+        valB = b.short_name || b.name;
+      } else if (sortBy === 'category') {
+        valA = a.category;
+        valB = b.category;
+      } else if (sortBy === 'price') {
+        valA = (a.product_variants || a.variants || [])[0]?.price || 0;
+        valB = (b.product_variants || b.variants || [])[0]?.price || 0;
+      } else if (sortBy === 'stock') {
+        valA = (a.product_variants || a.variants || []).reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
+        valB = (b.product_variants || b.variants || []).reduce((sum: number, v: any) => sum + (v.stock || 0), 0);
+      }
+      
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   return (
     <div className="flex flex-col h-full">
@@ -170,10 +251,35 @@ export default function AdminProducts() {
               </div>
             )}
           </div>
-          <button className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 bg-white hover:bg-gray-50 transition-colors flex items-center gap-2 shrink-0">
-            <Filter className="w-4 h-4" />
-            Filter
-          </button>
+          <div className="relative">
+            <button 
+              onClick={() => setIsFilterMenuOpen(!isFilterMenuOpen)}
+              className={`px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 shrink-0 ${filterCategory !== 'All' ? 'bg-[#722F38] text-white border-[#722F38]' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+            >
+              <Filter className="w-4 h-4" />
+              {filterCategory === 'All' ? 'Filter' : filterCategory}
+            </button>
+            {isFilterMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-20 overflow-hidden animate-in fade-in zoom-in-95">
+                <div className="p-2 border-b border-gray-50 bg-gray-50/50">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">Category Filter</span>
+                </div>
+                {categories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => {
+                      setFilterCategory(cat);
+                      setIsFilterMenuOpen(false);
+                    }}
+                    className={`w-full px-4 py-2 text-left text-sm transition-colors flex items-center justify-between group ${filterCategory === cat ? 'bg-[#722F38]/5 text-[#722F38] font-bold' : 'text-gray-600 hover:bg-gray-50'}`}
+                  >
+                    {cat}
+                    {filterCategory === cat && <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Table */}
@@ -195,10 +301,30 @@ export default function AdminProducts() {
                       className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
                     />
                   </th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Variants</th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Base Price</th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <button onClick={() => handleSort('name')} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+                      Product
+                      {sortBy === 'name' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <button onClick={() => handleSort('category')} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+                      Category
+                      {sortBy === 'category' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <button onClick={() => handleSort('stock')} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+                      Variants/Stock
+                      {sortBy === 'stock' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                    </button>
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    <button onClick={() => handleSort('price')} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
+                      Base Price
+                      {sortBy === 'price' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
+                    </button>
+                  </th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
@@ -226,16 +352,36 @@ export default function AdminProducts() {
                               <img src={product.thumbnail_url || firstVariant.image_url || firstVariant.image} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                             )}
                           </div>
-                          <div>
+                          <div className="flex-1 min-w-0">
                             <div className="text-sm font-semibold text-gray-900">{product.short_name || product.shortName}</div>
                             <div className="text-xs text-gray-500 truncate max-w-xs">{product.name}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                          {product.category}
-                        </span>
+                        {editingCell?.id === product.id && editingCell?.field === 'category' ? (
+                          <select 
+                            autoFocus
+                            value={editValue}
+                            onChange={e => {
+                              setEditValue(e.target.value);
+                              handleInlineSave(product.id, 'category', e.target.value);
+                            }}
+                            onBlur={() => setEditingCell(null)}
+                            className="w-full text-xs font-medium bg-white border border-[#722F38] rounded-full px-2 py-0.5 outline-none"
+                          >
+                            {categories.filter(c => c !== 'All').map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span 
+                            onClick={() => { setEditingCell({ id: product.id, field: 'category' }); setEditValue(product.category); }}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-[#722F38]/10 hover:text-[#722F38] cursor-pointer transition-colors"
+                          >
+                            {product.category}
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">{variants.length} options</div>

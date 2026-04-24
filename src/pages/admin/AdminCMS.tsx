@@ -60,7 +60,8 @@ export default function AdminCMS() {
               subtitle: saved.hero?.subtitle || initialCMSContent.hero.subtitle,
               cta: saved.hero?.cta || initialCMSContent.hero.cta,
               link: saved.hero?.link || initialCMSContent.hero.link || '',
-              imageUrl: saved.hero?.imageUrl || initialCMSContent.hero.imageUrl
+              imageUrl: saved.hero?.imageUrl || initialCMSContent.hero.imageUrl,
+              videoUrl: saved.hero?.videoUrl || ''
             },
             showcase: {
               title: saved.showcase?.title || initialCMSContent.showcase.title,
@@ -136,7 +137,8 @@ export default function AdminCMS() {
           setAboutContent({
             hero: { 
               title: saved.hero?.title || initialAboutContent.hero.title,
-              imageUrl: saved.hero?.imageUrl || initialAboutContent.hero.imageUrl
+              imageUrl: saved.hero?.imageUrl || initialAboutContent.hero.imageUrl,
+              videoUrl: saved.hero?.videoUrl || ''
             },
             inspiration: {
               title: saved.inspiration?.title || initialAboutContent.inspiration.title,
@@ -159,7 +161,8 @@ export default function AdminCMS() {
             hero: {
               title: saved.hero?.title || initialShopContent.hero.title,
               subtitle: saved.hero?.subtitle || initialShopContent.hero.subtitle,
-              imageUrl: saved.hero?.imageUrl || initialShopContent.hero.imageUrl
+              imageUrl: saved.hero?.imageUrl || initialShopContent.hero.imageUrl,
+              videoUrl: saved.hero?.videoUrl || ''
             }
           });
         }
@@ -305,11 +308,27 @@ export default function AdminCMS() {
                     />
                   </div>
                 </div>
-                <ImageUpload 
-                  label="Hero Image"
-                  value={homeContent.hero.imageUrl || ''}
-                  onChange={(url) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, imageUrl: url } })}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ImageUpload 
+                    label="Hero Image (Poster)"
+                    value={homeContent.hero.imageUrl || ''}
+                    onChange={(url) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, imageUrl: url } })}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
+                    <div className="relative">
+                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input 
+                        type="text" 
+                        value={homeContent.hero.videoUrl || ''} 
+                        onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, videoUrl: e.target.value } })}
+                        placeholder="https://.../video.mp4"
+                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
+                      />
+                    </div>
+                    <p className="text-[10px] text-gray-400 mt-2 italic">If provided, the video will play automatically. Image will be used as a placeholder/poster.</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -680,11 +699,26 @@ export default function AdminCMS() {
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
                   />
                 </div>
-                <ImageUpload 
-                  label="Hero Image"
-                  value={aboutContent.hero.imageUrl}
-                  onChange={(url) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, imageUrl: url } })}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ImageUpload 
+                    label="Hero Image (Poster)"
+                    value={aboutContent.hero.imageUrl}
+                    onChange={(url) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, imageUrl: url } })}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
+                    <div className="relative">
+                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input 
+                        type="text" 
+                        value={aboutContent.hero.videoUrl || ''} 
+                        onChange={(e) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, videoUrl: e.target.value } })}
+                        placeholder="https://.../video.mp4"
+                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -785,11 +819,26 @@ export default function AdminCMS() {
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
                   />
                 </div>
-                <ImageUpload 
-                  label="Hero Image"
-                  value={shopContent.hero.imageUrl}
-                  onChange={(url) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, imageUrl: url } })}
-                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <ImageUpload 
+                    label="Hero Image (Poster)"
+                    value={shopContent.hero.imageUrl}
+                    onChange={(url) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, imageUrl: url } })}
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
+                    <div className="relative">
+                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input 
+                        type="text" 
+                        value={shopContent.hero.videoUrl || ''} 
+                        onChange={(e) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, videoUrl: e.target.value } })}
+                        placeholder="https://.../video.mp4"
+                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </>
