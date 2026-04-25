@@ -85,10 +85,23 @@ export default function ProductDetail() {
 
   const productDetails = useMemo(() => {
     if (!product) return [];
+    
+    // Use CMS accordions if available, otherwise fallback to defaults
+    const cmsAcc = product.cms_content?.accordions;
+    
     return [
-      { title: 'Material & Perawatan', content: `Dibuat dari ${product.material || 'Ceruty Babydoll Premium'}. Disarankan cuci dengan tangan (hand wash) atau dry clean untuk menjaga kualitas serat kain.` },
-      { title: 'Spesifikasi Produk', content: `Berat: ${product.weight || 100}g. ${product.description || ''}` },
-      { title: 'Informasi Pengiriman', content: 'Pengiriman dilakukan setiap hari Senin-Sabtu. Estimasi pengiriman 2-4 hari kerja tergantung lokasi.' },
+      { 
+        title: 'Material & Perawatan', 
+        content: cmsAcc?.material || `Dibuat dari ${product.material || 'Ceruty Babydoll Premium'}. Disarankan cuci dengan tangan (hand wash) atau dry clean untuk menjaga kualitas serat kain.` 
+      },
+      { 
+        title: 'Spesifikasi Produk', 
+        content: cmsAcc?.specs || `Berat: ${product.weight || 100}g. ${product.description || ''}` 
+      },
+      { 
+        title: 'Informasi Pengiriman', 
+        content: cmsAcc?.shipping || 'Pengiriman dilakukan setiap hari Senin-Sabtu. Estimasi pengiriman 2-4 hari kerja tergantung lokasi.' 
+      },
     ];
   }, [product]);
 
@@ -270,16 +283,23 @@ export default function ProductDetail() {
 
             {/* Features */}
             <div className="grid grid-cols-3 gap-3 mb-8">
-              {[
-                { icon: Truck, label: 'Gratis Ongkir >200K' },
-                { icon: Shield, label: 'Premium Quality' },
-                { icon: Star, label: 'Original SECERA' },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex flex-col items-center gap-1.5 bg-white/70 rounded-xl p-3 text-center border border-gray-100 shadow-sm">
-                  <Icon className="w-4 h-4 text-[#722F38]/60" />
-                  <span className="text-[10px] text-[#3A3A3A]/60 font-medium">{label}</span>
-                </div>
-              ))}
+              {(product.cms_content?.features?.items?.length > 0 
+                ? product.cms_content.features.items.slice(0, 3) 
+                : [
+                    { icon: 'Truck', title: 'Gratis Ongkir >200K' },
+                    { icon: 'Shield', title: 'Premium Quality' },
+                    { icon: 'Star', title: 'Original SECERA' },
+                  ]
+              ).map((item: any, idx: number) => {
+                const IconMap: any = { Truck, Shield, Star, Package, Layers, Gem, Sparkles, Heart };
+                const Icon = IconMap[item.icon] || Package;
+                return (
+                  <div key={idx} className="flex flex-col items-center gap-1.5 bg-white/70 rounded-xl p-3 text-center border border-gray-100 shadow-sm">
+                    <Icon className="w-4 h-4 text-[#722F38]/60" />
+                    <span className="text-[10px] text-[#3A3A3A]/60 font-medium">{item.title}</span>
+                  </div>
+                );
+              })}
             </div>
 
             {/* Details Accordion */}

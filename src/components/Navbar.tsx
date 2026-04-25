@@ -1,14 +1,17 @@
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, LogOut } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { getCMSContent } from '../utils/api';
+import AuthModal from './AuthModal';
 
 export default function Navbar() {
   const location = useLocation();
   const path = location.pathname;
   const { totalItems, toggleCart } = useCart();
+  const { user, isLoggedIn, setShowAuthModal, showAuthModal, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [siteTitle, setSiteTitle] = useState('SECERA');
   const [scrolled, setScrolled] = useState(false);
@@ -36,6 +39,7 @@ export default function Navbar() {
   const links = [
     { to: '/', label: 'Home' },
     { to: '/shop', label: 'Shop' },
+    { to: '/my-orders', label: 'Orders' },
     { to: '/about', label: 'About' },
   ];
 
@@ -80,7 +84,27 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="flex items-center gap-5 relative z-10">
+          <div className="flex items-center gap-3 relative z-10">
+            {/* User */}
+            {isLoggedIn ? (
+              <div className="flex items-center gap-2">
+                <Link to="/profile" className="text-[#722F38] hover:scale-110 transition-transform p-2.5 bg-[#722F38]/5 rounded-full hover:bg-[#722F38]/10 border border-[#722F38]/5 flex items-center justify-center w-9 h-9">
+                  <span className="text-[10px] font-black uppercase">{user?.name?.charAt(0) || 'U'}</span>
+                </Link>
+                <button 
+                  onClick={logout}
+                  className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                  title="Logout"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setShowAuthModal(true)} className="text-[#722F38] hover:scale-110 transition-transform p-2.5 bg-[#722F38]/5 rounded-full hover:bg-[#722F38]/10 border border-[#722F38]/5">
+                <User className="w-4 h-4" />
+              </button>
+            )}
+
             {/* Cart */}
             <button
               onClick={toggleCart}
@@ -128,10 +152,33 @@ export default function Navbar() {
                   {link.label}
                 </Link>
               ))}
+              {isLoggedIn && (
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className={`text-base font-medium transition-colors py-2 border-t border-gray-50 pt-4 flex items-center gap-2 ${path === '/profile' ? 'text-[#722F38]' : 'text-[#3A3A3A]/70'}`}
+                >
+                  <User className="w-4 h-4" />
+                  My Profile
+                </Link>
+              )}
+              {isLoggedIn && (
+                <button
+                  onClick={() => {
+                    logout();
+                    setMobileOpen(false);
+                  }}
+                  className="text-base font-medium text-red-500 hover:text-red-600 transition-colors py-2 flex items-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Log Out
+                </button>
+              )}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
     </>
   );
 }

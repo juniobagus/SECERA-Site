@@ -1,7 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Save, User, Globe, CreditCard, Tag, Plus, Trash2, Loader2, Edit2, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Save, Globe, CreditCard, Tag, Plus, Trash2, Loader2, Edit2, X, MapPin, Search, MessageCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getCategories, createCategory, deleteCategory, updateCategory } from '../../utils/api';
+import { motion, AnimatePresence } from 'motion/react';
+import { getCategories, createCategory, deleteCategory, updateCategory, getSettings, updateSettings, searchDestination } from '../../utils/api';
+
+interface Suggestion {
+  id: number;
+  label: string;
+}
 
 export default function AdminSettings() {
   const [isSaving, setIsSaving] = useState(false);
@@ -12,6 +18,52 @@ export default function AdminSettings() {
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState('');
 
+  // Settings State
+  const [settings, setSettings] = useState({
+    shipping_origin_id: '',
+    shipping_origin_name: '',
+    whatsapp_number: '',
+    bank_account_info: '',
+  });
+
+  // Origin Autocomplete State
+  const [originSearch, setOriginSearch] = useState('');
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetchCategories();
+    fetchSettings();
+  }, []);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (originSearch.length >= 3 && originSearch !== settings.shipping_origin_name) {
+        setIsSearching(true);
+        const results = await searchDestination(originSearch);
+        setSuggestions(results);
+        setShowSuggestions(true);
+        setIsSearching(false);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [originSearch, settings.shipping_origin_name]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const fetchCategories = async () => {
     setIsLoadingCats(true);
     const data = await getCategories();
@@ -19,14 +71,32 @@ export default function AdminSettings() {
     setIsLoadingCats(false);
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  const fetchSettings = async () => {
+    const data = await getSettings();
+    setSettings({
+      shipping_origin_id: data.shipping_origin_id || '',
+      shipping_origin_name: data.shipping_origin_name || '',
+      whatsapp_number: data.whatsapp_number || '',
+      bank_account_info: data.bank_account_info || '',
+    });
+    setOriginSearch(data.shipping_origin_name || '');
+  };
+
+  const handleSaveSettings = async () => {
+    setIsSaving(true);
+    const loadingToast = toast.loading('Saving settings...');
+    try {
+      await updateSettings(settings);
+      toast.success('Settings saved successfully!', { id: loadingToast });
+    } catch (error) {
+      toast.error('Failed to save settings', { id: loadingToast });
+    }
+    setIsSaving(false);
+  };
 
   const handleAddCategory = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCategory.trim()) return;
-    
     const loadingToast = toast.loading('Adding category...');
     try {
       await createCategory(newCategory.trim());
@@ -65,23 +135,21 @@ export default function AdminSettings() {
     }
   };
 
-  const handleSave = () => {
-    setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      toast.success('General settings saved!');
-    }, 1000);
+  const handleSelectOrigin = (s: Suggestion) => {
+    setSettings({ ...settings, shipping_origin_id: String(s.id), shipping_origin_name: s.label });
+    setOriginSearch(s.label);
+    setShowSuggestions(false);
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto pb-20">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">General Settings</h1>
-          <p className="text-sm text-gray-500">Configure your store and account preferences.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Store Settings</h1>
+          <p className="text-sm text-gray-500">Manage your categories, shipping, and store info.</p>
         </div>
         <button 
-          onClick={handleSave}
+          onClick={handleSaveSettings}
           disabled={isSaving}
           className="bg-[#722F38] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#5a252d] transition-colors flex items-center gap-2 disabled:opacity-50"
         >
@@ -91,6 +159,98 @@ export default function AdminSettings() {
       </div>
 
       <div className="space-y-6">
+        {/* Shipping Origin Config */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+            <Globe className="w-5 h-5 text-[#722F38]" />
+            <h2 className="text-lg font-bold text-gray-900">Shipping Configuration</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div ref={searchRef} className="relative">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Origin (City/District)</label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  value={originSearch} 
+                  onChange={(e) => {
+                    setOriginSearch(e.target.value);
+                    if (e.target.value === '') setSettings({ ...settings, shipping_origin_id: '', shipping_origin_name: '' });
+                  }}
+                  placeholder="Type to search origin location..." 
+                  className="w-full px-10 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#722F38] animate-spin" />}
+              </div>
+              
+              <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }} 
+                    animate={{ opacity: 1, y: 0 }} 
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute z-50 w-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 max-h-60 overflow-y-auto"
+                  >
+                    {suggestions.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => handleSelectOrigin(s)}
+                        className="w-full px-4 py-3 text-left hover:bg-[#722F38]/5 flex items-start gap-3 border-b border-gray-50 last:border-0"
+                      >
+                        <MapPin className="w-4 h-4 text-[#722F38] mt-0.5 shrink-0" />
+                        <span className="text-sm font-medium text-gray-700">{s.label}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              <p className="text-xs text-gray-400 mt-2">Current Origin: <span className="font-bold text-[#722F38]">{settings.shipping_origin_name || 'Not set'}</span> (ID: {settings.shipping_origin_id || '-'})</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Store Info */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+            <MessageCircle className="w-5 h-5 text-[#722F38]" />
+            <h2 className="text-lg font-bold text-gray-900">WhatsApp & Contact</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Order Number</label>
+              <input 
+                type="text" 
+                value={settings.whatsapp_number}
+                onChange={e => setSettings({ ...settings, whatsapp_number: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                placeholder="e.g. 62812..." 
+              />
+              <p className="text-xs text-gray-400 mt-1">International format without + or spaces (e.g. 6281234567890).</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Methods */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+            <CreditCard className="w-5 h-5 text-[#722F38]" />
+            <h2 className="text-lg font-bold text-gray-900">Payment Instructions</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Bank Transfer Details</label>
+              <textarea 
+                rows={3} 
+                value={settings.bank_account_info}
+                onChange={e => setSettings({ ...settings, bank_account_info: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+              />
+              <p className="text-xs text-gray-400 mt-1">This information will be shown to customers after they place an order.</p>
+            </div>
+          </div>
+        </div>
+
         {/* Category Management */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="p-6 border-b border-gray-100 flex items-center justify-between">
@@ -134,7 +294,7 @@ export default function AdminSettings() {
                       <input 
                         type="checkbox" 
                         checked={selectedCats.length === categories.length && categories.length > 0}
-                        onChange={() => setSelectedCats(selectedCats.length === categories.length ? [] : categories.map(c => c.id))}
+                        onChange={() => setSelectedCats(selectedCats.length === categories.length ? [] : categories.map(c => String(c.id)))}
                         className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
                       />
                     </th>
@@ -154,13 +314,13 @@ export default function AdminSettings() {
                       <td className="px-4 py-3">
                         <input 
                           type="checkbox" 
-                          checked={selectedCats.includes(cat.id)}
-                          onChange={() => setSelectedCats(prev => prev.includes(cat.id) ? prev.filter(id => id !== cat.id) : [...prev, cat.id])}
+                          checked={selectedCats.includes(String(cat.id))}
+                          onChange={() => setSelectedCats(prev => prev.includes(String(cat.id)) ? prev.filter(id => id !== String(cat.id)) : [...prev, String(cat.id)])}
                           className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
                         />
                       </td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-700">
-                        {editingCatId === cat.id ? (
+                        {editingCatId === String(cat.id) ? (
                           <div className="flex items-center gap-2">
                             <input 
                               type="text" 
@@ -189,13 +349,13 @@ export default function AdminSettings() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button 
-                            onClick={() => { setEditingCatId(cat.id); setEditingCatName(cat.name); }}
+                            onClick={() => { setEditingCatId(String(cat.id)); setEditingCatName(cat.name); }}
                             className="p-1.5 text-gray-400 hover:text-[#722F38] transition-colors"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                           <button 
-                            onClick={() => { setSelectedCats([cat.id]); handleBulkDeleteCats(); }}
+                            onClick={() => { setSelectedCats([String(cat.id)]); handleBulkDeleteCats(); }}
                             className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -206,60 +366,6 @@ export default function AdminSettings() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Profile Section */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-            <User className="w-5 h-5 text-[#722F38]" />
-            <h2 className="text-lg font-bold text-gray-900">Admin Profile</h2>
-          </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
-              <input type="text" defaultValue="Secera Admin" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-              <input type="email" defaultValue="admin@secera.id" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" />
-            </div>
-          </div>
-        </div>
-
-        {/* Store Config */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-            <Globe className="w-5 h-5 text-[#722F38]" />
-            <h2 className="text-lg font-bold text-gray-900">Store Information</h2>
-          </div>
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp Order Number</label>
-              <input type="text" defaultValue="6285750990000" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" placeholder="e.g. 62812..." />
-              <p className="text-xs text-gray-400 mt-1">International format without + or spaces.</p>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Store Currency</label>
-              <select className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white">
-                <option value="IDR">IDR (Rp)</option>
-                <option value="USD">USD ($)</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Methods */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-            <CreditCard className="w-5 h-5 text-[#722F38]" />
-            <h2 className="text-lg font-bold text-gray-900">Payment Instructions</h2>
-          </div>
-          <div className="p-6 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Bank Transfer Details</label>
-              <textarea rows={3} defaultValue="Bank BCA&#10;A/N Secera Indonesia&#10;123-456-7890" className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" />
             </div>
           </div>
         </div>

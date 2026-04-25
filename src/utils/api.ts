@@ -253,3 +253,152 @@ export async function uploadImage(file: File): Promise<string | null> {
     return null;
   }
 }
+
+// === Settings ===
+
+export async function getSettings() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/settings`);
+    if (!response.ok) throw new Error('Failed to fetch settings');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getSettings):', error);
+    return {};
+  }
+}
+
+export async function updateSettings(settings: Record<string, any>) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    if (!response.ok) throw new Error('Failed to update settings');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (updateSettings):', error);
+    throw error;
+  }
+}
+
+// === Shipping (RajaOngkir) ===
+
+export async function searchDestination(query: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shipping/search?q=${encodeURIComponent(query)}`);
+    if (!response.ok) throw new Error('Failed to search');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (searchDestination):', error);
+    return [];
+  }
+}
+
+export async function getShippingCost(origin: string | number, destination: string | number, weight: number) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shipping/cost`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ origin, destination, weight, courier: 'jnt' }),
+    });
+    if (!response.ok) throw new Error('Failed to calculate shipping cost');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getShippingCost):', error);
+    return [];
+  }
+}
+
+// === Customer Auth ===
+
+export async function customerLogin(email: string, password: string) {
+  const response = await fetch(`${API_BASE_URL}/customer/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email, password }),
+  });
+  return { ok: response.ok, data: await response.json() };
+}
+
+export async function customerRegister(email: string, password: string, name: string, phone?: string) {
+  const response = await fetch(`${API_BASE_URL}/customer/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email, password, name, phone }),
+  });
+  return { ok: response.ok, data: await response.json() };
+}
+
+export async function updateProfile(profileData: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/customer/profile`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(profileData),
+    });
+    if (!response.ok) throw new Error('Failed to update profile');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (updateProfile):', error);
+    throw error;
+  }
+}
+
+// === Order Tracking ===
+
+export async function getMyOrders() {
+  try {
+    const token = localStorage.getItem('customer_token');
+    const response = await fetch(`${API_BASE_URL}/orders/my`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'include',
+    });
+    if (!response.ok) return [];
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getMyOrders):', error);
+    return [];
+  }
+}
+
+export async function lookupGuestOrder(orderId: string, phone: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/orders/lookup?order_id=${encodeURIComponent(orderId)}&phone=${encodeURIComponent(phone)}`);
+    if (!response.ok) {
+      const err = await response.json();
+      return { success: false, message: err.message };
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('API Error (lookupGuestOrder):', error);
+    return { success: false, message: 'Koneksi gagal' };
+  }
+}
+// === Customers (CRM) ===
+
+export async function getCustomers() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers`);
+    if (!response.ok) throw new Error('Failed to fetch customers');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getCustomers):', error);
+    return [];
+  }
+}
+
+export async function getCustomerByPhone(phone: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/customers/${phone}`);
+    if (!response.ok) throw new Error('Failed to fetch customer details');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getCustomerByPhone):', error);
+    return null;
+  }
+}

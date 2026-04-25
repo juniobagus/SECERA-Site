@@ -2,6 +2,22 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
+
+// Helper: extract customer user_id from token (optional)
+function getUserIdFromToken(req) {
+  const token = req.cookies.customer_token || req.headers.authorization?.split(' ')[1];
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role === 'customer') return decoded.id;
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
 
 // CREATE order
 router.post('/', async (req, res) => {
@@ -14,12 +30,15 @@ router.post('/', async (req, res) => {
       shipping_phone, 
       shipping_address, 
       shipping_city, 
-      shipping_postal_code, 
+      shipping_postal_code,
+      shipping_province_id,
+      shipping_city_id,
       notes,
       items 
     } = req.body;
 
     const orderId = uuidv4();
+    const userId = getUserIdFromToken(req);
     const connection = await db.getConnection();
 
     try {
@@ -27,8 +46,9 @@ router.post('/', async (req, res) => {
 
       // 1. Insert order
       await connection.query(
-        'INSERT INTO orders (id, total_amount, shipping_cost, discount_amount, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [orderId, total_amount, shipping_cost || 0, discount_amount || 0, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, notes || '']
+        `INSERT INTO orders (id, user_id, total_amount, shipping_cost, discount_amount, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, shipping_province_id, shipping_city_id, notes) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [orderId, userId, total_amount, shipping_cost || 0, discount_amount || 0, shipping_name, shipping_phone, shipping_address, shipping_city, shipping_postal_code, shipping_province_id || null, shipping_city_id || null, notes || '']
       );
 
       // 2. Insert items
@@ -79,6 +99,83 @@ router.get('/', async (req, res) => {
   }
 });
 
+// GET my orders (Customer — requires login)
+router.get('/my', async (req, res) => {
+  const userId = getUserIdFromToken(req);
+  if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+  try {
+    // Get user's phone to also find guest orders they placed with the same phone
+    const [userRows] = await db.query('SELECT phone FROM customer_users WHERE id = ?', [userId]);
+    const userPhone = userRows[0]?.phone;
+
+    const [orders] = await db.query(
+      'SELECT * FROM orders WHERE user_id = ? OR (shipping_phone = ? AND shipping_phone IS NOT NULL) ORDER BY created_at DESC',
+      [userId, userPhone]
+    );
+
+    for (const order of orders) {
+      const [items] = await db.query(
+        `SELECT oi.*, p.short_name as product_name, p.thumbnail_url 
+         FROM order_items oi
+         LEFT JOIN products p ON oi.product_id = p.id
+         WHERE oi.order_id = ?`,
+        [order.id]
+      );
+      order.items = items;
+    }
+
+    res.json(orders);
+  } catch (err) {
+    console.error('Error fetching my orders:', err);
+    res.status(500).json({ message: 'Error fetching orders' });
+  }
+});
+
+// GET guest order lookup (by phone OR order_id + phone)
+router.get('/lookup', async (req, res) => {
+  const { order_id, phone } = req.query;
+
+  if (!phone) {
+    return res.status(400).json({ message: 'Nomor HP wajib diisi' });
+  }
+
+  try {
+    let query = 'SELECT * FROM orders WHERE shipping_phone = ?';
+    let params = [phone];
+
+    if (order_id) {
+      query += ' AND id = ?';
+      params.push(order_id);
+    }
+
+    query += ' ORDER BY created_at DESC';
+
+    const [orders] = await db.query(query, params);
+
+    if (orders.length === 0) {
+      return res.status(404).json({ message: 'Pesanan tidak ditemukan dengan nomor HP tersebut.' });
+    }
+
+    // Fetch items for each order
+    for (const order of orders) {
+      const [items] = await db.query(
+        `SELECT oi.*, p.short_name as product_name, p.thumbnail_url 
+         FROM order_items oi
+         LEFT JOIN products p ON oi.product_id = p.id
+         WHERE oi.order_id = ?`,
+        [order.id]
+      );
+      order.items = items;
+    }
+
+    res.json({ success: true, orders });
+  } catch (err) {
+    console.error('Error looking up order:', err);
+    res.status(500).json({ message: 'Error looking up order' });
+  }
+});
+
 // GET order detail
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
@@ -105,10 +202,14 @@ router.get('/:id', async (req, res) => {
 // UPDATE order status
 router.patch('/:id/status', async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, tracking_number } = req.body;
 
   try {
-    await db.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+    if (tracking_number) {
+      await db.query('UPDATE orders SET status = ?, tracking_number = ? WHERE id = ?', [status, tracking_number, id]);
+    } else {
+      await db.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+    }
     res.json({ message: 'Order status updated successfully' });
   } catch (err) {
     console.error(err);

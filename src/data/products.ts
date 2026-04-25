@@ -23,15 +23,20 @@ export interface Product {
   thumbnail_url?: string;
   cms_content?: {
     features?: {
-      title: string;
-      items: { icon: string; title: string; description: string }[];
+      title?: string;
+      items: { icon: string; title: string; description?: string }[];
     };
     editorial?: {
       title: string;
       sections: { title: string; description: string; imageUrl: string; imagePosition: 'left' | 'right' }[];
     };
+    accordions?: {
+      material?: string;
+      specs?: string;
+      shipping?: string;
+    };
   };
-}
+};
 
 export const CATEGORIES = [
   'Semua',

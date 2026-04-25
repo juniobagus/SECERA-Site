@@ -359,7 +359,7 @@ export default function Home() {
           {/* Focal Carousel Container */}
           <div
             ref={ugcRef}
-            className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory px-[calc(50%-140px-6px)] md:px-[calc(50%-160px-6px)] py-10"
+            className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory px-[calc(50%-140px-6px)] md:px-[calc(50%-160px-6px)] py-20 -my-10"
             onScroll={handleUgcScroll}
           >
             {(cms.ugc.items?.length > 0 ? cms.ugc.items : []).map((ugcItem, index) => {
@@ -373,13 +373,12 @@ export default function Home() {
               return (
                 <motion.div
                   key={index}
-                  onClick={() => scrollToUgc(index)}
                   animate={{
                     scale: isActive ? 1.1 : 0.9,
                     opacity: isActive ? 1 : 0.5,
                   }}
                   transition={{ duration: 0.4 }}
-                  className="flex flex-col shrink-0 w-[280px] md:w-[320px] snap-center cursor-pointer"
+                  className="flex flex-col shrink-0 w-[280px] md:w-[320px] snap-center"
                 >
                   <div className="relative aspect-[9/16] bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500">
                     {tiktokId ? (
@@ -392,22 +391,35 @@ export default function Home() {
                   <motion.div
                     animate={{
                       opacity: isActive ? 1 : 0,
-                      y: isActive ? 0 : 10
+                      y: isActive ? 0 : 20
                     }}
+                    transition={{ duration: 0.5, delay: 0.1 }}
+                    className="w-full px-2 pb-6 pt-2"
                   >
                     {product && (
-                      <Link to={`/product/${product.id}`} className="flex items-center gap-4 px-2">
-                        <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#F1F2E9] shrink-0">
-                          <img src={thumbnail} alt={product.name} className="w-full h-full object-cover" />
+                      <Link 
+                        to={`/product/${product.id}`} 
+                        className="group flex items-center gap-4 p-4 bg-white rounded-[2rem] border border-slate-100/50 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-1"
+                      >
+                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#F1F2E9] shrink-0">
+                          <img 
+                            src={thumbnail} 
+                            alt={product.name} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
+                          />
                         </div>
-                        <div className="flex flex-col min-w-0">
-                          <span className="text-[10px] text-[#6E2B30]/50 uppercase tracking-widest font-bold truncate">{product.category}</span>
-                          <h4 className="text-sm font-medium text-[#6E2B30] truncate">{product.short_name}</h4>
-                          <div className="flex items-center justify-between gap-4 mt-1">
-                            <span className="text-sm font-bold text-[#6E2B30]">{formatPrice(firstVariant?.price ?? 0)}</span>
-                            <div className="w-6 h-6 rounded-full bg-[#6E2B30] text-white flex items-center justify-center">
-                              <Plus className="w-3 h-3" />
-                            </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[10px] text-[#6E2B30]/40 uppercase tracking-[0.15em] font-bold block mb-0.5">{product.category}</span>
+                          <h4 className="text-sm font-bold text-[#6E2B30] truncate mb-1">{product.short_name}</h4>
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-[#6E2B30]/80 tabular-nums">{formatPrice(firstVariant?.price ?? 0)}</span>
+                            <motion.div 
+                              whileHover={{ scale: 1.1, rotate: 90 }}
+                              whileTap={{ scale: 0.9 }}
+                              className="w-7 h-7 rounded-full bg-[#6E2B30] text-white flex items-center justify-center shadow-lg shadow-[#6E2B30]/20"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </motion.div>
                           </div>
                         </div>
                       </Link>

@@ -30,7 +30,8 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     tiktok_link: '',
     cms_content: {
       features: { title: 'What\'s in the box', items: [] },
-      editorial: { title: 'Features & Details', sections: [] }
+      editorial: { title: 'Features & Details', sections: [] },
+      accordions: { material: '', specs: '', shipping: '' }
     },
     variants: [{ id: 'v1', sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
   });
@@ -94,6 +95,11 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 videoUrl: section.videoUrl || '',
                 imagePosition: section.imagePosition || 'right'
               }))
+            },
+            accordions: {
+              material: product.cms_content?.accordions?.material || '',
+              specs: product.cms_content?.accordions?.specs || '',
+              shipping: product.cms_content?.accordions?.shipping || ''
             }
           }
         });
@@ -110,7 +116,8 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           tiktok_link: '',
           cms_content: {
             features: { title: 'What\'s in the box', items: [] },
-            editorial: { title: 'Features & Details', sections: [] }
+            editorial: { title: 'Features & Details', sections: [] },
+            accordions: { material: '', specs: '', shipping: '' }
           },
           variants: [{ id: generateId(), sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
         });
@@ -505,6 +512,71 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           {/* CMS TAB */}
           {activeTab === 'cms' && (
             <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              {/* Info Accordions */}
+              <div className="bg-gray-50/50 rounded-[2rem] p-8 border border-gray-100 space-y-8">
+                <div>
+                  <h3 className="text-sm font-bold text-gray-900">Product Information Accordions</h3>
+                  <p className="text-xs text-gray-400 mt-1">Details shown in collapsible sections on the product page</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" /> Material & Perawatan
+                    </label>
+                    <textarea 
+                      rows={5}
+                      value={formData.cms_content.accordions?.material}
+                      onChange={e => setFormData({
+                        ...formData,
+                        cms_content: {
+                          ...formData.cms_content,
+                          accordions: { ...formData.cms_content.accordions, material: e.target.value }
+                        }
+                      })}
+                      placeholder="Contoh: Dibuat dari Ceruty Babydoll Premium. Disarankan cuci dengan tangan..."
+                      className="w-full px-5 py-4 bg-white border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#722F38] resize-none leading-relaxed"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" /> Spesifikasi Produk
+                    </label>
+                    <textarea 
+                      rows={5}
+                      value={formData.cms_content.accordions?.specs}
+                      onChange={e => setFormData({
+                        ...formData,
+                        cms_content: {
+                          ...formData.cms_content,
+                          accordions: { ...formData.cms_content.accordions, specs: e.target.value }
+                        }
+                      })}
+                      placeholder="Contoh: Berat: 100g. Ukuran: All Size. Panjang Depan: 75cm..."
+                      className="w-full px-5 py-4 bg-white border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#722F38] resize-none leading-relaxed"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" /> Informasi Pengiriman
+                    </label>
+                    <textarea 
+                      rows={5}
+                      value={formData.cms_content.accordions?.shipping}
+                      onChange={e => setFormData({
+                        ...formData,
+                        cms_content: {
+                          ...formData.cms_content,
+                          accordions: { ...formData.cms_content.accordions, shipping: e.target.value }
+                        }
+                      })}
+                      placeholder="Contoh: Pengiriman dilakukan setiap hari Senin-Sabtu. Estimasi 2-4 hari kerja..."
+                      className="w-full px-5 py-4 bg-white border border-gray-100 rounded-2xl text-sm outline-none focus:border-[#722F38] resize-none leading-relaxed"
+                    />
+                  </div>
+                </div>
+              </div>
+
               {/* Features Section */}
               <div className="space-y-6">
                 <div className="flex justify-between items-center">

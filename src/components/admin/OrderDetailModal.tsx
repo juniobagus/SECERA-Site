@@ -76,12 +76,12 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                         <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                           <span className="font-medium text-gray-700">SKU: {item.variant_sku}</span>
                           <span className="text-gray-300">•</span>
-                          <span>Rp {formatPrice(item.price)}</span>
+                          <span>{formatPrice(item.price)}</span>
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-bold text-gray-900">x{item.quantity}</div>
-                        <div className="text-sm font-bold text-[#722F38]">Rp {formatPrice(item.price * item.quantity)}</div>
+                        <div className="text-sm font-bold text-[#722F38]">{formatPrice(item.price * item.quantity)}</div>
                       </div>
                     </div>
                   ))}
@@ -92,21 +92,21 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
               <div className="bg-gray-50 rounded-xl p-6 space-y-3">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>Rp {formatPrice(order.total_amount - (order.shipping_cost || 0) + (order.discount_amount || 0))}</span>
+                  <span>{formatPrice(order.items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Shipping Cost</span>
-                  <span>Rp {formatPrice(order.shipping_cost || 0)}</span>
+                  <span>{formatPrice(order.shipping_cost || 0)}</span>
                 </div>
                 {order.discount_amount > 0 && (
                   <div className="flex justify-between text-sm text-green-600">
                     <span>Discount</span>
-                    <span>-Rp {formatPrice(order.discount_amount)}</span>
+                    <span>-{formatPrice(order.discount_amount)}</span>
                   </div>
                 )}
                 <div className="pt-3 border-t border-gray-200 flex justify-between text-lg font-bold text-gray-900">
                   <span>Total Amount</span>
-                  <span className="text-[#722F38]">Rp {formatPrice(order.total_amount)}</span>
+                  <span className="text-[#722F38]">{formatPrice(order.total_amount)}</span>
                 </div>
               </div>
             </div>

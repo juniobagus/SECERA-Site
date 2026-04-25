@@ -170,9 +170,9 @@ export const initialCMSContent: CMSContent = {
       {
         title: "Belanja",
         items: [
-          { label: "Koleksi Baru", url: "#" },
+          { label: "Koleksi Baru", url: "/shop" },
+          { label: "Cek Status Pesanan", url: "/my-orders" },
           { label: "Signature Outer", url: "#" },
-          { label: "Aksesoris", url: "#" },
           { label: "Ulasan Pelanggan", url: "#" },
           { label: "Panduan Ukuran", url: "#" }
         ]

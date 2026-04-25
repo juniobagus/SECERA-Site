@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Package, ShoppingCart, Settings, LogOut, LayoutDashboard, Monitor } from 'lucide-react';
+import { Package, ShoppingCart, Settings, LogOut, LayoutDashboard, Monitor, Users } from 'lucide-react';
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -9,6 +9,7 @@ export default function AdminLayout() {
     { path: '/admin/cms', label: 'CMS', icon: Monitor },
     { path: '/admin/products', label: 'Products', icon: Package },
     { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
+    { path: '/admin/customers', label: 'Customers', icon: Users },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 

@@ -78,8 +78,25 @@ CREATE TABLE IF NOT EXISTS promo_products (
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS customer_users (
+    id VARCHAR(36) PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    address TEXT,
+    city VARCHAR(255),
+    province VARCHAR(255),
+    province_id INT,
+    city_id INT,
+    postal_code VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS orders (
     id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(36),
     status VARCHAR(50) DEFAULT 'pending',
     total_amount DECIMAL(15, 2) NOT NULL,
     shipping_cost DECIMAL(15, 2) DEFAULT 0,
@@ -89,9 +106,14 @@ CREATE TABLE IF NOT EXISTS orders (
     shipping_address TEXT NOT NULL,
     shipping_city VARCHAR(255) NOT NULL,
     shipping_postal_code VARCHAR(20) NOT NULL,
+    shipping_province_id INT,
+    shipping_city_id INT,
+    tracking_number VARCHAR(100),
+    shipping_courier VARCHAR(50) DEFAULT 'jnt',
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES customer_users(id) ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS order_items (
@@ -113,3 +135,17 @@ CREATE TABLE IF NOT EXISTS cms_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+
+-- Store Settings table
+CREATE TABLE IF NOT EXISTS settings (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- Initial default settings
+INSERT IGNORE INTO settings (setting_key, setting_value) VALUES 
+('shipping_origin_id', '69220'),
+('shipping_origin_name', 'Surabaya (Bubutan)'),
+('whatsapp_number', '6281234567890'),
+('bank_account_info', 'Bank BCA - 1234567890 - a.n. SECERA OFFICIAL');

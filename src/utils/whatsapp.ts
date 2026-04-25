@@ -55,12 +55,8 @@ export function generateWhatsAppMessage(
   return lines.join('\n');
 }
 
-export function openWhatsApp(message: string): void {
+export function openWhatsApp(message: string, phoneNumber?: string): void {
   const encoded = encodeURIComponent(message);
-  window.open(`https://wa.me/${ADMIN_PHONE}?text=${encoded}`, '_blank');
-}
-
-export function calculateShipping(subtotal: number): number {
-  // Free shipping for orders above Rp 200.000
-  return subtotal >= 200000 ? 0 : 15000;
+  const target = phoneNumber || ADMIN_PHONE;
+  window.open(`https://wa.me/${target}?text=${encoded}`, '_blank');
 }

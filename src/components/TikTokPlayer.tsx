@@ -9,39 +9,40 @@ interface TikTokPlayerProps {
 
 export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
   const [isMuted, setIsMuted] = useState(true);
-  const [isPaused, setIsPaused] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Track player readiness
   const [isReady, setIsReady] = useState(false);
 
-  // 1. Play/Pause Sync
+  // 1. Play Sync
   useEffect(() => {
     if (isReady && iframeRef.current?.contentWindow) {
-      const shouldBePlaying = isActive && !isPaused;
+      // Background play: always play regardless of isActive
       iframeRef.current.contentWindow.postMessage({
         'x-tiktok-player': true,
-        type: shouldBePlaying ? 'play' : 'pause'
+        type: 'play'
       }, '*');
     }
-  }, [isReady, isActive, isPaused]);
+  }, [isReady]);
+
+  // Determine actual mute state (force mute if inactive)
+  const isActuallyMuted = !isActive || isMuted;
 
   // 2. Mute/UnMute Sync
   useEffect(() => {
     if (isReady && iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage({
         'x-tiktok-player': true,
-        type: isMuted ? 'mute' : 'unMute'
+        type: isActuallyMuted ? 'mute' : 'unMute'
       }, '*');
     }
-  }, [isReady, isMuted]);
+  }, [isReady, isActuallyMuted]);
 
   // 3. Sync everything when player becomes ready
   useEffect(() => {
     if (isReady && iframeRef.current?.contentWindow) {
-      // Send initial states
-      iframeRef.current.contentWindow.postMessage({ 'x-tiktok-player': true, type: isMuted ? 'mute' : 'unMute' }, '*');
-      iframeRef.current.contentWindow.postMessage({ 'x-tiktok-player': true, type: (isActive && !isPaused) ? 'play' : 'pause' }, '*');
+      iframeRef.current.contentWindow.postMessage({ 'x-tiktok-player': true, type: isActuallyMuted ? 'mute' : 'unMute' }, '*');
+      iframeRef.current.contentWindow.postMessage({ 'x-tiktok-player': true, type: 'play' }, '*');
     }
   }, [isReady]);
 
@@ -68,12 +69,13 @@ export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Reset pause state when becoming active/inactive if needed
+  // We no longer track manual pause state
   useEffect(() => {
-    if (!isActive) {
-      setIsPaused(false); // Reset to play when scrolled away so it loops clean
+    // Ensuring it always plays when active
+    if (isActive && isReady && iframeRef.current?.contentWindow) {
+      iframeRef.current.contentWindow.postMessage({ 'x-tiktok-player': true, type: 'play' }, '*');
     }
-  }, [isActive]);
+  }, [isActive, isReady]);
 
   const embedUrl = `https://www.tiktok.com/player/v1/${videoId}?autoplay=1&muted=1&loop=1&volume_control=0&controls=0&volume=100`;
 
@@ -83,14 +85,10 @@ export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
     setIsMuted(newMuted);
   };
 
-  const togglePlay = () => {
-    setIsPaused(!isPaused);
-  };
 
   return (
     <div
-      className="relative w-full h-full overflow-hidden bg-black flex items-center justify-center cursor-pointer group"
-      onClick={togglePlay}
+      className="relative w-full h-full overflow-hidden bg-black flex items-center justify-center group"
     >
       {/* Skeleton / Placeholder */}
       <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
@@ -107,17 +105,7 @@ export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
           sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-scripts allow-top-navigation allow-same-origin"
         />
 
-        {/* Visual feedback for Pause state */}
-        <motion.div
-          animate={{ opacity: isPaused ? 1 : 0 }}
-          className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]"
-        >
-          <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/30">
-            <svg className="w-10 h-10 fill-current" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z" />
-            </svg>
-          </div>
-        </motion.div>
+
       </div>
 
       {/* Overlay UI */}

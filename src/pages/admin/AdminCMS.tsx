@@ -203,83 +203,70 @@ export default function AdminCMS() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
-      <div className="flex justify-between items-center mb-8">
+    <div className="max-w-4xl mx-auto">
+      {/* Sticky Header Bar */}
+      <div className="sticky top-[-2rem] z-30 -mx-8 px-8 py-6 mb-8 bg-gray-50/80 backdrop-blur-md border-b border-gray-200/50 flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Content Management System</h1>
-          <p className="text-sm text-gray-500">Manage your site text, hero sections, and FAQ.</p>
+          <p className="text-sm text-gray-500 font-medium">Manage your site text, hero sections, and FAQ.</p>
         </div>
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleSave}
           disabled={isSaving}
-          className="bg-[#722F38] text-white px-6 py-2 rounded-lg font-medium hover:bg-[#5a252d] transition-colors flex items-center gap-2 disabled:opacity-50"
+          className="bg-[#722F38] text-white px-8 py-3 rounded-2xl font-bold hover:bg-[#5a252d] transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-[#722F38]/20"
         >
           <Save className="w-4 h-4" />
           {isSaving ? 'Saving...' : 'Save CMS Changes'}
-        </button>
+        </motion.button>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 mb-8 border-b border-gray-200">
-        <button 
-          onClick={() => setActiveTab('home')}
-          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'home' ? 'text-[#722F38]' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <div className="flex items-center gap-2">
-            <Home className="w-4 h-4" />
-            Home Page
-          </div>
-          {activeTab === 'home' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#722F38]" />}
-        </button>
-        <button 
-          onClick={() => setActiveTab('about')}
-          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'about' ? 'text-[#722F38]' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4" />
-            About Page
-          </div>
-          {activeTab === 'about' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#722F38]" />}
-        </button>
-        <button 
-          onClick={() => setActiveTab('shop')}
-          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'shop' ? 'text-[#722F38]' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <div className="flex items-center gap-2">
-            <Search className="w-4 h-4" />
-            Shop Page
-          </div>
-          {activeTab === 'shop' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#722F38]" />}
-        </button>
-        <button 
-          onClick={() => setActiveTab('global')}
-          className={`pb-4 px-2 text-sm font-medium transition-colors relative ${activeTab === 'global' ? 'text-[#722F38]' : 'text-gray-500 hover:text-gray-700'}`}
-        >
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            Global Settings
-          </div>
-          {activeTab === 'global' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#722F38]" />}
-        </button>
+      <div className="pb-20">
+
+
+      {/* Modern Tabs */}
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-2xl mb-12 w-fit">
+        {[
+          { id: 'home', label: 'Home Page', icon: Home },
+          { id: 'about', label: 'About Page', icon: Info },
+          { id: 'shop', label: 'Shop Page', icon: Search },
+          { id: 'global', label: 'Global Settings', icon: Globe },
+        ].map((tab) => (
+          <button 
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all ${
+              activeTab === tab.id 
+                ? 'bg-white text-[#722F38] shadow-sm' 
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <div className="space-y-8">
         {activeTab === 'home' ? (
           <>
             {/* CMS: Hero Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Hero Section</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Hero Section</h2>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title</label>
                   <input 
                     type="text" 
                     value={homeContent.hero.title} 
                     onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, title: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div>
@@ -288,7 +275,7 @@ export default function AdminCMS() {
                     rows={2}
                     value={homeContent.hero.subtitle} 
                     onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, subtitle: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -298,7 +285,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.hero.cta} 
                       onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, cta: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                   <div>
@@ -307,7 +294,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.hero.link || ''} 
                       onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, link: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                       placeholder="/shop or https://..."
                     />
                   </div>
@@ -337,12 +324,14 @@ export default function AdminCMS() {
             </div>
 
             {/* CMS: Marquee Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-            <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Marquee (Scrolling Text)</h2>
-              </div>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">Marquee (Scrolling Text)</h2>
+                </div>
               <button 
                 onClick={() => {
                   const newItems = [...homeContent.marquee.items, ''];
@@ -353,7 +342,7 @@ export default function AdminCMS() {
                 <Plus className="w-4 h-4" /> Add Item
               </button>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-10 pt-6 space-y-6">
               <p className="text-xs text-gray-500 mb-2">These items will scroll horizontally across the home page.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 {homeContent.marquee.items.map((item, index) => (
@@ -385,14 +374,16 @@ export default function AdminCMS() {
           </div>
 
           {/* CMS: Product Showcase */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Star className="w-5 h-5 text-[#722F38]" />
-                  <h2 className="text-lg font-bold text-gray-900">Product Showcase</h2>
+                  <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                    <Star className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">Product Showcase</h2>
                 </div>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-10 pt-6 space-y-8">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
@@ -400,7 +391,7 @@ export default function AdminCMS() {
                       rows={2}
                       value={homeContent.showcase.title} 
                       onChange={(e) => setHomeContent({ ...homeContent, showcase: { ...homeContent.showcase, title: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                     />
                   </div>
                   <div>
@@ -409,7 +400,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.showcase.description} 
                       onChange={(e) => setHomeContent({ ...homeContent, showcase: { ...homeContent.showcase, description: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                 </div>
@@ -457,23 +448,25 @@ export default function AdminCMS() {
             </div>
 
             {/* CMS: UGC Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Video className="w-5 h-5 text-[#722F38]" />
-                  <h2 className="text-lg font-bold text-gray-900">UGC Section (Video Gallery)</h2>
+                  <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                    <Video className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">UGC Section (Video Gallery)</h2>
                 </div>
                 <button 
                   onClick={() => {
                     const newItems = [...homeContent.ugc.items, { videoUrl: '', productId: '', thumbnailUrl: '' }];
                     setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, items: newItems } });
                   }}
-                  className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
+                  className="text-sm font-bold text-[#722F38] flex items-center gap-2 px-4 py-2 bg-[#722F38]/5 rounded-xl hover:bg-[#722F38]/10 transition-all"
                 >
                   <Plus className="w-4 h-4" /> Add Video
                 </button>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-10 pt-6 space-y-8">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
@@ -481,7 +474,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.ugc.title} 
                       onChange={(e) => setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, title: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                   <div>
@@ -490,14 +483,14 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.ugc.subtitle} 
                       onChange={(e) => setHomeContent({ ...homeContent, ugc: { ...homeContent.ugc, subtitle: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {homeContent.ugc.items.map((item, index) => (
-                    <div key={index} className="p-4 bg-gray-50 rounded-xl relative group">
+                    <div key={index} className="p-6 bg-gray-50/50 border border-gray-100 rounded-[2rem] relative group">
                       <button 
                         onClick={() => {
                           const newItems = homeContent.ugc.items.filter((_, i) => i !== index);
@@ -556,23 +549,25 @@ export default function AdminCMS() {
             </div>
 
             {/* CMS: FAQ Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Globe className="w-5 h-5 text-[#722F38]" />
-                  <h2 className="text-lg font-bold text-gray-900">FAQ Section</h2>
+                  <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                    <Globe className="w-5 h-5" />
+                  </div>
+                  <h2 className="text-xl font-bold text-gray-900">FAQ Section</h2>
                 </div>
                 <button 
                   onClick={() => {
                     const newItems = [...homeContent.faq.items, { id: `faq-${Date.now()}`, question: '', answer: '' }];
                     setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
                   }}
-                  className="text-sm font-bold text-[#722F38] flex items-center gap-1 hover:underline"
+                  className="text-sm font-bold text-[#722F38] flex items-center gap-2 px-4 py-2 bg-[#722F38]/5 rounded-xl hover:bg-[#722F38]/10 transition-all"
                 >
                   <Plus className="w-4 h-4" /> Add FAQ
                 </button>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-10 pt-6 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
@@ -580,7 +575,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.faq.title} 
                       onChange={(e) => setHomeContent({ ...homeContent, faq: { ...homeContent.faq, title: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                   <div>
@@ -589,7 +584,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.faq.description} 
                       onChange={(e) => setHomeContent({ ...homeContent, faq: { ...homeContent.faq, description: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                 </div>
@@ -604,7 +599,7 @@ export default function AdminCMS() {
                     <Reorder.Item 
                       key={item.id || `faq-${index}`} 
                       value={item}
-                      className="p-4 bg-gray-50 rounded-xl relative group flex gap-4 items-start"
+                      className="p-6 bg-gray-50/50 border border-gray-100 rounded-[2rem] relative group flex gap-6 items-start shadow-sm"
                     >
                       <div className="mt-2 cursor-grab active:cursor-grabbing text-gray-400 hover:text-gray-600">
                         <GripVertical className="w-5 h-5" />
@@ -646,7 +641,7 @@ export default function AdminCMS() {
                               newItems[index].answer = e.target.value;
                               setHomeContent({ ...homeContent, faq: { ...homeContent.faq, items: newItems } });
                             }}
-                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white resize-none" 
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#722F38] outline-none bg-white resize-none font-medium text-sm" 
                           />
                         </div>
                       </div>
@@ -657,12 +652,14 @@ export default function AdminCMS() {
             </div>
 
             {/* Global CTA */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Bottom CTA Banner</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Bottom CTA Banner</h2>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-10 pt-6 space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">CTA Title</label>
@@ -670,7 +667,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.cta.title} 
                       onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, title: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                   <div>
@@ -679,7 +676,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.cta.description} 
                       onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, description: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                   <div>
@@ -688,7 +685,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.cta.buttonText} 
                       onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonText: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                   <div>
@@ -697,7 +694,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.cta.buttonLink || ''} 
                       onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonLink: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                       placeholder="/shop or https://..."
                     />
                   </div>
@@ -708,19 +705,21 @@ export default function AdminCMS() {
         ) : activeTab === 'about' ? (
           <>
             {/* About Page: Hero */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Hero Section</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Hero Section</h2>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title</label>
                   <input 
                     type="text" 
                     value={aboutContent.hero.title} 
                     onChange={(e) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, title: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div>
@@ -729,7 +728,7 @@ export default function AdminCMS() {
                     rows={3}
                     value={aboutContent.hero.subtitle} 
                     onChange={(e) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, subtitle: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -756,19 +755,21 @@ export default function AdminCMS() {
             </div>
 
             {/* About Page: Inspiration */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Inspiration Section</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Inspiration Section</h2>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
                   <textarea 
                     rows={2}
                     value={aboutContent.inspiration.subtitle} 
                     onChange={(e) => setAboutContent({ ...aboutContent, inspiration: { ...aboutContent.inspiration, subtitle: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <div>
@@ -777,7 +778,7 @@ export default function AdminCMS() {
                     rows={3}
                     value={aboutContent.inspiration.description1} 
                     onChange={(e) => setAboutContent({ ...aboutContent, inspiration: { ...aboutContent.inspiration, description1: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <div>
@@ -786,7 +787,7 @@ export default function AdminCMS() {
                     rows={3}
                     value={aboutContent.inspiration.description2} 
                     onChange={(e) => setAboutContent({ ...aboutContent, inspiration: { ...aboutContent.inspiration, description2: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <ImageUpload 
@@ -798,19 +799,21 @@ export default function AdminCMS() {
             </div>
 
             {/* About Page: Mission */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Mission Section</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Mission Section</h2>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Mission Subtitle</label>
                   <textarea 
                     rows={2}
                     value={aboutContent.mission.subtitle} 
                     onChange={(e) => setAboutContent({ ...aboutContent, mission: { ...aboutContent.mission, subtitle: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <div>
@@ -819,7 +822,7 @@ export default function AdminCMS() {
                     rows={3}
                     value={aboutContent.mission.description} 
                     onChange={(e) => setAboutContent({ ...aboutContent, mission: { ...aboutContent.mission, description: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
               </div>
@@ -828,19 +831,21 @@ export default function AdminCMS() {
         ) : activeTab === 'shop' ? (
           <>
             {/* Shop Page: Hero */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Hero Section</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Hero Section</h2>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Hero Title</label>
                   <input 
                     type="text" 
                     value={shopContent.hero.title} 
                     onChange={(e) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, title: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div>
@@ -849,7 +854,7 @@ export default function AdminCMS() {
                     rows={2}
                     value={shopContent.hero.subtitle} 
                     onChange={(e) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, subtitle: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -878,19 +883,21 @@ export default function AdminCMS() {
         ) : (
           <>
             {/* Global Settings: Site Information & SEO */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Site Information & SEO</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Site Information & SEO</h2>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Site Title</label>
                   <input 
                     type="text" 
                     value={homeContent.global?.siteTitle || ''} 
                     onChange={(e) => setHomeContent({ ...homeContent, global: { ...homeContent.global, siteTitle: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div>
@@ -899,7 +906,7 @@ export default function AdminCMS() {
                     rows={2}
                     value={homeContent.global?.seoDescription || ''} 
                     onChange={(e) => setHomeContent({ ...homeContent, global: { ...homeContent.global, seoDescription: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none" 
                   />
                 </div>
                 <div>
@@ -908,19 +915,21 @@ export default function AdminCMS() {
                     type="text" 
                     value={homeContent.global?.seoKeywords || ''} 
                     onChange={(e) => setHomeContent({ ...homeContent, global: { ...homeContent.global, seoKeywords: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
               </div>
             </div>
 
             {/* Global Settings: Social Media */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Social Media Links</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Social Media Links</h2>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
                   <input 
@@ -933,7 +942,7 @@ export default function AdminCMS() {
                         socialMedia: { ...homeContent.global.socialMedia, instagram: e.target.value } 
                       } 
                     })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div>
@@ -948,7 +957,7 @@ export default function AdminCMS() {
                         socialMedia: { ...homeContent.global.socialMedia, linkedin: e.target.value } 
                       } 
                     })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div>
@@ -963,26 +972,28 @@ export default function AdminCMS() {
                         socialMedia: { ...homeContent.global.socialMedia, twitter: e.target.value } 
                       } 
                     })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
               </div>
             </div>
 
             {/* Global Settings: Footer */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-              <div className="p-6 border-b border-gray-100 flex items-center gap-3">
-                <Globe className="w-5 h-5 text-[#722F38]" />
-                <h2 className="text-lg font-bold text-gray-900">Footer Settings</h2>
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Footer Settings</h2>
               </div>
-              <div className="p-6 space-y-4">
+              <div className="p-10 pt-6 space-y-8">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
                   <input 
                     type="text" 
                     value={homeContent.footer.tagline} 
                     onChange={(e) => setHomeContent({ ...homeContent, footer: { ...homeContent.footer, tagline: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div>
@@ -991,7 +1002,7 @@ export default function AdminCMS() {
                     type="text" 
                     value={homeContent.footer.copyright} 
                     onChange={(e) => setHomeContent({ ...homeContent, footer: { ...homeContent.footer, copyright: e.target.value } })}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1001,7 +1012,7 @@ export default function AdminCMS() {
                       type="email" 
                       value={homeContent.footer.email} 
                       onChange={(e) => setHomeContent({ ...homeContent, footer: { ...homeContent.footer, email: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                   <div>
@@ -1010,7 +1021,7 @@ export default function AdminCMS() {
                       type="text" 
                       value={homeContent.footer.phone} 
                       onChange={(e) => setHomeContent({ ...homeContent, footer: { ...homeContent.footer, phone: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                     />
                   </div>
                 </div>
@@ -1031,7 +1042,7 @@ export default function AdminCMS() {
                   
                   <div className="space-y-6">
                     {homeContent.footer.links.map((group, groupIdx) => (
-                      <div key={groupIdx} className="bg-gray-50 rounded-xl p-4 relative group/item">
+                      <div key={groupIdx} className="bg-gray-50/50 border border-gray-100 rounded-[2rem] p-6 relative group/item shadow-sm">
                         <button 
                           onClick={() => {
                             const newLinks = homeContent.footer.links.filter((_, i) => i !== groupIdx);
@@ -1053,7 +1064,7 @@ export default function AdminCMS() {
                                 newLinks[groupIdx].title = e.target.value;
                                 setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
                               }}
-                              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white font-bold" 
+                              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#722F38] outline-none bg-white font-bold" 
                             />
                           </div>
                           
@@ -1083,7 +1094,7 @@ export default function AdminCMS() {
                                     newLinks[groupIdx].items[itemIdx].label = e.target.value;
                                     setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
                                   }}
-                                  className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-[#722F38]" 
+                                  className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-xs outline-none focus:border-[#722F38] bg-white font-medium shadow-sm" 
                                 />
                                 <input 
                                   type="text" 
@@ -1094,7 +1105,7 @@ export default function AdminCMS() {
                                     newLinks[groupIdx].items[itemIdx].url = e.target.value;
                                     setHomeContent({ ...homeContent, footer: { ...homeContent.footer, links: newLinks } });
                                   }}
-                                  className="flex-1 px-3 py-1.5 border border-gray-200 rounded text-xs outline-none focus:border-[#722F38]" 
+                                  className="flex-1 px-4 py-2 border border-gray-100 rounded-xl text-xs outline-none focus:border-[#722F38] bg-white font-medium shadow-sm" 
                                 />
                                 <button 
                                   onClick={() => {
@@ -1120,5 +1131,6 @@ export default function AdminCMS() {
         )}
       </div>
     </div>
-  );
+  </div>
+);
 }

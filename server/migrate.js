@@ -21,6 +21,20 @@ async function migrate() {
     await connection.query(schema);
     console.log('Schema applied successfully.');
 
+    // Non-destructive migration: add new columns if they don't exist
+    console.log('Running migrations...');
+    const alterStatements = [
+      "ALTER TABLE orders ADD COLUMN user_id VARCHAR(36) AFTER id",
+      "ALTER TABLE orders ADD COLUMN shipping_province_id INT AFTER shipping_postal_code",
+      "ALTER TABLE orders ADD COLUMN shipping_city_id INT AFTER shipping_province_id",
+      "ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100) AFTER shipping_city_id",
+      "ALTER TABLE orders ADD COLUMN shipping_courier VARCHAR(50) DEFAULT 'jnt' AFTER tracking_number",
+    ];
+    for (const stmt of alterStatements) {
+      try { await connection.query(stmt); } catch (e) { /* column already exists */ }
+    }
+    console.log('Migrations completed.');
+
     // Seed CMS initial content if missing
     console.log('Checking CMS seed data...');
     
