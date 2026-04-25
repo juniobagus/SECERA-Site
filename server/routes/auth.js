@@ -8,6 +8,9 @@ const { v4: uuidv4 } = require('uuid'); // I need to install uuid
 // Secret for JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
+const { authenticator } = require('otplib');
+const qrcode = require('qrcode');
+
 // Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -22,6 +25,14 @@ router.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
       return res.status(401).json({ message: 'Email atau password salah' });
+    }
+
+    // Check if 2FA is enabled
+    if (user.two_factor_enabled) {
+      return res.json({ 
+        requires2FA: true, 
+        tempToken: jwt.sign({ id: user.id, purpose: '2fa_verify' }, JWT_SECRET, { expiresIn: '5m' }) 
+      });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
@@ -44,6 +55,87 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Verify 2FA during Login
+router.post('/login/2fa', async (req, res) => {
+  const { tempToken, code } = req.body;
+  try {
+    const decoded = jwt.verify(tempToken, JWT_SECRET);
+    if (decoded.purpose !== '2fa_verify') throw new Error('Invalid purpose');
+
+    const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [decoded.id]);
+    const user = rows[0];
+
+    const isValid = authenticator.check(code, user.two_factor_secret);
+    if (!isValid) {
+      return res.status(401).json({ message: 'Kode 2FA tidak valid' });
+    }
+
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000
+    });
+
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role
+      },
+      token
+    });
+  } catch (err) {
+    res.status(401).json({ message: 'Sesi verifikasi berakhir atau tidak valid' });
+  }
+});
+
+// Setup 2FA
+router.post('/2fa/setup', async (req, res) => {
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const secret = authenticator.generateSecret();
+    const otpauth = authenticator.keyuri(decoded.email, 'SECERA Admin', secret);
+    const qrCodeUrl = await qrcode.toDataURL(otpauth);
+
+    await db.query('UPDATE users SET two_factor_secret = ? WHERE id = ?', [secret, decoded.id]);
+
+    res.json({ secret, qrCodeUrl });
+  } catch (err) {
+    console.error('2FA Setup Error:', err);
+    res.status(500).json({ message: 'Error setting up 2FA' });
+  }
+});
+
+// Enable 2FA after verification
+router.post('/2fa/enable', async (req, res) => {
+  const { code } = req.body;
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const [rows] = await db.query('SELECT two_factor_secret FROM users WHERE id = ?', [decoded.id]);
+    const secret = rows[0].two_factor_secret;
+
+    const isValid = authenticator.check(code, secret);
+    if (!isValid) {
+      return res.status(400).json({ message: 'Kode tidak valid' });
+    }
+
+    await db.query('UPDATE users SET two_factor_enabled = TRUE WHERE id = ?', [decoded.id]);
+    res.json({ success: true, message: '2FA enabled successfully' });
+  } catch (err) {
+    console.error('2FA Enable Error:', err);
+    res.status(500).json({ message: 'Error enabling 2FA' });
   }
 });
 
@@ -77,7 +169,7 @@ router.get('/session', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const [rows] = await db.query('SELECT id, email, name, role FROM users WHERE id = ?', [decoded.id]);
+    const [rows] = await db.query('SELECT id, email, name, role, two_factor_enabled FROM users WHERE id = ?', [decoded.id]);
     if (rows.length === 0) return res.status(401).json({ message: 'User not found' });
 
     res.json({ user: rows[0] });

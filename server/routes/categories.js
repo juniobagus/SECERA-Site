@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const crypto = require('crypto');
+const { authenticateAdmin } = require('../middleware/auth');
 
 // GET all categories
 router.get('/', async (req, res) => {
@@ -15,7 +16,7 @@ router.get('/', async (req, res) => {
 });
 
 // CREATE category
-router.post('/', async (req, res) => {
+router.post('/', authenticateAdmin, async (req, res) => {
   const { name } = req.body;
   if (!name) return res.status(400).json({ message: 'Name is required' });
 
@@ -35,7 +36,7 @@ router.post('/', async (req, res) => {
 });
 
 // UPDATE category
-router.patch('/:id', async (req, res) => {
+router.patch('/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { name } = req.body;
   if (!name) return res.status(400).json({ message: 'Name is required' });
@@ -55,7 +56,7 @@ router.patch('/:id', async (req, res) => {
 });
 
 // DELETE category
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   try {
     await db.query('DELETE FROM categories WHERE id = ?', [id]);

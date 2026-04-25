@@ -18,6 +18,9 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [captcha, setCaptcha] = useState('');
+  const [captchaUrl, setCaptchaUrl] = useState('');
+  const [captchaKey, setCaptchaKey] = useState(0); // To force image refresh
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,8 +37,11 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
           setLoading(false);
           return;
         }
-        const result = await register(email, password, name, phone);
-        if (!result.success) setError(result.message || 'Registrasi gagal');
+        const result = await register(email, password, name, phone, captcha);
+        if (!result.success) {
+          setError(result.message || 'Registrasi gagal');
+          refreshCaptcha(); // Refresh on failure
+        }
       }
     } catch {
       setError('Terjadi kesalahan. Coba lagi.');
@@ -47,6 +53,15 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
   function switchTab(newTab: 'login' | 'register') {
     setTab(newTab);
     setError('');
+    if (newTab === 'register') {
+      refreshCaptcha();
+    }
+  }
+
+  function refreshCaptcha() {
+    setCaptchaUrl(`/api/captcha/generate?t=${Date.now()}`);
+    setCaptcha('');
+    setCaptchaKey(prev => prev + 1);
   }
 
   return (
@@ -171,6 +186,41 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+
+            {tab === 'register' && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="bg-zinc-50 rounded-2xl h-12 flex-1 flex items-center justify-center overflow-hidden border border-zinc-100 cursor-pointer"
+                    onClick={refreshCaptcha}
+                    title="Klik untuk segarkan captcha"
+                  >
+                    {captchaUrl && (
+                      <img 
+                        src={captchaUrl} 
+                        alt="Captcha" 
+                        className="h-full w-auto object-contain"
+                      />
+                    )}
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={refreshCaptcha}
+                    className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest hover:underline px-2"
+                  >
+                    Segarkan
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Masukkan kode di atas"
+                  value={captcha}
+                  onChange={(e) => setCaptcha(e.target.value)}
+                  required
+                  className="w-full bg-zinc-50 rounded-2xl px-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all text-center font-bold tracking-widest"
+                />
+              </div>
+            )}
 
             {/* Error */}
             {error && (

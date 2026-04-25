@@ -100,7 +100,7 @@ export default function TikTokPlayer({ videoId, isActive }: TikTokPlayerProps) {
           ref={iframeRef}
           src={embedUrl}
           className="w-full h-full border-none pointer-events-none"
-          allow="autoplay; fullscreen; accelerometer; gyroscope; encrypted-media; picture-in-picture; web-share; unload"
+          allow="autoplay; fullscreen; accelerometer; gyroscope; encrypted-media; picture-in-picture; web-share"
           title="TikTok Video Player"
           sandbox="allow-forms allow-popups allow-popups-to-escape-sandbox allow-scripts allow-top-navigation allow-same-origin"
         />

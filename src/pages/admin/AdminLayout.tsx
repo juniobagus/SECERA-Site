@@ -1,8 +1,16 @@
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Package, ShoppingCart, Settings, LogOut, LayoutDashboard, Monitor, Users } from 'lucide-react';
+import { useAdminAuth } from '../../context/AdminAuthContext';
 
 export default function AdminLayout() {
+  const { admin, logout } = useAdminAuth();
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/admin/login');
+  };
 
   const menuItems = [
     { path: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -43,7 +51,10 @@ export default function AdminLayout() {
         </nav>
 
         <div className="p-4 border-t border-gray-200">
-          <button className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+          <button 
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+          >
             <LogOut className="w-5 h-5 mr-3 shrink-0" />
             Sign Out
           </button>
@@ -56,7 +67,7 @@ export default function AdminLayout() {
           <div className="flex-1"></div>
           <div className="flex items-center gap-4">
             <div className="w-8 h-8 rounded-full bg-[#722F38]/10 flex items-center justify-center text-[#722F38] font-bold text-sm">
-              A
+              {admin?.name?.charAt(0) || 'A'}
             </div>
           </div>
         </header>

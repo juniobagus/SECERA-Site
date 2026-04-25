@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { authenticateAdmin } = require('../middleware/auth');
 
 // GET CMS content
 router.get('/:key', async (req, res) => {
@@ -26,7 +27,7 @@ router.get('/:key', async (req, res) => {
 });
 
 // SAVE CMS content
-router.post('/:key', async (req, res) => {
+router.post('/:key', authenticateAdmin, async (req, res) => {
   const { key } = req.params;
   const content = req.body;
   console.log('Saving CMS content for key:', key);

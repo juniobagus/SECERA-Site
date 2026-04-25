@@ -1,12 +1,35 @@
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const rateLimit = require('express-rate-limit');
 require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Rate Limiter for general API
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 attempts
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Terlalu banyak percobaan login, silakan coba lagi dalam 15 menit.' }
+});
+
 // Middleware
+app.use(apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/customer/login', authLimiter);
+app.use('/api/customer/register', authLimiter);
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true
@@ -30,10 +53,12 @@ const uploadRoutes = require('./routes/uploads');
 const shippingRoutes = require('./routes/shipping');
 const settingsRoutes = require('./routes/cms_settings');
 const customerRoutes = require('./routes/customers');
+const captchaRoutes = require('./routes/captcha');
 const path = require('path');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/customer', customerAuthRoutes);
+app.use('/api/captcha', captchaRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/orders', orderRoutes);

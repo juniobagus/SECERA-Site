@@ -2,22 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
-
-// Middleware to check auth (simplified for now)
-const authenticate = async (req, res, next) => {
-  // Bypassing auth for development to allow testing CRUD without login screen
-  return next();
-  
-  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'Unauthorized' });
-  try {
-    const decoded = require('jsonwebtoken').verify(token, process.env.JWT_SECRET || 'your_secret_key');
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-};
+const { authenticateAdmin } = require('../middleware/auth');
 
 // GET all products with variants and images
 router.get('/', async (req, res) => {
@@ -81,9 +66,9 @@ router.get('/:id', async (req, res) => {
 });
 
 // CREATE product
-router.post('/', authenticate, async (req, res) => {
+router.post('/', authenticateAdmin, async (req, res) => {
   const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content, variants, images } = req.body;
-  const productId = crypto.randomUUID();
+  const productId = uuidv4();
 
   const connection = await db.getConnection();
   try {
@@ -101,7 +86,7 @@ router.post('/', authenticate, async (req, res) => {
         const v = variants[i];
         await connection.query(
           'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
+          [uuidv4(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
         );
       }
     }
@@ -111,7 +96,7 @@ router.post('/', authenticate, async (req, res) => {
       for (let i = 0; i < images.length; i++) {
         await connection.query(
           'INSERT INTO product_images (id, product_id, image_url, display_order) VALUES (?, ?, ?, ?)',
-          [crypto.randomUUID(), productId, images[i].url || images[i], i]
+          [uuidv4(), productId, images[i].url || images[i], i]
         );
       }
     }
@@ -128,7 +113,7 @@ router.post('/', authenticate, async (req, res) => {
 });
 
 // UPDATE product
-router.put('/:id', authenticate, async (req, res) => {
+router.put('/:id', authenticateAdmin, async (req, res) => {
   const productId = req.params.id;
   const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content, variants, images } = req.body;
 
@@ -149,7 +134,7 @@ router.put('/:id', authenticate, async (req, res) => {
         const v = variants[i];
         await connection.query(
           'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
+          [uuidv4(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
         );
       }
     }
@@ -177,7 +162,7 @@ router.put('/:id', authenticate, async (req, res) => {
 });
 
 // PATCH product (partial update)
-router.patch('/:id', authenticate, async (req, res) => {
+router.patch('/:id', authenticateAdmin, async (req, res) => {
   const productId = req.params.id;
   const updates = { ...req.body };
   
@@ -213,7 +198,7 @@ router.patch('/:id', authenticate, async (req, res) => {
           const v = variants[i];
           await connection.query(
             'INSERT INTO product_variants (id, product_id, sku, color, option_name, price, promo_price, cost_price, stock, is_bundle, image_url, display_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [crypto.randomUUID(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
+            [uuidv4(), productId, v.sku || null, v.color || null, v.option_name || v.option || null, v.price || 0, v.promo_price || v.promoPrice || null, v.cost_price || 0, v.stock || 0, v.is_bundle || false, v.image_url || v.image || null, i]
           );
         }
       }
@@ -244,7 +229,7 @@ router.patch('/:id', authenticate, async (req, res) => {
 });
 
 // DELETE product
-router.delete('/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticateAdmin, async (req, res) => {
   try {
     const productId = req.params.id;
     

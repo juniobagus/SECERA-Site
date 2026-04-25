@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
+const { authenticateAdmin } = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
@@ -83,7 +84,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET all orders (Admin)
-router.get('/', async (req, res) => {
+router.get('/', authenticateAdmin, async (req, res) => {
   try {
     const [orders] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
     
@@ -200,7 +201,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // UPDATE order status
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { status, tracking_number } = req.body;
 

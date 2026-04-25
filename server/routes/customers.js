@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { authenticateAdmin } = require('../middleware/auth');
 
 // GET all customers (Aggregated from orders and users)
-router.get('/', async (req, res) => {
+router.get('/', authenticateAdmin, async (req, res) => {
   try {
     const [customers] = await db.query(`
       WITH all_phones AS (

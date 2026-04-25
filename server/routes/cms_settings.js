@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const { authenticateAdmin } = require('../middleware/auth');
 
 // GET all settings
 router.get('/', async (req, res) => {
@@ -17,7 +18,7 @@ router.get('/', async (req, res) => {
 });
 
 // UPDATE settings
-router.post('/', async (req, res) => {
+router.post('/', authenticateAdmin, async (req, res) => {
   const settings = req.body; // { key: value, ... }
   try {
     for (const [key, value] of Object.entries(settings)) {

@@ -9,13 +9,29 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
 // Register customer
 router.post('/register', async (req, res) => {
-  const { email, password, name, phone } = req.body;
+  const { email, password, name, phone, captcha } = req.body;
+  const captchaToken = req.cookies.captcha_token;
 
   if (!email || !password || !name) {
     return res.status(400).json({ message: 'Email, password, dan nama wajib diisi' });
   }
 
+  if (!captcha) {
+    return res.status(400).json({ message: 'Captcha wajib diisi' });
+  }
+
   try {
+    // Verify Captcha
+    if (!captchaToken) {
+      return res.status(400).json({ message: 'Captcha kedaluwarsa, silakan segarkan halaman' });
+    }
+
+    const decodedCaptcha = jwt.verify(captchaToken, JWT_SECRET);
+    if (decodedCaptcha.text !== captcha.toLowerCase()) {
+      return res.status(400).json({ message: 'Kode Captcha salah' });
+    }
+
+    res.clearCookie('captcha_token'); // Clear after use
     const [existing] = await db.query('SELECT id FROM customer_users WHERE email = ?', [email]);
     if (existing.length > 0) {
       return res.status(400).json({ message: 'Email sudah terdaftar' });

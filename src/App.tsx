@@ -2,6 +2,8 @@ import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom
 import { Toaster } from 'react-hot-toast';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
+import { AdminAuthProvider, useAdminAuth } from './context/AdminAuthContext';
+import { Navigate } from 'react-router-dom';
 import SmoothScroll from './components/SmoothScroll';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -26,6 +28,7 @@ import AdminOrders from './pages/admin/AdminOrders';
 import AdminCMS from './pages/admin/AdminCMS';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminCustomers from './pages/admin/AdminCustomers';
+import AdminLogin from './pages/admin/AdminLogin';
 
 function StorefrontLayout() {
   return (
@@ -39,6 +42,24 @@ function StorefrontLayout() {
   );
 }
 
+function AdminProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAdminAuth();
+  
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gray-50">
+        <div className="w-10 h-10 border-4 border-[#722F38]/20 border-t-[#722F38] rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <Router>
@@ -46,16 +67,18 @@ export default function App() {
         <CartProvider>
           <ScrollToTop />
           <Toaster position="top-center" reverseOrder={false} />
-          <Routes>
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<AdminDashboard />} />
-              <Route path="cms" element={<AdminCMS />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="orders" element={<AdminOrders />} />
-              <Route path="customers" element={<AdminCustomers />} />
-              <Route path="settings" element={<AdminSettings />} />
-            </Route>
+          <AdminAuthProvider>
+            <Routes>
+              {/* Admin Routes */}
+              <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/admin" element={<AdminProtectedRoute><AdminLayout /></AdminProtectedRoute>}>
+                <Route index element={<AdminDashboard />} />
+                <Route path="cms" element={<AdminCMS />} />
+                <Route path="products" element={<AdminProducts />} />
+                <Route path="orders" element={<AdminOrders />} />
+                <Route path="customers" element={<AdminCustomers />} />
+                <Route path="settings" element={<AdminSettings />} />
+              </Route>
 
             {/* Storefront Routes */}
             <Route element={<StorefrontLayout />}>
@@ -67,7 +90,8 @@ export default function App() {
               <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/profile" element={<Profile />} />
             </Route>
-          </Routes>
+            </Routes>
+          </AdminAuthProvider>
         </CartProvider>
       </AuthProvider>
     </Router>

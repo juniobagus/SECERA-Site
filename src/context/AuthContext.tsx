@@ -20,7 +20,7 @@ interface AuthContextType {
   showAuthModal: boolean;
   setShowAuthModal: (show: boolean) => void;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
-  register: (email: string, password: string, name: string, phone?: string) => Promise<{ success: boolean; message?: string }>;
+  register: (email: string, password: string, name: string, phone?: string, captcha?: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -86,13 +86,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function register(email: string, password: string, name: string, phone?: string) {
+  async function register(email: string, password: string, name: string, phone?: string, captcha?: string) {
     try {
       const response = await fetch('/api/customer/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ email, password, name, phone }),
+        body: JSON.stringify({ email, password, name, phone, captcha }),
       });
 
       const data = await response.json();
