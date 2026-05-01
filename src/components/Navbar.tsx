@@ -58,10 +58,10 @@ export default function Navbar() {
   }, []);
 
   const links = [
-    { to: '/', label: 'Home' },
-    { to: '/shop', label: 'Shop' },
-    { to: '/my-orders', label: 'Orders' },
-    { to: '/about', label: 'About' },
+    { to: '/', label: 'Beranda' },
+    { to: '/shop', label: 'Koleksi' },
+    { to: '/my-orders', label: 'Pesanan Saya' },
+    { to: '/about', label: 'Tentang' },
   ];
 
   return (
@@ -193,7 +193,7 @@ export default function Navbar() {
                   className={`text-label py-2 border-t border-gray-50 pt-4 flex items-center gap-2 ${path === '/profile' ? 'text-[#722F38]' : 'text-[#3A3A3A]/70'}`}
                 >
                   <User className="w-4 h-4" />
-                  My Profile
+                  Profil Saya
                 </Link>
               )}
               {isLoggedIn && (
@@ -205,7 +205,7 @@ export default function Navbar() {
                   className="text-label text-red-500 hover:text-red-600 py-2 flex items-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
-                  Log Out
+                  Keluar
                 </button>
               )}
             </div>

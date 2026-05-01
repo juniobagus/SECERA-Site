@@ -107,13 +107,41 @@ export default function Profile() {
           </div>
 
           <div className="bg-[#722F38] rounded-3xl p-8 text-white shadow-xl shadow-[#722F38]/20">
+            <h3 className="font-bold mb-2">Klaim Pesanan</h3>
+            <p className="text-xs text-white/70 mb-4 leading-relaxed">Pernah berbelanja sebagai Guest? Klaim pesanan Anda berdasarkan nomor HP yang terdaftar.</p>
+            <button 
+              onClick={async () => {
+                if (!user.phone) {
+                  toast.error('Silakan simpan nomor WhatsApp di profil terlebih dahulu');
+                  return;
+                }
+                setIsLoading(true);
+                const { claimGuestOrder } = await import('../utils/api');
+                const res = await claimGuestOrder(user.phone);
+                setIsLoading(false);
+                if (res.success) {
+                  toast.success(`Berhasil mengklaim ${res.claimed_count} pesanan`);
+                  // reload page to fetch orders
+                  window.location.reload();
+                } else {
+                  toast.error(res.message);
+                }
+              }}
+              disabled={isLoading}
+              className="w-full py-3 bg-white text-[#722F38] rounded-xl text-xs font-bold hover:bg-gray-100 transition-all block text-center disabled:opacity-70"
+            >
+              Klaim Sekarang
+            </button>
+          </div>
+
+          <div className="bg-gray-50 rounded-3xl p-8 text-gray-900 shadow-sm border border-gray-100">
             <h3 className="font-bold mb-2">Punya Pertanyaan?</h3>
-            <p className="text-xs text-white/70 mb-4 leading-relaxed">Hubungi Customer Service kami jika Anda mengalami kesulitan dalam mengelola akun.</p>
+            <p className="text-xs text-gray-500 mb-4 leading-relaxed">Hubungi Customer Service kami jika Anda mengalami kesulitan dalam mengelola akun.</p>
             <a 
               href={`https://wa.me/${waNumber}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 bg-white text-[#722F38] rounded-xl text-xs font-bold hover:bg-gray-100 transition-all block text-center"
+              className="w-full py-3 bg-[#722F38] text-white rounded-xl text-xs font-bold hover:bg-[#5a252d] transition-all block text-center"
             >
               Hubungi WhatsApp
             </a>

@@ -58,6 +58,7 @@ const shippingRoutes = require('./routes/shipping');
 const settingsRoutes = require('./routes/cms_settings');
 const customerRoutes = require('./routes/customers');
 const captchaRoutes = require('./routes/captcha');
+const notificationRoutes = require('./routes/notifications');
 const path = require('path');
 
 app.use('/api/auth', authRoutes);
@@ -71,6 +72,7 @@ app.use('/api/uploads', uploadRoutes);
 app.use('/api/shipping', shippingRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/customers', customerRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));

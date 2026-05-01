@@ -66,7 +66,7 @@ export default function Shop() {
 
       <div id="koleksi" className="scroll-mt-20">
         {/* Full-width Sticky Category Filter */}
-        <div className="sticky top-[48px] md:top-[56px] z-30 w-full bg-paper/95 backdrop-blur-xl border-b border-brand-wine/10">
+        <div className="sticky top-[64px] md:top-[56px] z-30 w-full bg-paper/95 backdrop-blur-xl border-b border-brand-wine/10">
           <div className="max-w-[1400px] mx-auto px-4 md:px-10 py-4 md:py-6">
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (

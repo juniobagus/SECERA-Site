@@ -113,4 +113,19 @@ router.post('/cost', async (req, res) => {
   } catch (err) { res.status(500).json({ message: 'Error' }); }
 });
 
+router.get('/track', async (req, res) => {
+  const { resi, courier } = req.query;
+  if (!resi) return res.status(400).json({ message: 'Resi is required' });
+  
+  try {
+    const result = await komerceGet(`/tracking/waybill?waybill=${encodeURIComponent(resi)}&courier=${encodeURIComponent(courier || 'jnt')}`);
+    if (result.meta?.status !== 'success') return res.status(500).json({ message: 'Error tracking waybill', details: result });
+    
+    res.json(result.data);
+  } catch (err) {
+    console.error('Error tracking:', err);
+    res.status(500).json({ message: 'Error tracking' });
+  }
+});
+
 module.exports = router;

@@ -28,7 +28,8 @@ async function migrate() {
       "ALTER TABLE orders ADD COLUMN shipping_province_id INT AFTER shipping_postal_code",
       "ALTER TABLE orders ADD COLUMN shipping_city_id INT AFTER shipping_province_id",
       "ALTER TABLE orders ADD COLUMN tracking_number VARCHAR(100) AFTER shipping_city_id",
-      "ALTER TABLE orders ADD COLUMN shipping_courier VARCHAR(50) DEFAULT 'jnt' AFTER tracking_number",
+      "ALTER TABLE orders ADD COLUMN payment_proof_url VARCHAR(255) AFTER tracking_number",
+      "ALTER TABLE orders ADD COLUMN shipping_courier VARCHAR(50) DEFAULT 'jnt' AFTER payment_proof_url",
     ];
     for (const stmt of alterStatements) {
       try { await connection.query(stmt); } catch (e) { /* column already exists */ }

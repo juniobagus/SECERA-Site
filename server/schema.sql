@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS orders (
     shipping_province_id INT,
     shipping_city_id INT,
     tracking_number VARCHAR(100),
+    payment_proof_url VARCHAR(255),
     shipping_courier VARCHAR(50) DEFAULT 'jnt',
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -149,3 +150,12 @@ INSERT IGNORE INTO settings (setting_key, setting_value) VALUES
 ('shipping_origin_name', 'Surabaya (Bubutan)'),
 ('whatsapp_number', '6281234567890'),
 ('bank_account_info', 'Bank BCA - 1234567890 - a.n. SECERA OFFICIAL');
+
+CREATE TABLE IF NOT EXISTS notifications (
+    id VARCHAR(36) PRIMARY KEY,
+    type VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    data JSON,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

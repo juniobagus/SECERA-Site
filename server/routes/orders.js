@@ -177,6 +177,27 @@ router.get('/lookup', async (req, res) => {
   }
 });
 
+// POST claim guest orders
+router.post('/claim', async (req, res) => {
+  const userId = getUserIdFromToken(req);
+  if (!userId) return res.status(401).json({ message: 'Not authenticated' });
+
+  const { phone } = req.body;
+  if (!phone) return res.status(400).json({ message: 'Nomor HP wajib diisi' });
+
+  try {
+    const [result] = await db.query(
+      'UPDATE orders SET user_id = ? WHERE shipping_phone = ? AND user_id IS NULL',
+      [userId, phone]
+    );
+
+    res.json({ success: true, message: 'Pesanan berhasil diklaim', claimed_count: result.affectedRows });
+  } catch (err) {
+    console.error('Error claiming order:', err);
+    res.status(500).json({ message: 'Error claiming order' });
+  }
+});
+
 // GET order detail
 router.get('/:id', async (req, res) => {
   const { id } = req.params;
@@ -200,13 +221,13 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// UPDATE order status
+// UPDATE order status (Admin)
 router.patch('/:id/status', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   const { status, tracking_number } = req.body;
 
   try {
-    if (tracking_number) {
+    if (tracking_number !== undefined) {
       await db.query('UPDATE orders SET status = ?, tracking_number = ? WHERE id = ?', [status, tracking_number, id]);
     } else {
       await db.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
@@ -215,6 +236,36 @@ router.patch('/:id/status', authenticateAdmin, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error updating order status' });
+  }
+});
+
+// PATCH payment proof (Customer)
+router.patch('/:id/payment-proof', async (req, res) => {
+  const { id } = req.params;
+  const { payment_proof_url } = req.body;
+  const userId = getUserIdFromToken(req);
+
+  // Allow guest (no userId) to upload if they know the order ID.
+  // In a real app we'd verify phone number matching for guests, but here we keep it simple since UUID is hard to guess.
+
+  try {
+    if (!payment_proof_url) return res.status(400).json({ message: 'URL bukti pembayaran wajib diisi' });
+    
+    await db.query('UPDATE orders SET payment_proof_url = ?, status = "waiting_confirmation" WHERE id = ?', [payment_proof_url, id]);
+    
+    // Create notification for admin
+    await db.query(
+      'INSERT INTO notifications (id, type, message, data) VALUES (?, ?, ?, ?)',
+      [uuidv4(), 'payment_uploaded', `Bukti pembayaran baru diunggah untuk pesanan #${id.slice(0, 8)}`, JSON.stringify({ order_id: id })]
+    );
+    
+    // Placeholder for real-time notification (e.g. Socket.io or Push)
+    console.log(`[Notification] Admin: New payment proof uploaded for order ${id}`);
+
+    res.json({ success: true, message: 'Bukti pembayaran berhasil diunggah. Menunggu konfirmasi admin.' });
+  } catch (err) {
+    console.error('Error uploading payment proof:', err);
+    res.status(500).json({ message: 'Gagal mengunggah bukti pembayaran' });
   }
 });
 

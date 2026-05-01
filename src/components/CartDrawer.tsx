@@ -142,7 +142,7 @@ export default function CartDrawer() {
                   onClick={() => setCartOpen(false)}
                   className="block w-full bg-[#722F38] hover:bg-[#5a252d] text-white text-sm font-bold py-4 px-6 rounded-xl uppercase tracking-wider transition-colors text-center"
                 >
-                  Checkout via WhatsApp
+                  Lanjutkan ke Checkout
                 </Link>
               </div>
             )}

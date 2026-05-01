@@ -15,7 +15,11 @@ export default function AdminOrders() {
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   
-  const statusOptions = ['All', 'pending', 'paid', 'processing', 'shipped', 'completed', 'cancelled'];
+  const statusOptions = ['All', 'pending', 'waiting_confirmation', 'paid', 'processing', 'shipped', 'completed', 'cancelled'];
+
+  const handleModalStatusUpdate = (id: string, newStatus: string, trackingNumber?: string) => {
+    handleStatusUpdate(id, newStatus, trackingNumber);
+  };
 
   useEffect(() => {
     loadOrders();
@@ -28,10 +32,10 @@ export default function AdminOrders() {
     setIsLoading(false);
   };
 
-  const handleStatusUpdate = async (id: string, newStatus: string) => {
+  const handleStatusUpdate = async (id: string, newStatus: string, trackingNumber?: string) => {
     setUpdatingId(id);
     try {
-      await updateOrderStatus(id, newStatus);
+      await updateOrderStatus(id, newStatus, trackingNumber);
       if (selectedOrder && selectedOrder.id === id) {
         setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
@@ -71,6 +75,7 @@ export default function AdminOrders() {
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'waiting_confirmation': return 'bg-orange-100 text-orange-800 border border-orange-200';
       case 'paid': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
       case 'processing': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
@@ -184,6 +189,7 @@ export default function AdminOrders() {
                           onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
                         >
                           <option value="pending">Pending</option>
+                          <option value="waiting_confirmation">Wait Confirmation</option>
                           <option value="paid">Paid</option>
                           <option value="processing">Processing</option>
                           <option value="shipped">Shipped</option>

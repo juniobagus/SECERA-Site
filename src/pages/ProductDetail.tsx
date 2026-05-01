@@ -85,22 +85,22 @@ export default function ProductDetail() {
     return [
       {
         key: 'details',
-        label: 'Details',
+        label: 'Rincian',
         content:
           cmsAccordions?.specs ||
-          `${product.description || 'Relaxed silhouette piece with refined drape and elevated finishing details.'}`,
+          `${product.description || 'Potongan siluet santai dengan drape halus dan detail akhir yang elegan.'}`,
       },
       {
         key: 'material',
-        label: 'Material',
-        content: cmsAccordions?.material || `Material: ${product.material || 'Premium textile blend'}`,
+        label: 'Bahan',
+        content: cmsAccordions?.material || `Bahan: ${product.material || 'Campuran tekstil premium'}`,
       },
       {
         key: 'shipping',
-        label: 'Shipping & Returns',
+        label: 'Pengiriman & Pengembalian',
         content:
           cmsAccordions?.shipping ||
-          'Orders are processed Monday to Saturday. Delivery estimate is 2-4 business days depending on destination.',
+          'Pesanan diproses Senin hingga Sabtu. Estimasi pengiriman 2-4 hari kerja tergantung tujuan.',
       },
     ];
   }, [product]);
@@ -213,10 +213,10 @@ export default function ProductDetail() {
         <div className="max-w-[1900px] mx-auto">
           <div className="hidden md:flex items-center gap-3 text-label text-muted/80">
             <Link to="/shop" className="inline-flex items-center gap-1 hover:text-brand-wine transition-colors">
-              <ArrowLeft className="w-3.5 h-3.5" /> Home
+              <ArrowLeft className="w-3.5 h-3.5" /> Beranda
             </Link>
             <span>/</span>
-            <span>Shop All</span>
+            <span>Semua Koleksi</span>
             <span>/</span>
             <span className="truncate text-brand-wine font-bold">{productName}</span>
           </div>
@@ -306,7 +306,7 @@ export default function ProductDetail() {
             <div className="border-t border-ink/5 pt-10 space-y-8">
               <div>
                 <p className="text-label text-muted mb-4">
-                  Color: <span className="text-ink">{selectedColor || '-'}</span>
+                  Warna: <span className="text-ink">{selectedColor || '-'}</span>
                 </p>
                 <div className="flex flex-wrap gap-3">
                   {colors.map((color: any) => {
@@ -344,14 +344,14 @@ export default function ProductDetail() {
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <p className="text-label text-muted">
-                      Size: <span className="text-ink">{selectedOption || '-'}</span>
+                      Ukuran: <span className="text-ink">{selectedOption || '-'}</span>
                     </p>
                     <button
                       type="button"
                       onClick={() => setShowSizeGuide(true)}
                       className="text-label text-brand-wine hover:text-brand-wine-deep transition-colors inline-flex items-center gap-1.5"
                     >
-                      Size Guide <Plus className="w-3 h-3" />
+                      Panduan Ukuran <Plus className="w-3 h-3" />
                     </button>
                   </div>
                   <div className="flex flex-wrap gap-3">
@@ -382,7 +382,7 @@ export default function ProductDetail() {
                   disabled={!activeVariant || (activeVariant?.stock ?? 1) === 0}
                   className="flex-1 h-14 bg-brand-wine text-white text-label hover:bg-brand-wine-deep transition-all shadow-xl shadow-brand-wine/15 disabled:opacity-40 disabled:grayscale"
                 >
-                  {addedFeedback ? 'Success' : 'Add to Cart'}
+                  {addedFeedback ? 'Berhasil' : 'Masukkan ke Keranjang'}
                 </button>
                 <button
                   type="button"
@@ -393,7 +393,7 @@ export default function ProductDetail() {
                 </button>
               </div>
 
-              <p className="text-label text-muted/60 pt-4">Availability: In Stock</p>
+              <p className="text-label text-muted/60 pt-4">Ketersediaan: Stok Tersedia</p>
 
               <div className="border-t border-ink/5 pt-8 space-y-4">
                 {detailRows.map((row) => {
@@ -453,7 +453,7 @@ export default function ProductDetail() {
             disabled={!activeVariant || (activeVariant?.stock ?? 1) === 0}
             className="h-12 px-6 bg-brand-wine text-white text-label shadow-lg shadow-brand-wine/20 disabled:opacity-45 inline-flex items-center gap-2"
           >
-            <ShoppingBag className="w-4 h-4" /> Buy
+            <ShoppingBag className="w-4 h-4" /> Beli Sekarang
           </button>
         </div>
       </div>
@@ -462,24 +462,24 @@ export default function ProductDetail() {
         <div className="fixed inset-0 z-50 bg-black/35 backdrop-blur-[1px] flex items-center justify-center px-4" onClick={() => setShowSizeGuide(false)}>
           <div className="w-full max-w-lg bg-white border border-[#0000001e] p-5 md:p-7" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-2xl text-[#111]">Size Guide</h3>
+              <h3 className="font-serif text-2xl text-[#111]">Panduan Ukuran</h3>
               <button
                 type="button"
                 onClick={() => setShowSizeGuide(false)}
                 className="text-xs uppercase tracking-[0.14em] text-[#444] hover:opacity-70"
               >
-                Close
+                Tutup
               </button>
             </div>
             <p className="text-sm text-[#4D4D4D] leading-relaxed mb-4">
-              Compare with a similar garment you already own. Measure chest width, shoulder width, and sleeve length on a flat surface for the best match.
+              Bandingkan dengan pakaian serupa yang Anda miliki. Ukur lebar dada, lebar bahu, dan panjang lengan di permukaan datar untuk mendapatkan ukuran terbaik.
             </p>
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="border-y border-[#0000001f]">
-                  <th className="text-left py-2 font-medium">Size</th>
-                  <th className="text-left py-2 font-medium">Chest</th>
-                  <th className="text-left py-2 font-medium">Length</th>
+                  <th className="text-left py-2 font-medium">Ukuran</th>
+                  <th className="text-left py-2 font-medium">Dada</th>
+                  <th className="text-left py-2 font-medium">Panjang</th>
                 </tr>
               </thead>
               <tbody>

@@ -1,11 +1,62 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Package, ShoppingCart, Settings, LogOut, LayoutDashboard, Monitor, Users } from 'lucide-react';
+import { Package, ShoppingCart, Settings, LogOut, LayoutDashboard, Monitor, Users, Bell, Check, Trash2 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import { useState, useEffect, useRef } from 'react';
+import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '../../utils/api';
+import { formatDistanceToNow } from 'date-fns';
+import { id as localeId } from 'date-fns/locale';
 
 export default function AdminLayout() {
   const { admin, logout } = useAdminAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    loadNotifications();
+    const interval = setInterval(loadNotifications, 30000); // Poll every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const loadNotifications = async () => {
+    const [notifs, count] = await Promise.all([
+      getNotifications(),
+      getUnreadCount()
+    ]);
+    setNotifications(notifs);
+    setUnreadCount(count);
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setIsNotifOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const success = await markAsRead(id);
+    if (success) {
+      setNotifications(notifications.map(n => n.id === id ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    const success = await markAllAsRead();
+    if (success) {
+      setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      setUnreadCount(0);
+    }
+  };
 
   const handleLogout = () => {
     logout();
@@ -65,9 +116,84 @@ export default function AdminLayout() {
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <header className="h-16 bg-white border-b border-gray-200 flex items-center px-8 shrink-0">
           <div className="flex-1"></div>
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-8 rounded-full bg-[#722F38]/10 flex items-center justify-center text-[#722F38] font-bold text-sm">
-              {admin?.name?.charAt(0) || 'A'}
+          <div className="flex items-center gap-6">
+            {/* Notification Bell */}
+            <div className="relative" ref={notifRef}>
+              <button 
+                onClick={() => setIsNotifOpen(!isNotifOpen)}
+                className="relative p-2 text-gray-400 hover:text-[#722F38] hover:bg-gray-100 rounded-full transition-all"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center ring-2 ring-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              {isNotifOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="px-4 py-2 border-b border-gray-50 flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-gray-900">Notifikasi</h3>
+                    {unreadCount > 0 && (
+                      <button 
+                        onClick={handleMarkAllAsRead}
+                        className="text-[10px] font-bold text-[#722F38] hover:underline"
+                      >
+                        Tandai semua dibaca
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center">
+                        <Bell className="w-8 h-8 text-gray-200 mx-auto mb-2" />
+                        <p className="text-xs text-gray-400">Tidak ada notifikasi</p>
+                      </div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div 
+                          key={notif.id}
+                          onClick={() => {
+                            if (notif.data?.order_id) navigate('/admin/orders');
+                            setIsNotifOpen(false);
+                          }}
+                          className={`px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0 relative ${!notif.is_read ? 'bg-[#722F38]/5' : ''}`}
+                        >
+                          {!notif.is_read && (
+                            <div className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#722F38] rounded-full"></div>
+                          )}
+                          <p className="text-xs text-gray-900 font-medium mb-1 pr-6">{notif.message}</p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-gray-400">
+                              {formatDistanceToNow(new Date(notif.created_at), { addSuffix: true, locale: localeId })}
+                            </span>
+                            {!notif.is_read && (
+                              <button 
+                                onClick={(e) => handleMarkAsRead(notif.id, e)}
+                                className="p-1 hover:bg-white rounded-md text-gray-400 hover:text-green-600 transition-colors"
+                              >
+                                <Check className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 pl-6 border-l border-gray-100">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-gray-900 leading-none mb-1">{admin?.name || 'Admin'}</p>
+                <p className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">{admin?.role || 'Administrator'}</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#722F38] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#722F38]/20">
+                {admin?.name?.charAt(0) || 'A'}
+              </div>
             </div>
           </div>
         </header>
@@ -79,3 +205,4 @@ export default function AdminLayout() {
     </div>
   );
 }
+

@@ -1,19 +1,30 @@
-import { X, Package, Truck, Phone, MapPin, Calendar, CreditCard, ChevronRight } from 'lucide-react';
+import { X, Package, Truck, Phone, MapPin, Calendar, CreditCard, ChevronRight, Image } from 'lucide-react';
 import { formatPrice } from '../../data/products';
+
+import { useState, useEffect } from 'react';
 
 interface OrderDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   order: any;
-  onStatusUpdate: (id: string, status: string) => void;
+  onStatusUpdate: (id: string, status: string, trackingNumber?: string) => void;
 }
 
 export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdate }: OrderDetailModalProps) {
+  const [trackingNumber, setTrackingNumber] = useState('');
+
+  useEffect(() => {
+    if (order) {
+      setTrackingNumber(order.tracking_number || '');
+    }
+  }, [order]);
+
   if (!isOpen || !order) return null;
 
   const getStatusColor = (status: string) => {
     switch(status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'waiting_confirmation': return 'bg-orange-100 text-orange-800 border border-orange-200';
       case 'paid': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
       case 'processing': return 'bg-blue-100 text-blue-800';
       case 'shipped': return 'bg-purple-100 text-purple-800';
@@ -127,16 +138,34 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status Management</label>
                     <select 
                       value={order.status}
-                      onChange={(e) => onStatusUpdate(order.id, e.target.value)}
+                      onChange={(e) => onStatusUpdate(order.id, e.target.value, trackingNumber)}
                       className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#722F38] outline-none bg-gray-50/50"
                     >
                       <option value="pending">Pending</option>
+                      <option value="waiting_confirmation">Wait Confirmation</option>
                       <option value="paid">Paid</option>
                       <option value="processing">Processing</option>
                       <option value="shipped">Shipped</option>
                       <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Nomor Resi (J&T)</label>
+                    <div className="flex gap-2 mt-1">
+                      <input 
+                        value={trackingNumber}
+                        onChange={(e) => setTrackingNumber(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#722F38] outline-none"
+                        placeholder="Masukkan nomor resi..."
+                      />
+                      <button 
+                        onClick={() => onStatusUpdate(order.id, order.status, trackingNumber)}
+                        className="px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors"
+                      >
+                        Save
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -176,6 +205,20 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                   </h3>
                   <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 text-sm text-orange-800 italic">
                     "{order.notes}"
+                  </div>
+                </div>
+              )}
+
+              {order.payment_proof_url && (
+                <div>
+                  <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <Image className="w-4 h-4" />
+                    Bukti Pembayaran
+                  </h3>
+                  <div className="bg-white border border-gray-100 rounded-xl p-2 shadow-sm">
+                    <a href={order.payment_proof_url} target="_blank" rel="noopener noreferrer" className="block w-full aspect-auto max-h-64 overflow-hidden rounded-lg hover:opacity-90 transition-opacity">
+                      <img src={order.payment_proof_url} alt="Bukti Pembayaran" className="w-full h-full object-contain" />
+                    </a>
                   </div>
                 </div>
               )}

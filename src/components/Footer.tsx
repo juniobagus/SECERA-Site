@@ -41,7 +41,7 @@ export default function Footer() {
             <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 max-w-xl mb-6">
               <input
                 type="email"
-                placeholder="Email address"
+                placeholder="Alamat email"
                 aria-label="Masukkan email untuk menerima update koleksi"
                 className="w-full h-12 px-4 bg-[#F9F9F9] text-[#5A252D] placeholder:text-[#5A252D]/50 outline-none"
               />
@@ -49,7 +49,7 @@ export default function Footer() {
                 aria-label="Kirim email untuk berlangganan update"
                 className="h-12 px-6 bg-[#F9F9F9] text-[#5A252D] text-label hover:bg-white transition-colors inline-flex items-center justify-center gap-2"
               >
-                Subscribe
+                Berlangganan
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -95,7 +95,7 @@ export default function Footer() {
       <div className="border-t border-[#F9F9F9]/10">
         <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-[#F9F9F9]/60">
           <p>{cms.footer.copyright}</p>
-          <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="#" className="hover:text-white transition-colors">Kebijakan Privasi</a>
         </div>
       </div>
     </footer>

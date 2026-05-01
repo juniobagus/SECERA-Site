@@ -3,18 +3,72 @@ import { motion } from 'motion/react';
 import { Package, Search, ChevronDown, ChevronUp, Truck, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getMyOrders, lookupGuestOrder } from '../utils/api';
+import { getMyOrders, lookupGuestOrder, trackOrder, uploadImage, uploadPaymentProof } from '../utils/api';
 import { formatPrice } from '../data/products';
+import { toast } from 'react-hot-toast';
 import AuthModal from '../components/AuthModal';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'Menunggu Pembayaran', color: 'bg-amber-100 text-amber-700', icon: Clock },
+  waiting_confirmation: { label: 'Menunggu Konfirmasi', color: 'bg-orange-100 text-orange-700 border border-orange-200/50', icon: Clock },
   paid: { label: 'Sudah Dibayar', color: 'bg-indigo-100 text-indigo-700 border border-indigo-200/50', icon: CheckCircle2 },
   processing: { label: 'Diproses', color: 'bg-blue-100 text-blue-700', icon: Package },
   shipped: { label: 'Dikirim', color: 'bg-purple-100 text-purple-700', icon: Truck },
   completed: { label: 'Selesai', color: 'bg-green-100 text-green-700', icon: CheckCircle2 },
   cancelled: { label: 'Dibatalkan', color: 'bg-red-100 text-red-700', icon: XCircle },
 };
+
+function OrderTracking({ resi, courier = 'jnt' }: { resi: string, courier?: string }) {
+  const [trackingData, setTrackingData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const loadTracking = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (trackingData) return;
+    setLoading(true);
+    const res = await trackOrder(resi, courier);
+    if (res && res.history) {
+      setTrackingData(res);
+    } else {
+      setError('Gagal memuat data resi.');
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="mt-4 border-t border-slate-100 pt-4">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-xs font-bold text-[#3A3A3A] uppercase tracking-widest">Pelacakan Pengiriman</h4>
+        {!trackingData && (
+          <button onClick={loadTracking} disabled={loading} className="text-xs font-bold text-[#722F38] bg-[#722F38]/10 px-3 py-1.5 rounded-lg hover:bg-[#722F38]/20 transition-colors flex items-center gap-2">
+            {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Lacak Resi'}
+          </button>
+        )}
+      </div>
+      
+      {error && <p className="text-xs text-red-500 bg-red-50 p-2 rounded-lg">{error}</p>}
+      
+      {trackingData && trackingData.history && (
+        <div className="space-y-4 mt-4 relative before:absolute before:inset-0 before:ml-[9px] before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent pl-6 md:pl-0">
+          {trackingData.history.map((item: any, idx: number) => (
+            <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+              <div className="flex items-center justify-center w-5 h-5 rounded-full border-2 border-white bg-slate-200 text-slate-500 group-[.is-active]:bg-[#722F38] group-[.is-active]:text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 absolute -left-6 md:static">
+                {idx === 0 ? <CheckCircle2 className="w-3 h-3" /> : <div className="w-1.5 h-1.5 bg-current rounded-full" />}
+              </div>
+              <div className="w-[calc(100%-1rem)] md:w-[calc(50%-1.5rem)] p-3 rounded-xl bg-white border border-slate-100 shadow-sm">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold text-slate-400">{item.date}</span>
+                </div>
+                <p className="text-xs text-[#3A3A3A] font-medium leading-relaxed">{item.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function MyOrders() {
   const { user, isLoggedIn, isLoading: authLoading } = useAuth();
@@ -112,12 +166,48 @@ export default function MyOrders() {
                 <p className="text-xs text-[#3A3A3A]">{order.shipping_address}, {order.shipping_city} {order.shipping_postal_code}</p>
               </div>
               {order.tracking_number && (
-                <div className="bg-purple-50 rounded-xl p-3 flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-purple-600 shrink-0" />
-                  <div>
-                    <p className="text-xs text-purple-600 font-bold">No. Resi</p>
-                    <p className="text-sm font-mono text-purple-800">{order.tracking_number}</p>
+                <div className="bg-purple-50 rounded-xl p-4 flex flex-col gap-2 mt-4">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-purple-600 shrink-0" />
+                    <div>
+                      <p className="text-[10px] text-purple-600 font-bold uppercase tracking-widest">No. Resi (J&T)</p>
+                      <p className="text-sm font-mono font-bold text-purple-900">{order.tracking_number}</p>
+                    </div>
                   </div>
+                  <OrderTracking resi={order.tracking_number} courier={order.shipping_courier || 'jnt'} />
+                </div>
+              )}
+              {order.status === 'pending' && (
+                <div className="mt-4 border-t border-slate-50 pt-4">
+                  <label className="block mb-2">
+                    <span className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest">Unggah Bukti Pembayaran</span>
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      className="block w-full text-xs text-slate-500 mt-2 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#722F38]/10 file:text-[#722F38] hover:file:bg-[#722F38]/20 transition-colors"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        
+                        const loadingToast = toast.loading('Mengunggah bukti pembayaran...');
+                        try {
+                          const url = await uploadImage(file);
+                          if (!url) throw new Error('Gagal mengunggah gambar');
+                          
+                          const res = await uploadPaymentProof(order.id, url);
+                          if (res.success) {
+                            toast.success(res.message, { id: loadingToast });
+                            // Update local state instead of reloading if possible, but reload is safer to get fresh data
+                            window.location.reload();
+                          } else {
+                            toast.error(res.message, { id: loadingToast });
+                          }
+                        } catch (err) {
+                          toast.error('Gagal mengunggah bukti', { id: loadingToast });
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
               )}
             </div>

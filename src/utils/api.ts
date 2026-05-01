@@ -37,14 +37,14 @@ export async function getOrderById(orderId: string): Promise<any> {
   }
 }
 
-export async function updateOrderStatus(orderId: string, status: string): Promise<boolean> {
+export async function updateOrderStatus(orderId: string, status: string, trackingNumber?: string): Promise<boolean> {
   try {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/status`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, tracking_number: trackingNumber }),
     });
     return response.ok;
   } catch (error) {
@@ -383,6 +383,17 @@ export async function getShippingCost(origin: string | number, destination: stri
   }
 }
 
+export async function trackOrder(resi: string, courier: string = 'jnt') {
+  try {
+    const response = await fetch(`${API_BASE_URL}/shipping/track?resi=${encodeURIComponent(resi)}&courier=${encodeURIComponent(courier)}`);
+    if (!response.ok) throw new Error('Failed to track order');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (trackOrder):', error);
+    return null;
+  }
+}
+
 // === Customer Auth ===
 
 export async function customerLogin(email: string, password: string) {
@@ -423,6 +434,30 @@ export async function updateProfile(profileData: any) {
 
 // === Order Tracking ===
 
+export async function uploadPaymentProof(orderId: string, proofUrl: string) {
+  try {
+    const token = localStorage.getItem('customer_token');
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/payment-proof`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      credentials: 'include',
+      body: JSON.stringify({ payment_proof_url: proofUrl }),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      return { success: false, message: err.message || 'Gagal mengunggah bukti pembayaran' };
+    }
+    const data = await response.json();
+    return { success: true, message: data.message };
+  } catch (error) {
+    console.error('API Error (uploadPaymentProof):', error);
+    return { success: false, message: 'Koneksi gagal' };
+  }
+}
+
 export async function getMyOrders() {
   try {
     const token = localStorage.getItem('customer_token');
@@ -452,6 +487,27 @@ export async function lookupGuestOrder(orderId: string, phone: string) {
     return { success: false, message: 'Koneksi gagal' };
   }
 }
+
+export async function claimGuestOrder(phone: string) {
+  try {
+    const token = localStorage.getItem('customer_token');
+    const response = await fetch(`${API_BASE_URL}/orders/claim`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      },
+      credentials: 'include',
+      body: JSON.stringify({ phone }),
+    });
+    
+    const data = await response.json();
+    return { success: response.ok, message: data.message, claimed_count: data.claimed_count || 0 };
+  } catch (error) {
+    console.error('API Error (claimGuestOrder):', error);
+    return { success: false, message: 'Koneksi gagal' };
+  }
+}
 // === Customers (CRM) ===
 
 export async function getCustomers() {
@@ -473,5 +529,58 @@ export async function getCustomerByPhone(phone: string) {
   } catch (error) {
     console.error('API Error (getCustomerByPhone):', error);
     return null;
+  }
+}
+
+// === Notifications ===
+
+export async function getNotifications() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/notifications`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getNotifications):', error);
+    return [];
+  }
+}
+
+export async function getUnreadCount() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/notifications/unread-count`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+    });
+    const data = await response.json();
+    return data.count || 0;
+  } catch (error) {
+    console.error('API Error (getUnreadCount):', error);
+    return 0;
+  }
+}
+
+export async function markAsRead(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/notifications/${id}/read`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (markAsRead):', error);
+    return false;
+  }
+}
+
+export async function markAllAsRead() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (markAllAsRead):', error);
+    return false;
   }
 }
