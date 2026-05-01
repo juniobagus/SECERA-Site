@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Instagram, Linkedin, Twitter, ArrowRight, MessageCircle } from 'lucide-react';
 import { initialCMSContent } from '../data/cms';
-import { getCMSContent } from '../utils/api';
+import { getCMSContent, getSettings } from '../utils/api';
 
 export default function Footer() {
   const [cms, setCms] = useState(initialCMSContent);
+  const [settings, setSettings] = useState<any>({});
 
   useEffect(() => {
     async function loadCMS() {
@@ -21,7 +22,12 @@ export default function Footer() {
         });
       }
     }
+    async function loadSettings() {
+      const data = await getSettings();
+      if (data) setSettings(data);
+    }
     loadCMS();
+    loadSettings();
   }, []);
 
   const groupedLinks = cms.footer.links || [];
@@ -68,6 +74,20 @@ export default function Footer() {
                 ))}
               </div>
             ))}
+            <div className="space-y-3">
+              <p className="text-label text-[#F9F9F9]/50">Perusahaan</p>
+              <div className="space-y-2">
+                <p className="text-sm font-bold text-white">{settings.company_name || 'SECERA'}</p>
+                <p className="text-xs text-[#F9F9F9]/60 whitespace-pre-wrap">
+                  {settings.company_address || 'Indonesia'}
+                </p>
+                <div className="pt-2">
+                  <p className="text-[10px] text-[#F9F9F9]/40 uppercase tracking-widest">Kontak</p>
+                  <p className="text-xs text-[#F9F9F9]/60">{cms.footer.email}</p>
+                  <p className="text-xs text-[#F9F9F9]/60">{cms.footer.phone}</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

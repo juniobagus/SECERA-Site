@@ -26,6 +26,8 @@ export default function AdminSettings() {
     shipping_origin_name: '',
     whatsapp_number: '',
     bank_account_info: '',
+    company_name: '',
+    company_address: '',
   });
 
   // Origin Autocomplete State
@@ -80,6 +82,8 @@ export default function AdminSettings() {
       shipping_origin_name: data.shipping_origin_name || '',
       whatsapp_number: data.whatsapp_number || '',
       bank_account_info: data.bank_account_info || '',
+      company_name: data.company_name || '',
+      company_address: data.company_address || '',
     });
     setOriginSearch(data.shipping_origin_name || '');
   };
@@ -208,6 +212,36 @@ export default function AdminSettings() {
                 )}
               </AnimatePresence>
               <p className="text-xs text-gray-400 mt-2">Current Origin: <span className="font-bold text-[#722F38]">{settings.shipping_origin_name || 'Not set'}</span> (ID: {settings.shipping_origin_id || '-'})</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Company Info */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+            <Tag className="w-5 h-5 text-[#722F38]" />
+            <h2 className="text-lg font-bold text-gray-900">Company Information</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+              <input 
+                type="text" 
+                value={settings.company_name}
+                onChange={e => setSettings({ ...settings, company_name: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+                placeholder="e.g. PT Secera Indonesia..." 
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Company Address</label>
+              <textarea 
+                rows={3}
+                value={settings.company_address}
+                onChange={e => setSettings({ ...settings, company_address: e.target.value })}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none resize-none" 
+                placeholder="Jl. Raya Secera No. 1..." 
+              />
             </div>
           </div>
         </div>

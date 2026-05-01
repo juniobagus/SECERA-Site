@@ -10,3 +10,9 @@
 - [ ] Implement User History & Account Features
 - [ ] Connect RajaOngkir J&T API
 
+# SECERA Project Status (1 Mei 2026)
+- [ ] Penyesuaian bahasa di storefront dan admin panel.
+- [ ] Setup RajaOngkir J&T API dan implement di admin panel.
+- [ ] Implement User History & Account Features
+    - [ ] Implement payment status di user history.
+    - [ ] Implement tracking number di user history.
