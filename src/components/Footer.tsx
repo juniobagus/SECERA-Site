@@ -24,90 +24,59 @@ export default function Footer() {
     loadCMS();
   }, []);
 
+  const groupedLinks = cms.footer.links || [];
+
   return (
-    <footer className="bg-[#722F38] text-[#F9F9F9] pt-20 relative overflow-hidden">
-      <div className="max-w-[1600px] mx-auto px-6 md:px-12 relative z-10">
-        <div className="mb-12">
-          <img src="/Logo/LogoType-light.svg" alt={cms.global.siteTitle} className="h-8 md:h-10 w-auto object-contain" />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 mb-16">
-          {cms.footer.links?.map((group, idx) => (
-            <div key={idx} className="lg:col-span-2 flex flex-col gap-4">
-              <h4 className="font-bold text-lg mb-2">{group.title}</h4>
-              {group.items.map((item, itemIdx) => (
-                <a 
-                  key={itemIdx} 
-                  href={item.url} 
-                  className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors"
-                >
-                  {item.label}
-                </a>
-              ))}
+    <footer className="bg-[#722F38] text-[#F9F9F9] border-t border-[#F9F9F9]/12">
+      <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-10 md:py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.4fr] gap-10 lg:gap-16">
+          <div>
+            <p className="text-label text-[#F9F9F9]/60 mb-6">Jadi yang pertama tahu koleksi baru SECERA</p>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 max-w-xl mb-6">
+              <input
+                type="email"
+                placeholder="Email address"
+                aria-label="Masukkan email untuk menerima update koleksi"
+                className="w-full h-12 px-4 bg-[#F9F9F9] text-[#5A252D] placeholder:text-[#5A252D]/50 outline-none"
+              />
+              <button
+                aria-label="Kirim email untuk berlangganan update"
+                className="h-12 px-6 bg-[#F9F9F9] text-[#5A252D] text-label hover:bg-white transition-colors inline-flex items-center justify-center gap-2"
+              >
+                Subscribe
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
-          ))}
-
-          <div className="lg:col-span-3 flex flex-col gap-4">
-            <h4 className="text-label text-white mb-2">Hubungi Kami</h4>
-            <a href={`https://wa.me/${cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors mb-1 flex items-center gap-2">
-              <MessageCircle className="w-4 h-4" /> +{cms.footer.phone}
-            </a>
-            <a href={`mailto:${cms.footer.email}`} className="text-sm text-[#F9F9F9]/80 hover:text-white transition-colors mb-4">{cms.footer.email}</a>
-            <div className="flex items-center gap-4">
-              <a href={cms.global.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors"><Instagram className="w-5 h-5" /></a>
-              <a href={cms.global.socialMedia.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors"><Linkedin className="w-5 h-5" /></a>
-              <a href={cms.global.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-white/70 transition-colors"><Twitter className="w-5 h-5" /></a>
+            <div className="flex items-center gap-4 text-[#F9F9F9]/85">
+              <a href={cms.global.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><Instagram className="w-5 h-5" /></a>
+              <a href={cms.global.socialMedia.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn"><Linkedin className="w-5 h-5" /></a>
+              <a href={cms.global.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Twitter"><Twitter className="w-5 h-5" /></a>
+              <a href={`https://wa.me/${cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="WhatsApp">
+                <MessageCircle className="w-5 h-5" />
+              </a>
             </div>
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="bg-[#7b5455] rounded-2xl p-8 lg:p-10 shadow-xl">
-              <h3 className="text-2xl md:text-3xl font-serif mb-8 leading-snug text-white">Dapatkan berita dan penawaran terbaru dari kami</h3>
-              <div className="relative border-b border-[#F9F9F9]/30 pb-2 flex items-center">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="bg-transparent w-full outline-none text-[#F9F9F9] placeholder:text-[#F9F9F9]/50 pr-8 text-lg"
-                />
-                <button className="absolute right-0 hover:translate-x-1 transition-transform">
-                  <ArrowRight className="w-6 h-6 text-[#F9F9F9]/70" />
-                </button>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {groupedLinks.slice(0, 4).map((group, idx) => (
+              <div key={idx} className="space-y-3">
+                <p className="text-label text-[#F9F9F9]/50">{group.title}</p>
+                {group.items.slice(0, 4).map((item, itemIdx) => (
+                  <a key={itemIdx} href={item.url} className="block text-sm text-[#F9F9F9]/88 hover:text-white transition-colors">
+                    {item.label}
+                  </a>
+                ))}
               </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 text-xs text-[#F9F9F9]/70 mb-8">
-          <span>{cms.footer.tagline}</span>
-          <span className="hidden md:inline">|</span>
-          <span>{cms.footer.copyright}</span>
-          <span className="hidden md:inline">|</span>
-          <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-        </div>
-
-        <div className="h-px bg-[#F9F9F9]/20 w-full mb-8" />
-
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 text-[10px] text-[#F9F9F9]/60 mb-16">
-          <div className="md:col-span-7 flex flex-col gap-3">
-            <p className="flex gap-2">
-              <span>*</span>
-              <span>Penawaran waktu terbatas untuk pelanggan baru. Gunakan kode saat checkout. Syarat dan ketentuan berlaku. Tidak dapat digabungkan dengan penawaran lain.</span>
-            </p>
-            <p className="flex gap-2">
-              <span>**</span>
-              <span>Studi Material Secera: Hasil dilaporkan dalam uji kenyamanan 2025. Material terbukti memberikan sirkulasi udara optimal dan kenyamanan sepanjang hari.</span>
-            </p>
-          </div>
-          <div className="md:col-span-5 border border-[#F9F9F9]/20 rounded-xl p-5">
-            <p>*Pernyataan ini belum dievaluasi oleh lembaga terkait. Produk ini tidak dimaksudkan untuk mendiagnosis, merawat, menyembuhkan, atau mencegah penyakit apa pun.</p>
+            ))}
           </div>
         </div>
       </div>
 
-      <div className="w-full overflow-hidden leading-none pt-4 flex justify-center items-end">
-        <h1 className="text-[24vw] font-bold text-[#F9F9F9] leading-[0.72] tracking-tighter select-none">
-          {cms.global.siteTitle.split('|')[0].trim().toLowerCase()}
-        </h1>
+      <div className="border-t border-[#F9F9F9]/10">
+        <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-[#F9F9F9]/60">
+          <p>{cms.footer.copyright}</p>
+          <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+        </div>
       </div>
     </footer>
   );

@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-01T08:08:00.000Z",
+  "title": "Design System: SECERA",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Wine",
+        "canonical": "oklch(34.8% 0.1 26.6)",
+        "tonalRamp": [
+          "oklch(15% 0.1 26.6)",
+          "oklch(25% 0.1 26.6)",
+          "oklch(35% 0.1 26.6)",
+          "oklch(45% 0.1 26.6)",
+          "oklch(55% 0.1 26.6)",
+          "oklch(75% 0.1 26.6)",
+          "oklch(85% 0.1 26.6)",
+          "oklch(95% 0.05 26.6)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "oklch(96.1% 0.007 68.6)",
+        "tonalRamp": [
+          "oklch(15% 0.007 68.6)",
+          "oklch(35% 0.007 68.6)",
+          "oklch(55% 0.007 68.6)",
+          "oklch(75% 0.007 68.6)",
+          "oklch(85% 0.007 68.6)",
+          "oklch(92% 0.007 68.6)",
+          "oklch(96% 0.007 68.6)",
+          "oklch(98% 0.007 68.6)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#261f1f"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Editorial Display",
+        "purpose": "Hero and major section headlines."
+      },
+      "body": {
+        "displayName": "Interface Body",
+        "purpose": "Product details and UI copy."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "editorial-glide",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Standard entrance and state transition easing."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "CTA Button (Ghost)",
+      "kind": "button",
+      "refersTo": "button-cta",
+      "description": "The primary interaction for brand heroes and major calls to action.",
+      "html": "<button class=\"ds-btn-cta\">GET STARTED</button>",
+      "css": ".ds-btn-cta { background: transparent; color: #f9f9f9; padding: 12px 40px; letter-spacing: 0.0560em; text-transform: uppercase; font-weight: 600; font-size: 0.7rem; font-family: 'Plus Jakarta Sans', sans-serif; border: 1px solid rgba(249, 249, 249, 0.8); border-radius: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; } .ds-btn-cta:hover { background: #f9f9f9; color: #5a252d; }"
+    },
+    {
+      "name": "Navigation Link",
+      "kind": "nav",
+      "description": "Standard navigation item with wide tracking.",
+      "html": "<a class=\"ds-nav-link\">SHOP</a>",
+      "css": ".ds-nav-link { color: #5a252d; opacity: 0.55; text-decoration: none; text-transform: uppercase; letter-spacing: 0.0560em; font-weight: 600; font-size: 0.7rem; font-family: 'Plus Jakarta Sans', sans-serif; transition: opacity 0.3s; cursor: pointer; } .ds-nav-link:hover { opacity: 1; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Editorial Sanctuary",
+    "overview": "SECERA is a space of calm confidence and high-fashion aspiration. The interface feels like a premium print magazine: spacious, typographically driven, and intentionally sharp.",
+    "keyCharacteristics": [
+      "High-Fashion Typography",
+      "Atmospheric Palette",
+      "Architectural Sharpness",
+      "Spacious Rhythm"
+    ],
+    "rules": [
+      {
+        "name": "The No-Gradient Rule",
+        "body": "Never use gradients for backgrounds or text. Color is always solid and confident.",
+        "section": "colors"
+      },
+      {
+        "name": "The Zero Radius Doctrine",
+        "body": "Every edge is a clean 90-degree angle. We avoid rounded corners to maintain a premium feel.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Editorial Title Rule",
+        "body": "Headings should always use Bodoni Moda with tight tracking for that high-end magazine look.",
+        "section": "typography"
+      }
+    ],
+    "dos": [
+      "Do use border-radius: 0 for every single element.",
+      "Do use Bodoni Moda for headlines.",
+      "Do use #f6f2ec (Paper) as the default background."
+    ],
+    "donts": [
+      "Don't use rounded corners unless it's a circular icon button.",
+      "Don't use blue or teal accents.",
+      "Don't use dark mode as a default."
+    ]
+  }
+}

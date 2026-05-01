@@ -3,7 +3,7 @@ import { Save, Globe, Home, Info, Plus, Trash2, Video, MessageSquare, Star, Sear
 import { motion, Reorder } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { initialCMSContent } from '../../data/cms';
-import { getCMSContent, saveCMSContent, getProducts } from '../../utils/api';
+import { getCMSContent, saveCMSContent, getProducts, uploadVideo } from '../../utils/api';
 import ImageUpload from '../../components/admin/ImageUpload';
 import { formatPrice } from '../../data/products';
 
@@ -106,12 +106,14 @@ export default function AdminCMS() {
                 answer: item.answer || initialCMSContent.faq.items[i]?.answer || ''
               }))
             },
-            cta: { 
-              title: saved.cta?.title || initialCMSContent.cta.title,
-              description: saved.cta?.description || initialCMSContent.cta.description,
-              buttonText: saved.cta?.buttonText || initialCMSContent.cta.buttonText,
-              buttonLink: saved.cta?.buttonLink || initialCMSContent.cta.buttonLink
-            },
+	            cta: { 
+	              title: saved.cta?.title || initialCMSContent.cta.title,
+	              description: saved.cta?.description || initialCMSContent.cta.description,
+	              buttonText: saved.cta?.buttonText || initialCMSContent.cta.buttonText,
+	              buttonLink: saved.cta?.buttonLink || initialCMSContent.cta.buttonLink,
+	              backgroundImageUrl: saved.cta?.backgroundImageUrl || initialCMSContent.cta.backgroundImageUrl || '',
+	              backgroundVideoUrl: saved.cta?.backgroundVideoUrl || initialCMSContent.cta.backgroundVideoUrl || ''
+	            },
             footer: { 
               tagline: saved.footer?.tagline || initialCMSContent.footer.tagline,
               email: saved.footer?.email || initialCMSContent.footer.email,
@@ -131,6 +133,17 @@ export default function AdminCMS() {
                 linkedin: saved.global?.socialMedia?.linkedin || initialCMSContent.global.socialMedia.linkedin,
                 twitter: saved.global?.socialMedia?.twitter || initialCMSContent.global.socialMedia.twitter,
               }
+            },
+            stylePreference: {
+              title: saved.stylePreference?.title || initialCMSContent.stylePreference.title,
+              items: (saved.stylePreference?.items || initialCMSContent.stylePreference.items).map((item: any, i: number) => ({
+                title: item.title || initialCMSContent.stylePreference.items[i]?.title || '',
+                subtitle: item.subtitle || initialCMSContent.stylePreference.items[i]?.subtitle || '',
+                cta: item.cta || initialCMSContent.stylePreference.items[i]?.cta || '',
+                link: item.link || initialCMSContent.stylePreference.items[i]?.link || '',
+                imageUrl: item.imageUrl || initialCMSContent.stylePreference.items[i]?.imageUrl || '',
+                videoUrl: item.videoUrl || ''
+              }))
             }
           });
         }
@@ -305,20 +318,163 @@ export default function AdminCMS() {
                     value={homeContent.hero.imageUrl || ''}
                     onChange={(url) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, imageUrl: url } })}
                   />
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
-                    <div className="relative">
-                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input 
-                        type="text" 
-                        value={homeContent.hero.videoUrl || ''} 
-                        onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, videoUrl: e.target.value } })}
-                        placeholder="https://.../video.mp4"
-                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
-                      />
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
+	                    <div className="relative">
+	                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+	                      <input 
+	                        type="text" 
+	                        value={homeContent.hero.videoUrl || ''} 
+	                        onChange={(e) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, videoUrl: e.target.value } })}
+	                        placeholder="https://.../video.mp4"
+	                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
+	                      />
+	                    </div>
+	                    <div className="mt-3 flex items-center gap-3">
+	                      <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#722F38] text-white text-xs font-bold cursor-pointer hover:bg-[#5a252d] transition-colors">
+	                        Upload Hero Video
+	                        <input
+	                          type="file"
+	                          accept="video/mp4,video/webm,video/ogg"
+	                          className="hidden"
+	                          onChange={async (e) => {
+	                            const file = e.target.files?.[0];
+	                            e.currentTarget.value = '';
+	                            if (!file) return;
+	                            const loadingToast = toast.loading('Uploading video...');
+	                            const url = await uploadVideo(file);
+	                            if (url) {
+	                              setHomeContent({ ...homeContent, hero: { ...homeContent.hero, videoUrl: url } });
+	                              toast.success('Video uploaded!', { id: loadingToast });
+	                            } else {
+	                              toast.error('Failed to upload video.', { id: loadingToast });
+	                            }
+	                          }}
+	                        />
+	                      </label>
+	                      <p className="text-[10px] text-gray-400 italic">MP4/WebM/Ogg. Served from your `/uploads`.</p>
+	                    </div>
+	                    <p className="text-[10px] text-gray-400 mt-2 italic">If provided, the video will play automatically. Image will be used as a placeholder/poster.</p>
+	                  </div>
+	                </div>
+	              </div>
+	            </div>
+
+            {/* CMS: Style Preference Section */}
+            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+              <div className="p-10 pb-4 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+                  <Home className="w-5 h-5" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Style Preference Section</h2>
+              </div>
+              <div className="p-10 pt-6 space-y-8">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
+                  <input 
+                    type="text" 
+                    value={homeContent.stylePreference.title} 
+                    onChange={(e) => setHomeContent({ ...homeContent, stylePreference: { ...homeContent.stylePreference, title: e.target.value } })}
+                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {homeContent.stylePreference.items.map((item, index) => (
+                    <div key={index} className="p-6 bg-gray-50/50 border border-gray-100 rounded-[2rem] space-y-4">
+                      <h3 className="font-bold text-gray-900 flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-[#722F38] text-white text-[10px] flex items-center justify-center">
+                          {index + 1}
+                        </span>
+                        Panel: {item.title || `Item ${index + 1}`}
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Title</label>
+                          <input 
+                            type="text" 
+                            value={item.title} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.stylePreference.items];
+                              newItems[index].title = e.target.value;
+                              setHomeContent({ ...homeContent, stylePreference: { ...homeContent.stylePreference, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Subtitle</label>
+                          <input 
+                            type="text" 
+                            value={item.subtitle} 
+                            onChange={(e) => {
+                              const newItems = [...homeContent.stylePreference.items];
+                              newItems[index].subtitle = e.target.value;
+                              setHomeContent({ ...homeContent, stylePreference: { ...homeContent.stylePreference, items: newItems } });
+                            }}
+                            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">CTA Text</label>
+                            <input 
+                              type="text" 
+                              value={item.cta} 
+                              onChange={(e) => {
+                                const newItems = [...homeContent.stylePreference.items];
+                                newItems[index].cta = e.target.value;
+                                setHomeContent({ ...homeContent, stylePreference: { ...homeContent.stylePreference, items: newItems } });
+                              }}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Link</label>
+                            <input 
+                              type="text" 
+                              value={item.link} 
+                              onChange={(e) => {
+                                const newItems = [...homeContent.stylePreference.items];
+                                newItems[index].link = e.target.value;
+                                setHomeContent({ ...homeContent, stylePreference: { ...homeContent.stylePreference, items: newItems } });
+                              }}
+                              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white" 
+                            />
+                          </div>
+                        </div>
+
+                        <ImageUpload 
+                          label="Panel Image"
+                          value={item.imageUrl}
+                          onChange={(url) => {
+                            const newItems = [...homeContent.stylePreference.items];
+                            newItems[index].imageUrl = url;
+                            setHomeContent({ ...homeContent, stylePreference: { ...homeContent.stylePreference, items: newItems } });
+                          }}
+                        />
+
+                        <div>
+                          <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Panel Video URL (Optional)</label>
+                          <div className="relative">
+                            <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <input 
+                              type="text" 
+                              value={item.videoUrl || ''} 
+                              onChange={(e) => {
+                                const newItems = [...homeContent.stylePreference.items];
+                                newItems[index].videoUrl = e.target.value;
+                                setHomeContent({ ...homeContent, stylePreference: { ...homeContent.stylePreference, items: newItems } });
+                              }}
+                              placeholder="https://..."
+                              className="w-full pl-11 pr-4 py-3 border border-gray-200 rounded-2xl outline-none bg-white focus:border-[#722F38] text-sm" 
+                            />
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p className="text-[10px] text-gray-400 mt-2 italic">If provided, the video will play automatically. Image will be used as a placeholder/poster.</p>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -651,58 +807,8 @@ export default function AdminCMS() {
               </div>
             </div>
 
-            {/* Global CTA */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
-              <div className="p-10 pb-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">Bottom CTA Banner</h2>
-              </div>
-              <div className="p-10 pt-6 space-y-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">CTA Title</label>
-                    <input 
-                      type="text" 
-                      value={homeContent.cta.title} 
-                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, title: e.target.value } })}
-                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">CTA Description</label>
-                    <input 
-                      type="text" 
-                      value={homeContent.cta.description} 
-                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, description: e.target.value } })}
-                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
-                    <input 
-                      type="text" 
-                      value={homeContent.cta.buttonText} 
-                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonText: e.target.value } })}
-                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Link</label>
-                    <input 
-                      type="text" 
-                      value={homeContent.cta.buttonLink || ''} 
-                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonLink: e.target.value } })}
-                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
-                      placeholder="/shop or https://..."
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : activeTab === 'about' ? (
+	          </>
+	        ) : activeTab === 'about' ? (
           <>
             {/* About Page: Hero */}
             <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
@@ -737,22 +843,46 @@ export default function AdminCMS() {
                     value={aboutContent.hero.imageUrl}
                     onChange={(url) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, imageUrl: url } })}
                   />
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
-                    <div className="relative">
-                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input 
-                        type="text" 
-                        value={aboutContent.hero.videoUrl || ''} 
-                        onChange={(e) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, videoUrl: e.target.value } })}
-                        placeholder="https://.../video.mp4"
-                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
+	                    <div className="relative">
+	                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+	                      <input 
+	                        type="text" 
+	                        value={aboutContent.hero.videoUrl || ''} 
+	                        onChange={(e) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, videoUrl: e.target.value } })}
+	                        placeholder="https://.../video.mp4"
+	                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
+	                      />
+	                    </div>
+	                    <div className="mt-3 flex items-center gap-3">
+	                      <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#722F38] text-white text-xs font-bold cursor-pointer hover:bg-[#5a252d] transition-colors">
+	                        Upload Hero Video
+	                        <input
+	                          type="file"
+	                          accept="video/mp4,video/webm,video/ogg"
+	                          className="hidden"
+	                          onChange={async (e) => {
+	                            const file = e.target.files?.[0];
+	                            e.currentTarget.value = '';
+	                            if (!file) return;
+	                            const loadingToast = toast.loading('Uploading video...');
+	                            const url = await uploadVideo(file);
+	                            if (url) {
+	                              setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, videoUrl: url } });
+	                              toast.success('Video uploaded!', { id: loadingToast });
+	                            } else {
+	                              toast.error('Failed to upload video.', { id: loadingToast });
+	                            }
+	                          }}
+	                        />
+	                      </label>
+	                      <p className="text-[10px] text-gray-400 italic">MP4/WebM/Ogg. Served from your `/uploads`.</p>
+	                    </div>
+	                  </div>
+	                </div>
+	              </div>
+	            </div>
 
             {/* About Page: Inspiration */}
             <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
@@ -863,27 +993,51 @@ export default function AdminCMS() {
                     value={shopContent.hero.imageUrl}
                     onChange={(url) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, imageUrl: url } })}
                   />
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
-                    <div className="relative">
-                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input 
-                        type="text" 
-                        value={shopContent.hero.videoUrl || ''} 
-                        onChange={(e) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, videoUrl: e.target.value } })}
-                        placeholder="https://.../video.mp4"
-                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
+	                    <div className="relative">
+	                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+	                      <input 
+	                        type="text" 
+	                        value={shopContent.hero.videoUrl || ''} 
+	                        onChange={(e) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, videoUrl: e.target.value } })}
+	                        placeholder="https://.../video.mp4"
+	                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm" 
+	                      />
+	                    </div>
+	                    <div className="mt-3 flex items-center gap-3">
+	                      <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#722F38] text-white text-xs font-bold cursor-pointer hover:bg-[#5a252d] transition-colors">
+	                        Upload Hero Video
+	                        <input
+	                          type="file"
+	                          accept="video/mp4,video/webm,video/ogg"
+	                          className="hidden"
+	                          onChange={async (e) => {
+	                            const file = e.target.files?.[0];
+	                            e.currentTarget.value = '';
+	                            if (!file) return;
+	                            const loadingToast = toast.loading('Uploading video...');
+	                            const url = await uploadVideo(file);
+	                            if (url) {
+	                              setShopContent({ ...shopContent, hero: { ...shopContent.hero, videoUrl: url } });
+	                              toast.success('Video uploaded!', { id: loadingToast });
+	                            } else {
+	                              toast.error('Failed to upload video.', { id: loadingToast });
+	                            }
+	                          }}
+	                        />
+	                      </label>
+	                      <p className="text-[10px] text-gray-400 italic">MP4/WebM/Ogg. Served from your `/uploads`.</p>
+	                    </div>
+	                  </div>
+	                </div>
+	              </div>
+	            </div>
           </>
-        ) : (
-          <>
-            {/* Global Settings: Site Information & SEO */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+	        ) : (
+	          <>
+	            {/* Global Settings: Site Information & SEO */}
+	            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
               <div className="p-10 pb-4 flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
                   <Globe className="w-5 h-5" />
@@ -1126,9 +1280,105 @@ export default function AdminCMS() {
                   </div>
                 </div>
               </div>
-            </div>
-          </>
-        )}
+	            </div>
+
+	            {/* Global Settings: Global CTA Banner */}
+	            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
+	              <div className="p-10 pb-4 flex items-center gap-3">
+	                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
+	                  <MessageSquare className="w-5 h-5" />
+	                </div>
+	                <h2 className="text-xl font-bold text-gray-900">Global CTA Banner</h2>
+	              </div>
+	              <div className="p-10 pt-6 space-y-8">
+	                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-1">CTA Title</label>
+	                    <input
+	                      type="text"
+	                      value={homeContent.cta.title}
+	                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, title: e.target.value } })}
+	                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900"
+	                    />
+	                  </div>
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-1">CTA Description</label>
+	                    <input
+	                      type="text"
+	                      value={homeContent.cta.description}
+	                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, description: e.target.value } })}
+	                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900"
+	                    />
+	                  </div>
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
+	                    <input
+	                      type="text"
+	                      value={homeContent.cta.buttonText}
+	                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonText: e.target.value } })}
+	                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900"
+	                    />
+	                  </div>
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-1">Button Link</label>
+	                    <input
+	                      type="text"
+	                      value={homeContent.cta.buttonLink || ''}
+	                      onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, buttonLink: e.target.value } })}
+	                      className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900"
+	                      placeholder="/shop or https://..."
+	                    />
+	                  </div>
+	                </div>
+
+	                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+	                  <ImageUpload
+	                    label="CTA Background Image (Fallback/Poster)"
+	                    value={homeContent.cta.backgroundImageUrl || ''}
+	                    onChange={(url) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, backgroundImageUrl: url } })}
+	                  />
+	                  <div>
+	                    <label className="block text-sm font-medium text-gray-700 mb-2">CTA Background Video URL (Optional)</label>
+	                    <div className="relative">
+	                      <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+	                      <input
+	                        type="text"
+	                        value={homeContent.cta.backgroundVideoUrl || ''}
+	                        onChange={(e) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, backgroundVideoUrl: e.target.value } })}
+	                        placeholder="/uploads/your-video.mp4 or https://.../video.mp4"
+	                        className="w-full pl-11 pr-4 py-3 border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] text-sm"
+	                      />
+	                    </div>
+	                    <div className="mt-3 flex items-center gap-3">
+	                      <label className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-[#722F38] text-white text-xs font-bold cursor-pointer hover:bg-[#5a252d] transition-colors">
+	                        Upload CTA Video
+	                        <input
+	                          type="file"
+	                          accept="video/mp4,video/webm,video/ogg"
+	                          className="hidden"
+	                          onChange={async (e) => {
+	                            const file = e.target.files?.[0];
+	                            e.currentTarget.value = '';
+	                            if (!file) return;
+	                            const loadingToast = toast.loading('Uploading video...');
+	                            const url = await uploadVideo(file);
+	                            if (url) {
+	                              setHomeContent({ ...homeContent, cta: { ...homeContent.cta, backgroundVideoUrl: url } });
+	                              toast.success('Video uploaded!', { id: loadingToast });
+	                            } else {
+	                              toast.error('Failed to upload video.', { id: loadingToast });
+	                            }
+	                          }}
+	                        />
+	                      </label>
+	                      <p className="text-[10px] text-gray-400 italic">MP4/WebM/Ogg. Autoplay + loop in Global CTA.</p>
+	                    </div>
+	                  </div>
+	                </div>
+	              </div>
+	            </div>
+	          </>
+	        )}
       </div>
     </div>
   </div>

@@ -10,10 +10,13 @@ const PORT = process.env.PORT || 3001;
 // Rate Limiter for general API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  max: 2000, // Increased for development and high-burst asset activity
   standardHeaders: true,
   legacyHeaders: false,
-  message: { message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti.' }
+  message: { message: 'Terlalu banyak permintaan dari IP ini, silakan coba lagi nanti.' },
+  // CMS editing in the admin panel can legitimately generate many calls; it has its own client-side
+  // throttling. Skipping it here avoids blocking admins after a burst of asset/API activity.
+  skip: (req) => req.path.startsWith('/cms')
 });
 
 const authLimiter = rateLimit({
@@ -25,7 +28,8 @@ const authLimiter = rateLimit({
 });
 
 // Middleware
-app.use(apiLimiter);
+// Apply the general API rate limiter only to API routes (not static assets like /uploads).
+app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/customer/login', authLimiter);
 app.use('/api/customer/register', authLimiter);

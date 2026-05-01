@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
 import { getCMSContent } from '../utils/api';
+import Hero from '../components/Hero';
 
 const initialAboutContent = {
   hero: {
     title: "Tentang Secera",
     subtitle: "Secera adalah tim desainer, pengrajin, dan visioner yang berdedikasi untuk mendefinisikan ulang gaya modest modern.",
-    imageUrl: "https://images.unsplash.com/photo-1529156069898-49953eb1b5a4?q=80&w=2000&auto=format&fit=crop"
+    imageUrl: "https://images.unsplash.com/photo-1529156069898-49953eb1b5a4?q=80&w=2000&auto=format&fit=crop",
+    videoUrl: ""
   },
   inspiration: {
     title: "Inspirasi Kami",
@@ -48,58 +49,19 @@ export default function About() {
   }, []);
 
   return (
-    <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
-      <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[70vh]">
-        {/* Background Media (Image or Video) */}
-        <div className="absolute inset-0 z-0 scale-105">
-          {content.hero.videoUrl ? (
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              className="w-full h-full object-cover object-center"
-              poster={content.hero.imageUrl}
-            >
-              <source src={content.hero.videoUrl} type="video/mp4" />
-            </video>
-          ) : (
-            <img
-              src={content.hero.imageUrl}
-              alt="About Secera"
-              className="w-full h-full object-cover object-center"
-              referrerPolicy="no-referrer"
-            />
-          )}
-          {/* Dark overlay for white text readability */}
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
+    <div className="min-h-screen w-full bg-[#F9F9F9] flex flex-col font-sans">
+      <Hero
+        title={content.hero.title}
+        subtitle={content.hero.subtitle}
+        imageUrl={content.hero.imageUrl}
+        videoUrl={content.hero.videoUrl}
+        alignment="center"
+      />
 
-        {/* Hero Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
-          <motion.h1
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-4xl md:text-6xl lg:text-7xl font-serif mb-6 max-w-5xl leading-tight text-white"
-          >
-            {content.hero.title}
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-light"
-          >
-            {content.hero.subtitle}
-          </motion.p>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 md:gap-5 mt-3 md:mt-5">
+      <div className="flex flex-col">
 
         {/* Our Inspiration Section */}
-        <div className="w-full flex flex-col md:flex-row gap-3 md:gap-5">
+        <div className="w-full flex flex-col md:flex-row">
           <div className="w-full md:w-[40%] relative min-h-[40vh] md:min-h-[60vh] rounded-[2rem] overflow-hidden">
             <img
               src={content.inspiration.imageUrl}

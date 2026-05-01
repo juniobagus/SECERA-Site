@@ -54,6 +54,8 @@ export interface CMSContent {
     description: string;
     buttonText: string;
     buttonLink?: string;
+    backgroundImageUrl?: string;
+    backgroundVideoUrl?: string;
   };
   footer: {
     tagline: string;
@@ -67,6 +69,17 @@ export interface CMSContent {
   };
   marquee: {
     items: string[];
+  };
+  stylePreference: {
+    title: string;
+    items: Array<{
+      title: string;
+      subtitle: string;
+      cta: string;
+      link: string;
+      imageUrl: string;
+      videoUrl?: string;
+    }>;
   };
   global: {
     siteTitle: string;
@@ -159,7 +172,28 @@ export const initialCMSContent: CMSContent = {
     title: "Penawaran Eksklusif Website",
     description: "Dapatkan potongan harga hingga 15% untuk setiap pembelian langsung melalui website kami hari ini.",
     buttonText: "Mulai Belanja Sekarang",
-    buttonLink: "/shop"
+    buttonLink: "/shop",
+    backgroundImageUrl: "",
+    backgroundVideoUrl: ""
+  },
+  stylePreference: {
+    title: "Temukan Gaya Anda",
+    items: [
+      {
+        title: "Modern",
+        subtitle: "Minimalist & Kontemporer",
+        cta: "Lihat Koleksi",
+        link: "/shop?style=modern",
+        imageUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop"
+      },
+      {
+        title: "Etnik",
+        subtitle: "Sentuhan Budaya & Warisan",
+        cta: "Lihat Koleksi",
+        link: "/shop?style=etnik",
+        imageUrl: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=2070&auto=format&fit=crop"
+      }
+    ]
   },
   footer: {
     tagline: "Mendefinisikan ulang gaya modest",

@@ -219,18 +219,70 @@ export async function getCMSContent(key: string) {
 }
 
 export async function saveCMSContent(key: string, content: any) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/cms/${key}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(content),
-    });
-    return response.ok;
-  } catch (error) {
-    console.error(`API Error (saveCMSContent ${key}):`, error);
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+  const parseRetryAfterMs = (value: string | null) => {
+    if (!value) return null;
+    const seconds = Number(value);
+    if (Number.isFinite(seconds)) return Math.max(0, seconds) * 1000;
+    const dateMs = Date.parse(value);
+    if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
+    return null;
+  };
+
+  const globalAny = globalThis as any;
+  const inflight: Map<string, Promise<boolean>> =
+    globalAny.__seceraInflightCmsSaves ?? (globalAny.__seceraInflightCmsSaves = new Map());
+  const lastSaveAt: Map<string, number> =
+    globalAny.__seceraLastCmsSaveAt ?? (globalAny.__seceraLastCmsSaveAt = new Map());
+
+  const existing = inflight.get(key);
+  if (existing) return existing;
+
+  const now = Date.now();
+  const last = lastSaveAt.get(key) ?? 0;
+  // Prevent accidental double-submits / hot-refresh storms.
+  if (now - last < 1500) {
+    console.warn(`saveCMSContent(${key}) skipped: called too frequently.`);
     return false;
+  }
+
+  const task = (async () => {
+    lastSaveAt.set(key, Date.now());
+
+    const maxAttempts = 4;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/cms/${key}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(content),
+        });
+
+        if (response.ok) return true;
+        if (response.status !== 429) return false;
+
+        if (attempt === maxAttempts) return false;
+
+        const retryAfterMs = parseRetryAfterMs(response.headers.get('retry-after'));
+        const backoffMs = Math.min(8000, 500 * 2 ** (attempt - 1));
+        const jitterMs = Math.floor(Math.random() * 250);
+        await sleep((retryAfterMs ?? backoffMs) + jitterMs);
+      } catch (error) {
+        console.error(`API Error (saveCMSContent ${key}):`, error);
+        return false;
+      }
+    }
+
+    return false;
+  })();
+
+  inflight.set(key, task);
+  try {
+    return await task;
+  } finally {
+    inflight.delete(key);
   }
 }
 export async function uploadImage(file: File): Promise<string | null> {
@@ -250,6 +302,27 @@ export async function uploadImage(file: File): Promise<string | null> {
     return null;
   } catch (error) {
     console.error('API Error (uploadImage):', error);
+    return null;
+  }
+}
+
+export async function uploadVideo(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append('video', file);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/uploads/video`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.url;
+    }
+    return null;
+  } catch (error) {
+    console.error('API Error (uploadVideo):', error);
     return null;
   }
 }

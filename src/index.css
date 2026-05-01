@@ -3,62 +3,130 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-wine);
+    color: var(--color-paper);
   }
 }
 
 @theme {
-  --font-serif: "Joan", "Source Serif 4", serif;
-  --font-sans: "Lato", sans-serif;
-  
+  --font-serif: "Libre Caslon Display", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+
+  --color-brand-wine: #722f38;
+  --color-brand-wine-deep: #5a252d;
+  --color-paper: rgba(244, 244, 244, 0.98);
+  --color-ink: #261f1f;
+  --color-muted: #7b6f6b;
+
   --animate-marquee: marquee 25s linear infinite;
-  
+
   @keyframes marquee {
-    0% { transform: translateX(0%); }
-    100% { transform: translateX(-50%); }
+    0% {
+      transform: translateX(0%);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
   }
 }
 
 @layer base {
   html {
-    scroll-behavior: smooth;
     font-family: var(--font-sans);
-    color: #3A3A3A; /* Brand Charcoal */
-    background-color: #F9F9F9; /* Neutral Off-White */
+    color: var(--color-ink);
+    background-color: var(--color-paper);
   }
 
   body {
     font-weight: 500;
     line-height: 1.6;
+    letter-spacing: 0.0360em;
   }
 
-  h1, h2, h3, h4 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-serif);
-    letter-spacing: -0.02em; /* Tight tracking for premium feel */
-    line-height: 1.2;
+    font-weight: 400;
+    font-style: normal;
+    font-variant-numeric: lining-nums proportional-nums;
+    hanging-punctuation: first last;
   }
 
-  h1 { font-size: clamp(2.5rem, 8vw, 4rem); }
-  h2 { font-size: clamp(2rem, 6vw, 3rem); }
-  h3 { font-size: clamp(1.5rem, 4vw, 2.25rem); }
+  /* Zero Radius Doctrine */
+  * {
+    border-radius: 0 !important;
+  }
 }
 
 @layer utilities {
-  .text-label {
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-weight: 700;
-    font-size: 0.75rem;
+
+  /* Fluid Typography Ramp */
+  .text-display {
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 8vw, 4rem);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    font-weight: 400;
   }
-  
+
+  .text-headline {
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-weight: 400;
+  }
+
+  .text-title {
+    font-family: var(--font-sans);
+    font-size: 1.25rem;
+    line-height: 1.4;
+    font-weight: 600;
+    letter-spacing: 0.0420em;
+  }
+
+  .text-label {
+    font-family: var(--font-sans);
+    text-transform: uppercase;
+    letter-spacing: 0.0560em;
+    font-weight: 600;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .text-body-fine {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+  }
+
+  /* Editorial Utilities */
+  .max-prose-editorial {
+    max-width: 75ch;
+  }
+
   .mask-image-linear {
     mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
     -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
   }
-  
+
   .hide-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .hide-scrollbar::-webkit-scrollbar {
     display: none;
   }

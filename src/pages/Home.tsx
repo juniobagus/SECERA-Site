@@ -3,95 +3,24 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useRef, useState, useEffect } from 'react';
-import { Star, Clock, Layers, Gem, Sparkles, ChevronLeft, ChevronRight, Volume2, VolumeX, Plus, ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react';
-import { motion } from 'motion/react';
+import { useRef, useState, useEffect, useMemo, type MouseEvent } from 'react';
+import { Volume2, VolumeX, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { products, formatPrice } from '../data/products';
-import { useCart } from '../context/CartContext';
 import { initialCMSContent } from '../data/cms';
 import { getCMSContent, getProducts } from '../utils/api';
+import { getGoogleDrivePreviewUrl, normalizeVideoUrl } from '../utils/media';
 import ProductCard from '../components/ProductCard';
-import TikTokPlayer from '../components/TikTokPlayer';
+import CTAButton from '../components/CTAButton';
+import UGCPlayer from '../components/UGCPlayer';
+import UGCProductCard from '../components/UGCProductCard';
+import Hero from '../components/Hero';
 
-const getTikTokId = (url: string) => {
-  const match = url.match(/\/video\/(\d+)/);
-  if (match) return match[1];
-  
-  // Alternative: v/ID or /v/ID
-  const matchV = url.match(/\/v\/(\d+)/);
-  return matchV ? matchV[1] : null;
-};
-
-// Sub-component for standard video player with controls
-function CustomVideoPlayer({ src, poster, isActive }: { src: string, poster?: string, isActive: boolean }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isMuted, setIsMuted] = useState(true);
-
-  // Inisialisasi muted melalui DOM saat pertama kali mount
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.muted = isMuted;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (videoRef.current) {
-      if (isActive) {
-        videoRef.current.play().catch(e => console.log("Autoplay blocked", e));
-      } else {
-        videoRef.current.pause();
-      }
-    }
-  }, [isActive]);
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (videoRef.current) {
-      const newMuted = !isMuted;
-      // Langsung ubah property DOM untuk menghindari re-render tag video
-      videoRef.current.muted = newMuted;
-      setIsMuted(newMuted);
-    }
-  };
-
-  return (
-    <>
-      <video
-        ref={videoRef}
-        autoPlay
-        loop
-        playsInline
-        className="w-full h-full object-cover"
-        poster={poster}
-        // Kita tidak menaruh 'muted' di sini sebagai reactive prop 
-        // agar React tidak me-refresh elemen saat state berubah
-        defaultValue={undefined} 
-      >
-        <source src={src} type="video/mp4" />
-      </video>
-      <motion.button 
-        whileHover={{ scale: 1.1, backgroundColor: 'rgba(255, 255, 255, 0.4)' }}
-        whileTap={{ scale: 0.9 }}
-        onClick={toggleMute}
-        className="absolute top-6 right-6 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white z-10 border border-white/30 transition-colors outline-none pointer-events-auto"
-      >
-        {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-      </motion.button>
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 pointer-events-none opacity-40">
-        <h3 className="text-2xl font-bold text-white tracking-tighter font-sans uppercase">secera</h3>
-      </div>
-    </>
-  );
-}
 
 export default function Home() {
-  const { addItem } = useCart();
-  const carouselRef = useRef<HTMLDivElement>(null);
   const ugcRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(true);
-  const [scrollProgress, setScrollProgress] = useState(0);
+  const shouldReduceMotion = useReducedMotion();
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [activeUgcIndex, setActiveUgcIndex] = useState(0);
   const [cms, setCms] = useState(initialCMSContent);
@@ -119,56 +48,63 @@ export default function Home() {
   };
 
   useEffect(() => {
-    async function loadCMS() {
-      const data = await getCMSContent('main_site');
-      if (data) {
-        const newCms = {
-          ...initialCMSContent,
-          ...data,
-          hero: { ...initialCMSContent.hero, ...data.hero },
-          showcase: { ...initialCMSContent.showcase, ...data.showcase },
-          testimonials: { ...initialCMSContent.testimonials, ...data.testimonials },
-          ugc: { ...initialCMSContent.ugc, ...data.ugc },
-          faq: { ...initialCMSContent.faq, ...data.faq },
-          cta: { ...initialCMSContent.cta, ...data.cta },
-          features: { ...initialCMSContent.features, ...data.features },
-          footer: { ...initialCMSContent.footer, ...data.footer },
-          global: { ...initialCMSContent.global, ...data.global }
-        };
-        setCms(newCms);
+    async function loadAllData() {
+      try {
+        const [cmsData, productsData] = await Promise.all([
+          getCMSContent('main_site'),
+          getProducts('active')
+        ]);
 
-        // SEO Update
-        if (newCms.global.siteTitle) document.title = newCms.global.siteTitle;
+        // Process CMS
+        if (cmsData) {
+          const newCms = {
+            ...initialCMSContent,
+            ...cmsData,
+            hero: { ...initialCMSContent.hero, ...cmsData.hero },
+            showcase: { ...initialCMSContent.showcase, ...cmsData.showcase },
+            testimonials: { ...initialCMSContent.testimonials, ...cmsData.testimonials },
+            ugc: { ...initialCMSContent.ugc, ...cmsData.ugc },
+            faq: { ...initialCMSContent.faq, ...cmsData.faq },
+            cta: { ...initialCMSContent.cta, ...cmsData.cta },
+            features: { ...initialCMSContent.features, ...cmsData.features },
+            footer: { ...initialCMSContent.footer, ...cmsData.footer },
+            global: { ...initialCMSContent.global, ...cmsData.global },
+            stylePreference: { ...initialCMSContent.stylePreference, ...cmsData.stylePreference }
+          };
+          setCms(newCms);
 
-        let metaDesc = document.querySelector('meta[name="description"]');
-        if (!metaDesc) {
-          metaDesc = document.createElement('meta');
-          metaDesc.setAttribute('name', 'description');
-          document.head.appendChild(metaDesc);
+          // SEO Update
+          if (newCms.global.siteTitle) document.title = newCms.global.siteTitle;
+
+          let metaDesc = document.querySelector('meta[name="description"]');
+          if (!metaDesc) {
+            metaDesc = document.createElement('meta');
+            metaDesc.setAttribute('name', 'description');
+            document.head.appendChild(metaDesc);
+          }
+          metaDesc.setAttribute('content', newCms.global.seoDescription);
+
+          let metaKeywords = document.querySelector('meta[name="keywords"]');
+          if (!metaKeywords) {
+            metaKeywords = document.createElement('meta');
+            metaKeywords.setAttribute('name', 'keywords');
+            document.head.appendChild(metaKeywords);
+          }
+          metaKeywords.setAttribute('content', newCms.global.seoKeywords);
         }
-        metaDesc.setAttribute('content', newCms.global.seoDescription);
 
-        let metaKeywords = document.querySelector('meta[name="keywords"]');
-        if (!metaKeywords) {
-          metaKeywords = document.createElement('meta');
-          metaKeywords.setAttribute('name', 'keywords');
-          document.head.appendChild(metaKeywords);
+        // Process Products
+        if (productsData && productsData.length > 0) {
+          setProductsList(productsData);
+        } else {
+          setProductsList(products); // Fallback to static data if API is empty
         }
-        metaKeywords.setAttribute('content', newCms.global.seoKeywords);
+      } catch (error) {
+        console.error('Failed to load home data:', error);
       }
     }
 
-    async function loadProducts() {
-      const data = await getProducts('active');
-      if (data && data.length > 0) {
-        setProductsList(data);
-      } else {
-        setProductsList(products); // Fallback to static data if API is empty
-      }
-    }
-
-    loadCMS();
-    loadProducts();
+    loadAllData();
   }, []);
 
   // Center UGC on load
@@ -184,146 +120,96 @@ export default function Home() {
     }
   }, [cms.ugc.items]);
 
-  const handleScroll = () => {
-    if (carouselRef.current) {
-      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-      setCanScrollLeft(scrollLeft > 0);
-
-      const maxScroll = scrollWidth - clientWidth;
-      const isAtEnd = Math.ceil(scrollLeft) >= maxScroll - 10;
-      setCanScrollRight(!isAtEnd && maxScroll > 0);
-
-      const progress = maxScroll > 0 ? (scrollLeft / maxScroll) * 100 : 0;
-      setScrollProgress(Math.min(Math.max(progress, 0), 100));
-    }
-  };
-
-  useEffect(() => {
-    handleScroll();
-    window.addEventListener('resize', handleScroll);
-    return () => window.removeEventListener('resize', handleScroll);
-  }, []);
-
-  const scroll = (direction: 'left' | 'right') => {
-    if (carouselRef.current) {
-      const scrollAmount = window.innerWidth < 768 ? 324 : 424; // Card width + gap
-      carouselRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-    }
-  };
-
   return (
     <>
-      <div className="min-h-screen w-full bg-[#F9F9F9] p-3 md:p-5 flex flex-col font-sans">
-        <div className="relative flex-1 w-full rounded-[2rem] overflow-hidden flex flex-col min-h-[80vh]">
-          {/* Background Media (Image or Video) */}
-          <div className="absolute inset-0 z-0">
-            {cms.hero.videoUrl ? (
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-cover object-center"
-                poster={cms.hero.imageUrl}
+      <div className="min-h-screen w-full bg-[#F9F9F9] flex flex-col font-sans">
+        <Hero
+          title={cms.hero.title}
+          subtitle={cms.hero.subtitle}
+          cta={{
+            text: cms.hero.cta,
+            link: cms.hero.link || '/shop'
+          }}
+          imageUrl={cms.hero.imageUrl}
+          videoUrl={cms.hero.videoUrl}
+          alignment="center"
+        />
+
+        {/* Style Preference Section */}
+        <section className="w-full bg-white">
+          <div className="grid grid-cols-1 md:grid-cols-2">
+            {(cms.stylePreference?.items || []).map((item, index) => (
+              <Link
+                key={index}
+                to={item.link}
+                className="group relative h-[70vh] md:h-[85vh] overflow-hidden flex flex-col justify-end p-8 md:p-12"
               >
-                <source src={cms.hero.videoUrl} type="video/mp4" />
-              </video>
-            ) : (
-              <img
-                src={cms.hero.imageUrl}
-                alt={cms.hero.title}
-                className="w-full h-full object-cover object-center"
-                referrerPolicy="no-referrer"
-              />
-            )}
-            {/* Dark overlay for white text readability */}
-            <div className="absolute inset-0 bg-black/40" />
-          </div>
+                {/* Background Image with Shimmer */}
+                <div className="absolute inset-0 z-0 bg-paper">
+                  <motion.img
+                    src={item.imageUrl}
+                    alt={item.title}
+                    initial={{ scale: 1.1 }}
+                    whileHover={{ scale: 1 }}
+                    transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                    className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700"
+                  />
+                  {/* Overlays */}
+                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                </div>
 
-          {/* Hero Content */}
-          <main className="relative z-10 flex flex-col items-center justify-center flex-1 px-4 text-center pt-24">
-            <motion.h1
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-5xl md:text-7xl lg:text-8xl font-serif mb-6 max-w-4xl leading-tight text-white"
-            >
-              {cms.hero.title}
-            </motion.h1>
+                {/* Content */}
+                <div className="relative z-10">
+                  <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="text-label text-white/80 mb-2 uppercase tracking-widest text-xs md:text-sm"
+                  >
+                    {item.subtitle}
+                  </motion.p>
+                  <motion.h3
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="text-5xl md:text-7xl font-serif text-white mb-8"
+                  >
+                    {item.title}
+                  </motion.h3>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <div className="inline-block bg-white text-ink px-8 py-3.5 text-label uppercase tracking-widest group-hover:bg-brand-wine group-hover:text-white transition-all duration-300">
+                      {item.cta}
+                    </div>
+                  </motion.div>
+                </div>
 
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="text-lg md:text-xl text-white/90 mb-10 max-w-2xl font-light"
-            >
-              {cms.hero.subtitle}
-            </motion.p>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="flex flex-col sm:flex-row items-center gap-4"
-            >
-              <Link to="/shop" className="px-8 py-3.5 rounded-full border border-white/60 bg-transparent hover:bg-white hover:text-black transition-all duration-300 text-sm font-medium w-full sm:w-auto text-white">
-                {cms.hero.cta}
+                {/* Border line between items */}
+                {index === 0 && (
+                  <div className="hidden md:block absolute right-0 top-0 bottom-0 w-[1px] bg-white/10 z-20" />
+                )}
               </Link>
-            </motion.div>
-          </main>
-        </div>
-
-        {/* Trust & Features Marquee */}
-        <div className="w-full py-4 mt-3 md:mt-5 flex items-center overflow-hidden px-4 md:px-8 shrink-0">
-          {/* Left side: Rating */}
-          <div className="hidden md:flex items-center gap-2 pr-6 md:pr-8 shrink-0 z-10">
-            {/* <div className="flex items-center gap-1">
-              <Star className="w-6 h-6 fill-[#00b67a] text-[#00b67a]" />
-              <span className="font-bold text-xl tracking-tight">5 Stars</span>
-            </div> */}
-            <div className="flex items-center gap-0.5 ml-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="bg-[#00b67a] p-1 rounded-sm">
-                  <Star className="w-4 h-4 fill-white text-white" />
-                </div>
-              ))}
-            </div>
+            ))}
           </div>
+        </section>
 
-          {/* Right side: Marquee */}
-          <div className="flex-1 overflow-hidden relative md:ml-8 flex items-center mask-image-linear">
-            {/* 
-            We duplicate the content to create a seamless infinite loop.
-            The animation translates from 0 to -50%, so the content needs to be twice as wide.
-          */}
-            <div className="flex items-center gap-12 animate-marquee whitespace-nowrap w-max">
-              {/* Group 1 */}
-              {cms.marquee?.items?.map((item, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-zinc-800 font-medium">{item}</span>
-                </div>
-              ))}
 
-              {/* Group 2 (Duplicate for seamless loop) */}
-              {cms.marquee?.items?.map((item, i) => (
-                <div key={`dup-${i}`} className="flex items-center gap-3">
-                  <span className="text-zinc-800 font-medium">{item}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Product Grid Section */}
-      <section className="py-24 px-6 md:px-12 max-w-[1600px] mx-auto">
-        <div className="max-w-5xl mx-auto text-center mb-24">
+      <section className="pt-20 pb-24 px-6 md:px-12 max-w-[1600px] mx-auto">
+        <div className="max-w-4xl mr-auto mb-16 md:mb-20">
+          <p className="text-label text-[#722F38]/55 mb-4">Pilihan Kurasi</p>
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight"
+            className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight max-w-3xl"
           >
             {cms.showcase.title.includes(' yang ') ? (
               <>
@@ -333,6 +219,9 @@ export default function Home() {
               cms.showcase.title
             )}
           </motion.h2>
+          <p className="text-[#3A3A3A]/70 mt-5 max-w-2xl">
+            Mulai dari pilihan teraman untuk acara spesial, lalu sesuaikan detail di halaman produk.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
@@ -347,11 +236,11 @@ export default function Home() {
 
 
       {/* UGC Video Section - Infinite Scrolling Carousel */}
-      <section className="py-24 overflow-hidden bg-white">
+      <section className="py-20 overflow-hidden bg-white">
         <div className="px-6 md:px-12 max-w-[1600px] mx-auto mb-12 flex items-end justify-between">
           <div>
-            <h2 className="text-3xl md:text-5xl font-serif text-[#6E2B30] mb-4">Our Community</h2>
-            <p className="text-zinc-500 max-w-xl">Lihat bagaimana para pelanggan kami tampil memukau dengan koleksi Secera. Tandai kami di media sosial untuk kesempatan ditampilkan di sini.</p>
+            <h2 className="text-3xl md:text-5xl font-serif text-brand-wine mb-4">Cerita Pelanggan</h2>
+            <p className="text-muted max-w-xl">Lihat gaya nyata pelanggan SECERA untuk referensi cepat sebelum memilih.</p>
           </div>
         </div>
 
@@ -359,72 +248,37 @@ export default function Home() {
           {/* Focal Carousel Container */}
           <div
             ref={ugcRef}
-            className="flex gap-3 overflow-x-auto hide-scrollbar snap-x snap-mandatory px-[calc(50%-140px-6px)] md:px-[calc(50%-160px-6px)] py-20 -my-10"
+            className="flex gap-4 overflow-x-auto hide-scrollbar snap-x snap-mandatory px-[calc(50%-140px-8px)] md:px-[calc(50%-160px-8px)] py-10"
             onScroll={handleUgcScroll}
           >
             {(cms.ugc.items?.length > 0 ? cms.ugc.items : []).map((ugcItem, index) => {
-              const product = productsList.find(p => p.id === ugcItem.productId);
+              const product = productsList.find((p) => p.id === ugcItem.productId);
               const variants = product?.product_variants || product?.variants || [];
               const firstVariant = variants[0];
               const thumbnail = ugcItem.thumbnailUrl || product?.thumbnail_url || firstVariant?.image_url;
               const isActive = activeUgcIndex === index;
-              const tiktokId = getTikTokId(ugcItem.videoUrl);
 
               return (
                 <motion.div
                   key={index}
                   animate={{
-                    scale: isActive ? 1.1 : 0.9,
-                    opacity: isActive ? 1 : 0.5,
+                    scale: isActive ? 1.1 : 0.92,
+                    opacity: isActive ? 1 : 0.6,
                   }}
                   transition={{ duration: 0.4 }}
                   className="flex flex-col shrink-0 w-[280px] md:w-[320px] snap-center"
                 >
-                  <div className="relative aspect-[9/16] bg-[#F1F2E9] mb-4 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-xl transition-shadow duration-500">
-                    {tiktokId ? (
-                      <TikTokPlayer videoId={tiktokId} isActive={isActive} />
-                    ) : (
-                      <CustomVideoPlayer src={ugcItem.videoUrl} poster={thumbnail} isActive={isActive} />
-                    )}
-                  </div>
+                  <UGCPlayer
+                    videoUrl={ugcItem.videoUrl}
+                    thumbnail={thumbnail}
+                    isActive={isActive}
+                  />
 
-                  <motion.div
-                    animate={{
-                      opacity: isActive ? 1 : 0,
-                      y: isActive ? 0 : 20
-                    }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="w-full px-2 pb-6 pt-2"
-                  >
-                    {product && (
-                      <Link 
-                        to={`/product/${product.id}`} 
-                        className="group flex items-center gap-4 p-4 bg-white rounded-[2rem] border border-slate-100/50 shadow-[0_10px_30px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_40px_-20px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-1"
-                      >
-                        <div className="w-16 h-16 rounded-2xl overflow-hidden bg-[#F1F2E9] shrink-0">
-                          <img 
-                            src={thumbnail} 
-                            alt={product.name} 
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" 
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-[10px] text-[#6E2B30]/40 uppercase tracking-[0.15em] font-bold block mb-0.5">{product.category}</span>
-                          <h4 className="text-sm font-bold text-[#6E2B30] truncate mb-1">{product.short_name}</h4>
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-[#6E2B30]/80 tabular-nums">{formatPrice(firstVariant?.price ?? 0)}</span>
-                            <motion.div 
-                              whileHover={{ scale: 1.1, rotate: 90 }}
-                              whileTap={{ scale: 0.9 }}
-                              className="w-7 h-7 rounded-full bg-[#6E2B30] text-white flex items-center justify-center shadow-lg shadow-[#6E2B30]/20"
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </motion.div>
-                          </div>
-                        </div>
-                      </Link>
-                    )}
-                  </motion.div>
+                  <UGCProductCard
+                    product={product}
+                    thumbnail={thumbnail}
+                    isActive={isActive}
+                  />
                 </motion.div>
               );
             })}
@@ -436,28 +290,16 @@ export default function Home() {
               <button
                 key={i}
                 onClick={() => scrollToUgc(i)}
-                className={`w-2 h-2 rounded-full transition-all ${activeUgcIndex === i ? 'w-8 bg-[#6E2B30]' : 'bg-zinc-200'}`}
+                aria-label={`Lihat video pelanggan ke-${i + 1}`}
+                className={`w-2 h-2 rounded-full transition-all ${activeUgcIndex === i ? 'w-8 bg-brand-wine' : 'bg-zinc-200'}`}
               />
             ))}
           </div>
         </div>
-
-        <style>{`
-          .mask-image-linear {
-            mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-          }
-          .hide-scrollbar::-webkit-scrollbar {
-            display: none;
-          }
-          .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-          }
-        `}</style>
       </section>
 
       {/* FAQ Section */}
-      <section className="py-24 px-6 md:px-12 max-w-3xl mx-auto w-full">
+      <section className="py-20 px-6 md:px-12 max-w-3xl mx-auto w-full">
         <motion.h2
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -467,7 +309,7 @@ export default function Home() {
         >
           {cms.faq.title}
         </motion.h2>
-        <p className="text-zinc-600 text-center mb-16">{cms.faq.description}</p>
+        <p className="text-zinc-600 text-center mb-12">{cms.faq.description}</p>
         <div className="flex flex-col border-t border-zinc-900">
           {cms.faq.items.map((faq, index) => (
             <motion.div
