@@ -85,11 +85,6 @@ export interface CMSContent {
     siteTitle: string;
     seoDescription: string;
     seoKeywords: string;
-    socialMedia: {
-      instagram: string;
-      linkedin: string;
-      twitter: string;
-    };
   };
 }
 
@@ -226,10 +221,5 @@ export const initialCMSContent: CMSContent = {
     siteTitle: "SECERA | Modern Modest Fashion",
     seoDescription: "Secera menghadirkan koleksi modest fashion modern dengan kualitas premium dan desain eksklusif.",
     seoKeywords: "fashion, modest, hijab, busana muslim, premium",
-    socialMedia: {
-      instagram: "https://instagram.com/secera.id",
-      linkedin: "https://linkedin.com/company/secera",
-      twitter: "https://twitter.com/seceraid"
-    }
   }
 };

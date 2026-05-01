@@ -100,7 +100,7 @@
   .text-label {
     font-family: var(--font-sans);
     text-transform: uppercase;
-    letter-spacing: 0.0560em;
+    letter-spacing: 0.18em;
     font-weight: 600;
     font-size: 0.7rem;
     line-height: 1.2;

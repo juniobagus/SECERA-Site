@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Instagram, Linkedin, Twitter, ArrowRight, MessageCircle } from 'lucide-react';
+import { Instagram, Linkedin, Twitter, ArrowRight, MessageCircle, Facebook } from 'lucide-react';
 import { initialCMSContent } from '../data/cms';
 import { getCMSContent, getSettings } from '../utils/api';
 
@@ -14,11 +14,7 @@ export default function Footer() {
         setCms({
           ...initialCMSContent,
           ...data,
-          hero: { ...initialCMSContent.hero, ...data.hero },
-          faq: { ...initialCMSContent.faq, ...data.faq },
-          cta: { ...initialCMSContent.cta, ...data.cta },
-          features: { ...initialCMSContent.features, ...data.features },
-          footer: { ...initialCMSContent.footer, ...data.footer }
+          footer: { ...initialCMSContent.footer, ...data.footer },
         });
       }
     }
@@ -37,27 +33,35 @@ export default function Footer() {
       <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-10 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_1.4fr] gap-10 lg:gap-16">
           <div>
-            <p className="text-label text-[#F9F9F9]/60 mb-6">Jadi yang pertama tahu koleksi baru SECERA</p>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-0 max-w-xl mb-6">
-              <input
-                type="email"
-                placeholder="Alamat email"
-                aria-label="Masukkan email untuk menerima update koleksi"
-                className="w-full h-12 px-4 bg-[#F9F9F9] text-[#5A252D] placeholder:text-[#5A252D]/50 outline-none"
-              />
-              <button
-                aria-label="Kirim email untuk berlangganan update"
-                className="h-12 px-6 bg-[#F9F9F9] text-[#5A252D] text-label hover:bg-white transition-colors inline-flex items-center justify-center gap-2"
+            <p className="text-label text-[#F9F9F9]/60 mb-2">Dapatkan komisi eksklusif dengan berbagi keanggunan</p>
+            <h3 className="font-serif text-2xl md:text-3xl text-white mb-6 max-w-md leading-tight">BERGABUNG SEBAGAI AFFILIATOR SECERA</h3>
+            <div className="flex mb-8">
+              <a 
+                href={`https://wa.me/${settings.whatsapp_number || cms.footer.phone}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-12 px-8 bg-[#F9F9F9] text-[#5A252D] text-label hover:bg-white transition-all inline-flex items-center justify-center gap-3 group"
               >
-                Berlangganan
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
+                HUBUNGI WHATSAPP
+                <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+              </a>
             </div>
             <div className="flex items-center gap-4 text-[#F9F9F9]/85">
-              <a href={cms.global.socialMedia.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><Instagram className="w-5 h-5" /></a>
-              <a href={cms.global.socialMedia.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="LinkedIn"><Linkedin className="w-5 h-5" /></a>
-              <a href={cms.global.socialMedia.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Twitter"><Twitter className="w-5 h-5" /></a>
-              <a href={`https://wa.me/${cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="WhatsApp">
+              {settings.instagram_url && (
+                <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><Instagram className="w-5 h-5" /></a>
+              )}
+              {settings.facebook_url && (
+                <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Facebook"><Facebook className="w-5 h-5" /></a>
+              )}
+              {settings.twitter_url && (
+                <a href={settings.twitter_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Twitter"><Twitter className="w-5 h-5" /></a>
+              )}
+              {settings.tiktok_url && (
+                <a href={settings.tiktok_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="TikTok">
+                  <i className="fa-brands fa-tiktok text-lg"></i>
+                </a>
+              )}
+              <a href={`https://wa.me/${settings.whatsapp_number || cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="WhatsApp">
                 <MessageCircle className="w-5 h-5" />
               </a>
             </div>

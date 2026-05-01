@@ -28,6 +28,10 @@ export default function AdminSettings() {
     bank_account_info: '',
     company_name: '',
     company_address: '',
+    instagram_url: '',
+    twitter_url: '',
+    tiktok_url: '',
+    facebook_url: '',
   });
 
   // Origin Autocomplete State
@@ -84,6 +88,10 @@ export default function AdminSettings() {
       bank_account_info: data.bank_account_info || '',
       company_name: data.company_name || '',
       company_address: data.company_address || '',
+      instagram_url: data.instagram_url || '',
+      twitter_url: data.twitter_url || '',
+      tiktok_url: data.tiktok_url || '',
+      facebook_url: data.facebook_url || '',
     });
     setOriginSearch(data.shipping_origin_name || '');
   };
@@ -263,6 +271,58 @@ export default function AdminSettings() {
                 placeholder="e.g. 62812..." 
               />
               <p className="text-xs text-gray-400 mt-1">International format without + or spaces (e.g. 6281234567890).</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Social Media Links */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center gap-3">
+            <Globe className="w-5 h-5 text-[#722F38]" />
+            <h2 className="text-lg font-bold text-gray-900">Social Media Links</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
+                <input 
+                  type="text" 
+                  value={settings.instagram_url}
+                  onChange={e => setSettings({ ...settings, instagram_url: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none text-sm" 
+                  placeholder="https://instagram.com/..." 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Twitter URL</label>
+                <input 
+                  type="text" 
+                  value={settings.twitter_url}
+                  onChange={e => setSettings({ ...settings, twitter_url: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none text-sm" 
+                  placeholder="https://twitter.com/..." 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">TikTok URL</label>
+                <input 
+                  type="text" 
+                  value={settings.tiktok_url}
+                  onChange={e => setSettings({ ...settings, tiktok_url: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none text-sm" 
+                  placeholder="https://tiktok.com/@..." 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Facebook URL</label>
+                <input 
+                  type="text" 
+                  value={settings.facebook_url}
+                  onChange={e => setSettings({ ...settings, facebook_url: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none text-sm" 
+                  placeholder="https://facebook.com/..." 
+                />
+              </div>
             </div>
           </div>
         </div>

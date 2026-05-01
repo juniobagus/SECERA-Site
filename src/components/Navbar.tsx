@@ -10,7 +10,7 @@ import AuthModal from './AuthModal';
 export default function Navbar() {
   const location = useLocation();
   const path = location.pathname;
-  const isProductPage = path.startsWith('/product/');
+  const isSolidPage = path.startsWith('/product/') || ['/profile', '/my-orders', '/shop', '/checkout'].includes(path);
   const { totalItems, toggleCart } = useCart();
   const { user, isLoggedIn, setShowAuthModal, showAuthModal, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -62,6 +62,7 @@ export default function Navbar() {
     { to: '/shop', label: 'Koleksi' },
     { to: '/my-orders', label: 'Pesanan Saya' },
     { to: '/about', label: 'Tentang' },
+    ...(isLoggedIn ? [{ to: '/profile', label: 'Profil' }] : [])
   ];
 
   return (
@@ -74,18 +75,18 @@ export default function Navbar() {
       >
         <motion.nav
           animate={{
-            backgroundColor: scrolled || isProductPage ? 'rgba(244, 244, 244, 0.98)' : 'rgba(0, 0, 0, 0)',
-            borderColor: scrolled || isProductPage ? 'rgba(38, 31, 31, 0.16)' : 'rgba(0, 0, 0, 0)',
-            paddingTop: scrolled || isProductPage ? '12px' : '16px',
-            paddingBottom: scrolled || isProductPage ? '12px' : '16px'
+            backgroundColor: scrolled || isSolidPage ? 'rgba(244, 244, 244, 0.98)' : 'rgba(0, 0, 0, 0)',
+            borderColor: scrolled || isSolidPage ? 'rgba(38, 31, 31, 0.16)' : 'rgba(0, 0, 0, 0)',
+            paddingTop: scrolled || isSolidPage ? '12px' : '16px',
+            paddingBottom: scrolled || isSolidPage ? '12px' : '16px'
           }}
-          className="px-6 md:px-12 flex items-center justify-between border-b relative"
+          className="px-[clamp(1.5rem,5vw,6rem)] flex items-center justify-between border-b relative"
         >
           <Link to="/" className="relative z-10 block">
-            <img 
-              src={scrolled || isProductPage ? "/Logo/LogoType-dark.svg" : "/Logo/LogoType-light.svg"} 
-              alt={siteTitle} 
-              className="h-5 md:h-6 w-auto object-contain" 
+            <img
+              src={scrolled || isSolidPage ? "/Logo/LogoType-dark.svg" : "/Logo/LogoType-light.svg"}
+              alt={siteTitle}
+              className="h-5 md:h-6 w-auto object-contain"
             />
           </Link>
 
@@ -96,8 +97,8 @@ export default function Navbar() {
                 key={link.to}
                 to={link.to}
                 className={`text-label transition-all ${path === link.to
-                  ? (scrolled || isProductPage ? 'text-[#5A252D]' : 'text-[#F9F9F9]')
-                  : (scrolled || isProductPage ? 'text-[#5A252D]/55 hover:text-[#5A252D]' : 'text-[#F9F9F9]/70 hover:text-[#F9F9F9]')
+                  ? (scrolled || isSolidPage ? 'text-[#5A252D]' : 'text-[#F9F9F9]')
+                  : (scrolled || isSolidPage ? 'text-[#5A252D]/55 hover:text-[#5A252D]' : 'text-[#F9F9F9]/70 hover:text-[#F9F9F9]')
                   }`}
               >
                 {link.label}
@@ -105,47 +106,47 @@ export default function Navbar() {
             ))}
           </div>
 
-          <div className="flex items-center gap-3 relative z-10">
-            {/* User */}
-            {isLoggedIn ? (
-              <div className="flex items-center gap-2">
-                <Link to="/profile" className={`${scrolled ? 'text-[#5A252D] border-[#5A252D]/20 hover:bg-[#5A252D]/5' : 'text-[#F9F9F9] border-[#F9F9F9]/35 hover:bg-[#F9F9F9]/10'} transition-colors p-2.5 border flex items-center justify-center w-9 h-9`}>
-                  <span className="text-[10px] font-black">{user?.name?.charAt(0) || 'U'}</span>
-                </Link>
-                <button 
+          <div className="flex items-center gap-6 relative z-10">
+
+            <div className="flex items-center gap-3">
+              {/* Cart */}
+              <button
+                onClick={toggleCart}
+                className={`relative ${scrolled || isSolidPage ? 'text-[#5A252D] border-[#5A252D]/20 hover:bg-[#5A252D]/5' : 'text-[#F9F9F9] border-[#F9F9F9]/35 hover:bg-[#F9F9F9]/10'} transition-colors p-2.5 border`}
+              >
+                <ShoppingBag className="w-4 h-4" />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-[#5A252D] text-white text-[8px] font-black flex items-center justify-center">
+                    {totalItems}
+                  </span>
+                )}
+              </button>
+
+              {/* User / Logout */}
+              {isLoggedIn ? (
+                <button
                   onClick={logout}
-                  className="p-2 text-gray-400 hover:text-red-600 transition-colors"
+                  className={`hidden md:flex items-center gap-2 text-label px-3 py-2 transition-all ${scrolled || isSolidPage ? 'text-[#5A252D]/60 hover:text-[#5A252D]' : 'text-[#F9F9F9]/60 hover:text-[#F9F9F9]'
+                    }`}
                   title="Logout"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Keluar</span>
                 </button>
-              </div>
-            ) : (
-              <button onClick={() => setShowAuthModal(true)} className={`${scrolled || isProductPage ? 'text-[#5A252D] border-[#5A252D]/20 hover:bg-[#5A252D]/5' : 'text-[#F9F9F9] border-[#F9F9F9]/35 hover:bg-[#F9F9F9]/10'} transition-colors p-2.5 border`}>
-                <User className="w-4 h-4" />
-              </button>
-            )}
-
-            {/* Cart */}
-            <button
-              onClick={toggleCart}
-              className={`relative ${scrolled || isProductPage ? 'text-[#5A252D] border-[#5A252D]/20 hover:bg-[#5A252D]/5' : 'text-[#F9F9F9] border-[#F9F9F9]/35 hover:bg-[#F9F9F9]/10'} transition-colors p-2.5 border`}
-            >
-              <ShoppingBag className="w-4 h-4" />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 bg-[#5A252D] text-white text-[8px] font-black flex items-center justify-center">
-                  {totalItems}
-                </span>
+              ) : (
+                <button onClick={() => setShowAuthModal(true)} className={`${scrolled || isSolidPage ? 'text-[#5A252D] border-[#5A252D]/20 hover:bg-[#5A252D]/5' : 'text-[#F9F9F9] border-[#F9F9F9]/35 hover:bg-[#F9F9F9]/10'} transition-colors p-2.5 border`}>
+                  <User className="w-4 h-4" />
+                </button>
               )}
-            </button>
 
-            {/* Mobile Menu Toggle */}
-            <button
-              onClick={() => setMobileOpen(!mobileOpen)}
-              className={`md:hidden ${scrolled || isProductPage ? 'text-[#5A252D]' : 'text-[#F9F9F9]'} hover:opacity-70 transition-opacity p-2`}
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+              {/* Mobile Menu Toggle */}
+              <button
+                onClick={() => setMobileOpen(!mobileOpen)}
+                className={`md:hidden ${scrolled || isSolidPage ? 'text-[#5A252D]' : 'text-[#F9F9F9]'} hover:opacity-70 transition-opacity p-2`}
+              >
+                {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
         </motion.nav>
       </motion.div>
@@ -173,42 +174,32 @@ export default function Navbar() {
 
               <div className="flex-1 overflow-y-auto px-6 py-6">
                 <div className="flex flex-col gap-4">
-              {links.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setMobileOpen(false)}
-                  className={`text-label py-2 ${path === link.to
-                    ? 'text-[#722F38]'
-                    : 'text-[#3A3A3A]/70 hover:text-[#722F38]'
-                    }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              {isLoggedIn && (
-                <Link
-                  to="/profile"
-                  onClick={() => setMobileOpen(false)}
-                  className={`text-label py-2 border-t border-gray-50 pt-4 flex items-center gap-2 ${path === '/profile' ? 'text-[#722F38]' : 'text-[#3A3A3A]/70'}`}
-                >
-                  <User className="w-4 h-4" />
-                  Profil Saya
-                </Link>
-              )}
-              {isLoggedIn && (
-                <button
-                  onClick={() => {
-                    logout();
-                    setMobileOpen(false);
-                  }}
-                  className="text-label text-red-500 hover:text-red-600 py-2 flex items-center gap-2"
-                >
-                  <LogOut className="w-4 h-4" />
-                  Keluar
-                </button>
-              )}
-            </div>
+                  {links.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setMobileOpen(false)}
+                      className={`text-label py-2 ${path === link.to
+                        ? 'text-[#722F38]'
+                        : 'text-[#3A3A3A]/70 hover:text-[#722F38]'
+                        }`}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                  {isLoggedIn && (
+                    <button
+                      onClick={() => {
+                        logout();
+                        setMobileOpen(false);
+                      }}
+                      className="text-label text-red-500 hover:text-red-600 py-2 flex items-center gap-2 border-t border-gray-100 pt-4"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Keluar
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Mobile Sidebar Footer */}

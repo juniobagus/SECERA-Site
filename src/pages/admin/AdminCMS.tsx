@@ -128,11 +128,6 @@ export default function AdminCMS() {
               siteTitle: saved.global?.siteTitle || initialCMSContent.global.siteTitle,
               seoDescription: saved.global?.seoDescription || initialCMSContent.global.seoDescription,
               seoKeywords: saved.global?.seoKeywords || initialCMSContent.global.seoKeywords,
-              socialMedia: {
-                instagram: saved.global?.socialMedia?.instagram || initialCMSContent.global.socialMedia.instagram,
-                linkedin: saved.global?.socialMedia?.linkedin || initialCMSContent.global.socialMedia.linkedin,
-                twitter: saved.global?.socialMedia?.twitter || initialCMSContent.global.socialMedia.twitter,
-              }
             },
             stylePreference: {
               title: saved.stylePreference?.title || initialCMSContent.stylePreference.title,
@@ -1069,63 +1064,6 @@ export default function AdminCMS() {
                     type="text" 
                     value={homeContent.global?.seoKeywords || ''} 
                     onChange={(e) => setHomeContent({ ...homeContent, global: { ...homeContent.global, seoKeywords: e.target.value } })}
-                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Global Settings: Social Media */}
-            <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
-              <div className="p-10 pb-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-[#722F38]/10 flex items-center justify-center text-[#722F38]">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <h2 className="text-xl font-bold text-gray-900">Social Media Links</h2>
-              </div>
-              <div className="p-10 pt-6 space-y-8">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Instagram URL</label>
-                  <input 
-                    type="text" 
-                    value={homeContent.global?.socialMedia?.instagram || ''} 
-                    onChange={(e) => setHomeContent({ 
-                      ...homeContent, 
-                      global: { 
-                        ...homeContent.global, 
-                        socialMedia: { ...homeContent.global.socialMedia, instagram: e.target.value } 
-                      } 
-                    })}
-                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
-                  <input 
-                    type="text" 
-                    value={homeContent.global?.socialMedia?.linkedin || ''} 
-                    onChange={(e) => setHomeContent({ 
-                      ...homeContent, 
-                      global: { 
-                        ...homeContent.global, 
-                        socialMedia: { ...homeContent.global.socialMedia, linkedin: e.target.value } 
-                      } 
-                    })}
-                    className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Twitter URL</label>
-                  <input 
-                    type="text" 
-                    value={homeContent.global?.socialMedia?.twitter || ''} 
-                    onChange={(e) => setHomeContent({ 
-                      ...homeContent, 
-                      global: { 
-                        ...homeContent.global, 
-                        socialMedia: { ...homeContent.global.socialMedia, twitter: e.target.value } 
-                      } 
-                    })}
                     className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900" 
                   />
                 </div>
