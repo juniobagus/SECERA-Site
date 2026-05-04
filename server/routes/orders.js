@@ -86,16 +86,24 @@ router.post('/', async (req, res) => {
 // GET all orders (Admin)
 router.get('/', authenticateAdmin, async (req, res) => {
   try {
-    const [orders] = await db.query('SELECT * FROM orders ORDER BY created_at DESC');
+    const [orders] = await db.query(`
+      SELECT o.*, 
+             (SELECT SUM(price * quantity) FROM order_items WHERE order_id = o.id) as calculated_subtotal,
+             (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
+      FROM orders o 
+      ORDER BY o.created_at DESC
+    `);
     
-    // For each order, get item count (minimal for list view)
-    for (const order of orders) {
-      const [items] = await db.query('SELECT COUNT(*) as count FROM order_items WHERE order_id = ?', [order.id]);
-      order.item_count = items[0].count;
-    }
+    // For each order, ensure total_amount is consistent with calculations if needed
+    // But we'll let the frontend decide whether to use total_amount or calculated_total
+    const ordersWithCalculatedTotal = orders.map(order => ({
+      ...order,
+      calculated_total: (Number(order.calculated_subtotal) || 0) + (Number(order.shipping_cost) || 0) - (Number(order.discount_amount) || 0)
+    }));
     
-    res.json(orders);
+    res.json(ordersWithCalculatedTotal);
   } catch (err) {
+    console.error('Error fetching admin orders:', err);
     res.status(500).json({ message: 'Error fetching orders' });
   }
 });

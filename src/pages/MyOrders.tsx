@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Package, Search, ChevronDown, ChevronUp, Truck, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { Package, Search, ChevronDown, ChevronUp, Truck, Clock, CheckCircle2, XCircle, Loader2, Printer, Tag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getMyOrders, lookupGuestOrder, trackOrder, uploadImage, uploadPaymentProof } from '../utils/api';
 import { formatPrice } from '../data/products';
 import { toast } from 'react-hot-toast';
 import AuthModal from '../components/AuthModal';
+import OrderPrintTemplate from '../components/OrderPrintTemplate';
+import ShippingLabelTemplate from '../components/ShippingLabelTemplate';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: any }> = {
   pending: { label: 'Menunggu Pembayaran', color: 'bg-amber-100 text-amber-700', icon: Clock },
@@ -76,6 +78,8 @@ export default function MyOrders() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [orderToPrint, setOrderToPrint] = useState<any>(null);
+  const [printType, setPrintType] = useState<'invoice' | 'label'>('invoice');
 
   // Guest lookup
   const [guestPhone, setGuestPhone] = useState('');
@@ -83,6 +87,16 @@ export default function MyOrders() {
   const [guestOrders, setGuestOrders] = useState<any[]>([]);
   const [guestError, setGuestError] = useState('');
   const [guestLoading, setGuestLoading] = useState(false);
+
+  useEffect(() => {
+    if (orderToPrint) {
+      const timer = setTimeout(() => {
+        window.print();
+        setOrderToPrint(null);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [orderToPrint]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -165,6 +179,24 @@ export default function MyOrders() {
                 <p className="text-xs text-zinc-400 mb-1">Alamat pengiriman:</p>
                 <p className="text-xs text-[#3A3A3A]">{order.shipping_address}, {order.shipping_city} {order.shipping_postal_code}</p>
               </div>
+              
+              <div className="flex flex-wrap gap-2 pt-4">
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setPrintType('invoice'); setOrderToPrint(order); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-[#3A3A3A] rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Cetak Invoice
+                </button>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setPrintType('label'); setOrderToPrint(order); }}
+                  className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 text-[#3A3A3A] rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors shadow-sm"
+                >
+                  <Tag className="w-3.5 h-3.5" />
+                  Label Pengiriman (A6)
+                </button>
+              </div>
+
               {order.tracking_number && (
                 <div className="bg-purple-50 rounded-xl p-4 flex flex-col gap-2 mt-4">
                   <div className="flex items-center gap-2">
@@ -197,7 +229,6 @@ export default function MyOrders() {
                           const res = await uploadPaymentProof(order.id, url);
                           if (res.success) {
                             toast.success(res.message, { id: loadingToast });
-                            // Update local state instead of reloading if possible, but reload is safer to get fresh data
                             window.location.reload();
                           } else {
                             toast.error(res.message, { id: loadingToast });
@@ -220,11 +251,15 @@ export default function MyOrders() {
   return (
     <div className="min-h-screen bg-[#F9F9F9] pt-28 pb-24 px-4 md:px-6 font-sans">
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} />}
+      
+      {/* Print Template Container */}
+      {orderToPrint && printType === 'invoice' && <OrderPrintTemplate order={orderToPrint} />}
+      {orderToPrint && printType === 'label' && <ShippingLabelTemplate order={orderToPrint} />}
+
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-serif text-[#722F38] mb-2">Pesanan Saya</h1>
         <p className="text-sm text-zinc-400 mb-8">Lihat status dan riwayat pesanan Anda</p>
 
-        {/* Logged in — show orders list */}
         {isLoggedIn && (
           <>
             {loading ? (
@@ -243,16 +278,13 @@ export default function MyOrders() {
           </>
         )}
 
-        {/* Not logged in — show guest lookup + login prompt */}
         {!isLoggedIn && !authLoading && (
           <div className="space-y-6">
-            {/* Login prompt */}
             <div className="bg-white rounded-2xl p-6 shadow-sm text-center">
               <p className="text-sm text-[#3A3A3A]/70 mb-4">Masuk ke akun Anda untuk melihat seluruh riwayat pesanan</p>
               <button onClick={() => setShowAuthModal(true)} className="bg-[#722F38] text-white px-6 py-3 rounded-xl text-sm font-bold uppercase tracking-wider hover:bg-[#5a252d] transition-colors">Masuk / Daftar</button>
             </div>
 
-            {/* Guest lookup */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h3 className="text-sm font-bold text-[#3A3A3A] mb-4 flex items-center gap-2"><Search className="w-4 h-4" /> Riwayat Pesanan (Tamu)</h3>
               <form onSubmit={handleGuestLookup} className="space-y-3">
@@ -271,7 +303,6 @@ export default function MyOrders() {
               </form>
             </div>
 
-            {/* Guest order results */}
             {guestOrders.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-sm font-bold text-[#3A3A3A] px-2 flex items-center justify-between">

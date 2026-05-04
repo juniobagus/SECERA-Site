@@ -177,7 +177,7 @@ export default function AdminOrders() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">{formatPrice(order.total_amount)}</div>
+                      <div className="text-sm font-medium text-gray-900">{formatPrice(order.calculated_total ?? order.total_amount)}</div>
                       <div className="text-xs text-gray-500">{order.item_count || 0} items</div>
                     </td>
                     <td className="px-6 py-4 text-right">

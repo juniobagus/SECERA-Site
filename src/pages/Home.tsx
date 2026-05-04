@@ -149,38 +149,42 @@ export default function Home() {
                   <motion.img
                     src={item.imageUrl}
                     alt={item.title}
-                    initial={{ scale: 1.1 }}
-                    whileHover={{ scale: 1 }}
-                    transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+                    initial={{ scale: 1.15, opacity: 0 }}
+                    whileInView={{ scale: 1, opacity: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1] }}
                     className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-700"
                   />
                   {/* Overlays */}
-                  <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors duration-500" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  <div className="absolute inset-0 bg-black/25 group-hover:bg-black/15 transition-colors duration-700" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
                 </div>
 
                 {/* Content */}
                 <div className="relative z-10">
                   <motion.p
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 15 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
                     className="text-label text-white/80 mb-2 uppercase tracking-widest text-xs md:text-sm"
                   >
                     {item.subtitle}
                   </motion.p>
                   <motion.h3
-                    initial={{ opacity: 0, y: 20 }}
+                    initial={{ opacity: 0, y: 25 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, delay: 0.35, ease: [0.25, 1, 0.5, 1] }}
                     className="text-5xl md:text-7xl font-serif text-white mb-8"
                   >
                     {item.title}
                   </motion.h3>
                   <motion.div
-                    initial={{ opacity: 0, y: 10 }}
+                    initial={{ opacity: 0, y: 15 }}
                     whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 1, delay: 0.5, ease: [0.25, 1, 0.5, 1] }}
                   >
                     <div className="inline-block bg-white text-ink px-8 py-3.5 text-label uppercase tracking-widest group-hover:bg-brand-wine group-hover:text-white transition-all duration-300">
                       {item.cta}
@@ -203,12 +207,20 @@ export default function Home() {
       {/* Product Grid Section */}
       <section className="pt-20 pb-24 px-6 md:px-12 max-w-[1600px] mx-auto">
         <div className="max-w-4xl mr-auto mb-16 md:mb-20">
-          <p className="text-label text-[#722F38]/55 mb-4">Pilihan Kurasi</p>
+          <motion.p 
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
+            className="text-label text-[#722F38]/55 mb-4"
+          >
+            Pilihan Kurasi
+          </motion.p>
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 35 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: 1.2, delay: 0.1, ease: [0.25, 1, 0.5, 1] }}
             className="text-4xl md:text-5xl lg:text-6xl font-serif text-[#6E2B30] leading-tight max-w-3xl"
           >
             {cms.showcase.title.includes(' yang ') ? (
@@ -219,9 +231,15 @@ export default function Home() {
               cms.showcase.title
             )}
           </motion.h2>
-          <p className="text-[#3A3A3A]/70 mt-5 max-w-2xl">
+          <motion.p 
+            initial={{ opacity: 0, y: 15 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 1, delay: 0.25, ease: [0.25, 1, 0.5, 1] }}
+            className="text-[#3A3A3A]/70 mt-5 max-w-2xl"
+          >
             Mulai dari pilihan teraman untuk acara spesial, lalu sesuaikan detail di halaman produk.
-          </p>
+          </motion.p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-16">
@@ -239,8 +257,24 @@ export default function Home() {
       <section className="py-20 overflow-hidden bg-white">
         <div className="px-6 md:px-12 max-w-[1600px] mx-auto mb-12 flex items-end justify-between">
           <div>
-            <h2 className="text-3xl md:text-5xl font-serif text-brand-wine mb-4">Cerita Pelanggan</h2>
-            <p className="text-muted max-w-xl">Lihat gaya nyata pelanggan SECERA untuk referensi cepat sebelum memilih.</p>
+            <motion.h2 
+              initial={{ opacity: 0, y: 25 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
+              className="text-3xl md:text-5xl font-serif text-brand-wine mb-4"
+            >
+              Cerita Pelanggan
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 1, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
+              className="text-muted max-w-xl"
+            >
+              Lihat gaya nyata pelanggan SECERA untuk referensi cepat sebelum memilih.
+            </motion.p>
           </div>
         </div>
 
@@ -301,15 +335,23 @@ export default function Home() {
       {/* FAQ Section */}
       <section className="py-20 px-6 md:px-12 max-w-3xl mx-auto w-full">
         <motion.h2
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
+          transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
           className="text-4xl md:text-5xl font-serif text-[#6E2B30] text-center mb-4"
         >
           {cms.faq.title}
         </motion.h2>
-        <p className="text-zinc-600 text-center mb-12">{cms.faq.description}</p>
+        <motion.p 
+          initial={{ opacity: 0, y: 15 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
+          className="text-zinc-600 text-center mb-12"
+        >
+          {cms.faq.description}
+        </motion.p>
         <div className="flex flex-col border-t border-zinc-900">
           {cms.faq.items.map((faq, index) => (
             <motion.div
@@ -317,7 +359,7 @@ export default function Home() {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.1, ease: "easeOut" }}
+              transition={{ duration: 0.8, delay: index * 0.12, ease: [0.25, 1, 0.5, 1] }}
               className="border-b border-zinc-900"
             >
               <button

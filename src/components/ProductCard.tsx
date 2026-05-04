@@ -100,10 +100,10 @@ export default function ProductCard({ product, index }: any) {
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 35 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-50px' }}
-        transition={{ duration: 0.5, delay: index * 0.05 }}
+        transition={{ duration: 1, delay: index * 0.1, ease: [0.25, 1, 0.5, 1] }}
         className="flex flex-col group"
       >
         {/* Image */}
@@ -119,7 +119,7 @@ export default function ProductCard({ product, index }: any) {
           <img
             src={thumbnail}
             alt={shortName}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            className="w-full h-full object-cover transition-transform duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-110 grayscale-[10%] group-hover:grayscale-0"
             referrerPolicy="no-referrer"
             loading="lazy"
           />

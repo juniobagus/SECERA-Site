@@ -66,14 +66,14 @@
       "refersTo": "button-cta",
       "description": "The primary interaction for brand heroes and major calls to action.",
       "html": "<button class=\"ds-btn-cta\">GET STARTED</button>",
-      "css": ".ds-btn-cta { background: transparent; color: #f9f9f9; padding: 12px 40px; letter-spacing: 0.0560em; text-transform: uppercase; font-weight: 600; font-size: 0.7rem; font-family: 'Plus Jakarta Sans', sans-serif; border: 1px solid rgba(249, 249, 249, 0.8); border-radius: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; } .ds-btn-cta:hover { background: #f9f9f9; color: #5a252d; }"
+      "css": ".ds-btn-cta { background: transparent; color: #f9f9f9; padding: 12px 40px; letter-spacing: 0.0560em; text-transform: uppercase; font-weight: 600; font-size: 0.7rem; font-family: 'Google Sans', sans-serif; border: 1px solid rgba(249, 249, 249, 0.8); border-radius: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; } .ds-btn-cta:hover { background: #f9f9f9; color: #5a252d; }"
     },
     {
       "name": "Navigation Link",
       "kind": "nav",
       "description": "Standard navigation item with wide tracking.",
       "html": "<a class=\"ds-nav-link\">SHOP</a>",
-      "css": ".ds-nav-link { color: #5a252d; opacity: 0.55; text-decoration: none; text-transform: uppercase; letter-spacing: 0.0560em; font-weight: 600; font-size: 0.7rem; font-family: 'Plus Jakarta Sans', sans-serif; transition: opacity 0.3s; cursor: pointer; } .ds-nav-link:hover { opacity: 1; }"
+      "css": ".ds-nav-link { color: #5a252d; opacity: 0.55; text-decoration: none; text-transform: uppercase; letter-spacing: 0.0560em; font-weight: 600; font-size: 0.7rem; font-family: 'Google Sans', sans-serif; transition: opacity 0.3s; cursor: pointer; } .ds-nav-link:hover { opacity: 1; }"
     }
   ],
   "narrative": {

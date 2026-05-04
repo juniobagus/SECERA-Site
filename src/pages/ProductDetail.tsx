@@ -1,10 +1,93 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Heart, Loader2, Plus, ShoppingBag } from 'lucide-react';
 import { formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { getProductById } from '../utils/api';
+
+const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, className?: string, id: string }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Reset loading state when src changes
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setIsLoaded(true);
+    } else {
+      setIsLoaded(false);
+    }
+  }, [src]);
+
+  return (
+    <div className={`relative overflow-hidden bg-paper/40 aspect-[3/4] min-h-[400px] md:min-h-[600px] ${className}`}>
+      <AnimatePresence mode="wait">
+        {!isLoaded && (
+          <motion.div
+            key={`skeleton-${src}`}
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-10"
+          >
+            <div className="w-full h-full bg-paper relative overflow-hidden">
+              <motion.div
+                animate={{
+                  x: ['-100%', '100%'],
+                }}
+                transition={{
+                  duration: 1.5,
+                  repeat: Infinity,
+                  ease: "linear",
+                }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-full h-full"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <motion.img
+        ref={imgRef}
+        key={`img-${src}`}
+        src={src}
+        alt={alt}
+        onLoad={() => setIsLoaded(true)}
+        initial={{ opacity: 0, scale: 1.05 }}
+        animate={{
+          opacity: isLoaded ? 1 : 0,
+          scale: isLoaded ? 1 : 1.05,
+        }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="w-full h-full object-cover relative z-0"
+        referrerPolicy="no-referrer"
+      />
+    </div>
+  );
+};
+
+const ThumbnailImage = ({ src }: { src: string }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current?.complete) {
+      setIsLoaded(true);
+    }
+  }, [src]);
+
+  return (
+    <div className="relative w-full h-full bg-paper/20 aspect-[3/4]">
+      {!isLoaded && <div className="absolute inset-0 bg-paper animate-pulse z-10" />}
+      <img
+        ref={imgRef}
+        src={src}
+        alt=""
+        onLoad={() => setIsLoaded(true)}
+        className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
+        referrerPolicy="no-referrer"
+      />
+    </div>
+  );
+};
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -48,6 +131,7 @@ export default function ProductDetail() {
   }, [colors, selectedColor]);
 
   const colorVariants = useMemo(() => {
+    if (!selectedColor) return variants;
     return variants.filter((variant: any) => variant.color === selectedColor);
   }, [variants, selectedColor]);
 
@@ -65,12 +149,36 @@ export default function ProductDetail() {
   }, [colorVariants, selectedOption]);
 
   const allImages = useMemo(() => {
+    if (!product) return [];
+    
+    // 1. Start with color-specific variant images
     const images = colorVariants.map((variant: any) => variant.image_url || variant.image).filter(Boolean);
-    if (product?.thumbnail_url && !images.includes(product.thumbnail_url)) {
-      images.unshift(product.thumbnail_url);
+    
+    // 2. Add product-level images if available
+    if (Array.isArray(product.images)) {
+      images.push(...product.images.filter(Boolean));
     }
-    return images;
-  }, [colorVariants, product?.thumbnail_url]);
+    
+    const uniqueImages = Array.from(new Set(images)) as string[];
+    
+    // 3. Ensure the thumbnail is included and at the front
+    const thumb = product?.thumbnail_url || product?.thumbnailUrl || product?.image_url || product?.image;
+    if (thumb) {
+      const thumbIndex = uniqueImages.indexOf(thumb);
+      if (thumbIndex > -1) {
+        uniqueImages.splice(thumbIndex, 1);
+      }
+      uniqueImages.unshift(thumb);
+    }
+    
+    // 4. Fallback to all variant images if still empty
+    if (uniqueImages.length === 0) {
+      const allVariantImages = variants.map((v: any) => v.image_url || v.image).filter(Boolean);
+      return Array.from(new Set(allVariantImages)) as string[];
+    }
+    
+    return uniqueImages;
+  }, [colorVariants, variants, product]);
 
   useEffect(() => {
     setActiveImg(0);
@@ -137,75 +245,6 @@ export default function ProductDetail() {
       </div>
     );
   }
-
-  const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, className?: string, id: string }) => {
-    const [isLoaded, setIsLoaded] = useState(false);
-
-    // Reset loading state when src changes
-    useEffect(() => {
-      setIsLoaded(false);
-    }, [src]);
-
-    return (
-      <div className={`relative overflow-hidden bg-paper/40 ${className}`}>
-        <AnimatePresence mode="wait">
-          {!isLoaded && (
-            <motion.div
-              key={`skeleton-${src}`}
-              initial={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-10"
-            >
-              <div className="w-full h-full bg-paper relative overflow-hidden">
-                <motion.div
-                  animate={{
-                    x: ['-100%', '100%'],
-                  }}
-                  transition={{
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "linear",
-                  }}
-                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-full h-full"
-                />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <motion.img
-          key={`img-${src}`}
-          src={src}
-          alt={alt}
-          onLoad={() => setIsLoaded(true)}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{
-            opacity: isLoaded ? 1 : 0,
-            scale: isLoaded ? 1 : 1.05,
-          }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full h-auto object-cover relative z-0"
-          referrerPolicy="no-referrer"
-        />
-      </div>
-    );
-  };
-
-  const ThumbnailImage = ({ src }: { src: string }) => {
-    const [isLoaded, setIsLoaded] = useState(false);
-    useEffect(() => { setIsLoaded(false); }, [src]);
-    return (
-      <div className="relative w-full h-full">
-        {!isLoaded && <div className="absolute inset-0 bg-paper animate-pulse z-10" />}
-        <img
-          src={src}
-          alt=""
-          onLoad={() => setIsLoaded(true)}
-          className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
-          referrerPolicy="no-referrer"
-        />
-      </div>
-    );
-  };
 
   return (
     <main className="min-h-screen bg-paper font-sans w-full max-w-full pt-[72px] pb-24 md:pb-0">
@@ -462,7 +501,7 @@ export default function ProductDetail() {
         <div className="fixed inset-0 z-50 bg-black/35 backdrop-blur-[1px] flex items-center justify-center px-4" onClick={() => setShowSizeGuide(false)}>
           <div className="w-full max-w-lg bg-white border border-[#0000001e] p-5 md:p-7" onClick={(event) => event.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-serif text-2xl text-[#111]">Panduan Ukuran</h3>
+              <h3 className="font-serif text-2xl text-[#111]">{product?.cms_content?.size_guide?.title || 'Panduan Ukuran'}</h3>
               <button
                 type="button"
                 onClick={() => setShowSizeGuide(false)}
@@ -472,22 +511,25 @@ export default function ProductDetail() {
               </button>
             </div>
             <p className="text-sm text-[#4D4D4D] leading-relaxed mb-4">
-              Bandingkan dengan pakaian serupa yang Anda miliki. Ukur lebar dada, lebar bahu, dan panjang lengan di permukaan datar untuk mendapatkan ukuran terbaik.
+              {product?.cms_content?.size_guide?.description || 'Bandingkan dengan pakaian serupa yang Anda miliki. Ukur lebar dada, lebar bahu, dan panjang lengan di permukaan datar untuk mendapatkan ukuran terbaik.'}
             </p>
             <table className="w-full border-collapse text-xs">
               <thead>
                 <tr className="border-y border-[#0000001f]">
                   <th className="text-left py-2 font-medium">Ukuran</th>
-                  <th className="text-left py-2 font-medium">Dada</th>
-                  <th className="text-left py-2 font-medium">Panjang</th>
+                  <th className="text-left py-2 font-medium">{product?.cms_content?.size_guide?.column1_label || 'Dada'}</th>
+                  <th className="text-left py-2 font-medium">{product?.cms_content?.size_guide?.column2_label || 'Panjang'}</th>
                 </tr>
               </thead>
               <tbody>
-                {(options.length ? options : ['S', 'M', 'L']).map((size: any, index: number) => (
-                  <tr key={size} className="border-b border-[#00000012] text-[#3C3C3C]">
-                    <td className="py-2">{size}</td>
-                    <td className="py-2">{88 + index * 4} cm</td>
-                    <td className="py-2">{66 + index * 2} cm</td>
+                {(product?.cms_content?.size_guide?.table?.length > 0 
+                  ? product.cms_content.size_guide.table 
+                  : (options.length ? options.map((s: any, i: number) => ({ label: s, dada: `${88 + i * 4} cm`, panjang: `${66 + i * 2} cm` })) : [])
+                ).map((row: any) => (
+                  <tr key={row.label || row.id} className="border-b border-[#00000012] text-[#3C3C3C]">
+                    <td className="py-2">{row.label}</td>
+                    <td className="py-2">{row.dada}</td>
+                    <td className="py-2">{row.panjang}</td>
                   </tr>
                 ))}
               </tbody>

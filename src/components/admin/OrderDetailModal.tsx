@@ -1,5 +1,7 @@
-import { X, Package, Truck, Phone, MapPin, Calendar, CreditCard, ChevronRight, Image } from 'lucide-react';
+import { X, Package, Truck, Phone, MapPin, Calendar, CreditCard, ChevronRight, Image, Printer, Tag } from 'lucide-react';
 import { formatPrice } from '../../data/products';
+import OrderPrintTemplate from '../OrderPrintTemplate';
+import ShippingLabelTemplate from '../ShippingLabelTemplate';
 
 import { useState, useEffect } from 'react';
 
@@ -12,6 +14,7 @@ interface OrderDetailModalProps {
 
 export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdate }: OrderDetailModalProps) {
   const [trackingNumber, setTrackingNumber] = useState('');
+  const [activePrint, setActivePrint] = useState<'invoice' | 'label' | null>(null);
 
   useEffect(() => {
     if (order) {
@@ -19,10 +22,28 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
     }
   }, [order]);
 
+  useEffect(() => {
+    if (activePrint) {
+      const timer = setTimeout(() => {
+        window.print();
+        setActivePrint(null);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [activePrint]);
+
   if (!isOpen || !order) return null;
 
+  const handlePrintInvoice = () => {
+    setActivePrint('invoice');
+  };
+
+  const handlePrintLabel = () => {
+    setActivePrint('label');
+  };
+
   const getStatusColor = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'pending': return 'bg-yellow-100 text-yellow-800';
       case 'waiting_confirmation': return 'bg-orange-100 text-orange-800 border border-orange-200';
       case 'paid': return 'bg-indigo-100 text-indigo-800 border border-indigo-200';
@@ -37,15 +58,21 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
   const formatDate = (isoString: string) => {
     if (!isoString) return '-';
     const date = new Date(isoString);
-    return new Intl.DateTimeFormat('id-ID', { 
+    return new Intl.DateTimeFormat('id-ID', {
       day: 'numeric', month: 'long', year: 'numeric',
       hour: '2-digit', minute: '2-digit'
     }).format(date);
   };
 
+  const calculatedSubtotal = order.items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0;
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Print Templates (Hidden from UI, visible during print) */}
+        {activePrint === 'invoice' && <OrderPrintTemplate order={order} />}
+        {activePrint === 'label' && <ShippingLabelTemplate order={order} />}
+
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <div>
@@ -55,9 +82,9 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                 {order.status}
               </span>
             </div>
-            <p className="text-sm text-gray-500">ID: {order.id}</p>
+            <p className="text-sm text-gray-500 font-mono">ID: {order.id}</p>
           </div>
-          <button 
+          <button
             onClick={onClose}
             className="p-2 hover:bg-gray-200 rounded-full transition-colors"
           >
@@ -103,7 +130,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
               <div className="bg-gray-50 rounded-xl p-6 space-y-3">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>{formatPrice(order.items?.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) || 0)}</span>
+                  <span>{formatPrice(calculatedSubtotal)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Shipping Cost</span>
@@ -117,7 +144,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                 )}
                 <div className="pt-3 border-t border-gray-200 flex justify-between text-lg font-bold text-gray-900">
                   <span>Total Amount</span>
-                  <span className="text-[#722F38]">{formatPrice(order.total_amount)}</span>
+                  <span className="text-[#722F38]">{formatPrice(calculatedSubtotal + Number(order.shipping_cost || 0) - Number(order.discount_amount || 0))}</span>
                 </div>
               </div>
             </div>
@@ -136,7 +163,7 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Status Management</label>
-                    <select 
+                    <select
                       value={order.status}
                       onChange={(e) => onStatusUpdate(order.id, e.target.value, trackingNumber)}
                       className="w-full mt-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#722F38] outline-none bg-gray-50/50"
@@ -152,14 +179,14 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Nomor Resi (J&T)</label>
-                    <div className="flex gap-2 mt-1">
-                      <input 
+                    <div className="flex flex-col gap-2 mt-1">
+                      <input
                         value={trackingNumber}
                         onChange={(e) => setTrackingNumber(e.target.value)}
                         className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:border-[#722F38] outline-none"
                         placeholder="Masukkan nomor resi..."
                       />
-                      <button 
+                      <button
                         onClick={() => onStatusUpdate(order.id, order.status, trackingNumber)}
                         className="px-4 py-2 bg-gray-900 text-white rounded-lg text-xs font-bold hover:bg-black transition-colors"
                       >
@@ -226,8 +253,22 @@ export default function OrderDetailModal({ isOpen, onClose, order, onStatusUpdat
           </div>
         </div>
 
-        <div className="p-6 border-t border-gray-100 flex justify-end bg-gray-50/50">
-          <button 
+        <div className="p-6 border-t border-gray-100 flex justify-end items-center gap-3 bg-gray-50/50">
+          <button
+            onClick={handlePrintInvoice}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-lg font-bold hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <Printer className="w-4 h-4" />
+            Print Invoice
+          </button>
+          <button
+            onClick={handlePrintLabel}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-lg font-bold hover:bg-gray-50 transition-all shadow-sm"
+          >
+            <Tag className="w-4 h-4" />
+            Print Shipping Label (A6)
+          </button>
+          <button
             onClick={onClose}
             className="px-8 py-2.5 bg-[#722F38] text-white rounded-lg font-bold hover:bg-[#5a252d] transition-all shadow-md shadow-[#722F38]/20"
           >

@@ -1,41 +1,53 @@
 import React, { useState, useRef } from 'react';
-import { Upload, X, ImageIcon, Loader2 } from 'lucide-react';
+import { Upload, X, ImageIcon, Loader2, Crop } from 'lucide-react';
 import { uploadImage } from '../../utils/api';
+import CropModal from './CropModal';
 
 interface ImageUploadProps {
   value: string;
   onChange: (url: string) => void;
   label?: string;
   className?: string;
+  aspectRatio?: number;
 }
 
-export default function ImageUpload({ value, onChange, label, className = '' }: ImageUploadProps) {
+export default function ImageUpload({ value, onChange, label, className = '', aspectRatio = 16 / 9 }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [tempImageSrc, setTempImageSrc] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Basic validation
     if (!file.type.startsWith('image/')) {
       alert('Please upload an image file.');
       return;
     }
 
+    const reader = new FileReader();
+    reader.onload = () => {
+      setTempImageSrc(reader.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleCropSave = async (croppedFile: File) => {
+    setShowCropModal(false);
     setIsUploading(true);
-    const url = await uploadImage(file);
+    const url = await uploadImage(croppedFile);
     setIsUploading(false);
 
     if (url) {
       onChange(url);
     } else {
       alert('Failed to upload image.');
-    }
-    
-    // Clear the input so the same file can be uploaded again if deleted
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
     }
   };
 
@@ -52,6 +64,17 @@ export default function ImageUpload({ value, onChange, label, className = '' }: 
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setTempImageSrc(value);
+                  setShowCropModal(true);
+                }}
+                className="p-2 bg-white rounded-full text-gray-700 hover:text-[#722F38] transition-colors"
+                title="Crop Image"
+              >
+                <Crop className="w-5 h-5" />
+              </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
@@ -103,6 +126,14 @@ export default function ImageUpload({ value, onChange, label, className = '' }: 
         onChange={handleFileChange}
         accept="image/*"
         className="hidden"
+      />
+
+      <CropModal
+        isOpen={showCropModal}
+        onClose={() => setShowCropModal(false)}
+        imageSrc={tempImageSrc}
+        onCrop={handleCropSave}
+        aspectRatio={aspectRatio}
       />
     </div>
   );

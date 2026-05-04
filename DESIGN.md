@@ -22,13 +22,13 @@ typography:
     lineHeight: 1.08
     letterSpacing: "-0.02em"
   body:
-    fontFamily: "\"Plus Jakarta Sans\", sans-serif"
+    fontFamily: "\"Google Sans\", sans-serif"
     fontSize: "1rem"
     fontWeight: 500
     lineHeight: 1.6
     letterSpacing: "0.0360em"
   label:
-    fontFamily: "\"Plus Jakarta Sans\", sans-serif"
+    fontFamily: "\"Google Sans\", sans-serif"
     fontSize: "0.7rem"
     fontWeight: 600
     lineHeight: 1.2
@@ -93,9 +93,9 @@ The palette is aspirational and tactile, moving away from "digital" blues and gr
 ## 3. Typography
 
 **Display Font:** Libre Caslon Display (with serif fallback)
-**Body Font:** Plus Jakarta Sans (with sans-serif fallback)
+**Body Font:** Google Sans (with sans-serif fallback)
 
-**Character:** A high-contrast editorial pairing. Libre Caslon Display provides the decorative, high-fashion drama of a luxury magazine, while Plus Jakarta Sans offers a crisp, modern Indonesian clarity for the interface and product information.
+**Character:** A high-contrast editorial pairing. Libre Caslon Display provides the decorative, high-fashion drama of a luxury magazine, while Google Sans offers a crisp, modern Indonesian clarity for the interface and product information.
 
 ### Hierarchy
 - **Display** (400, `clamp(2.5rem, 8vw, 4rem)`, 1.08): Hero headlines and major section titles.
@@ -106,7 +106,7 @@ The palette is aspirational and tactile, moving away from "digital" blues and gr
 
 ### Named Rules
 **The High-Fashion Title Rule.** Headings should always use Libre Caslon Display with tight tracking (`-0.03em`) for that editorial look.
-**The UI Clarity Rule.** All interactive elements (buttons, inputs, nav) must use Plus Jakarta Sans for speed of recognition and a modern, airy feel.
+**The UI Clarity Rule.** All interactive elements (buttons, inputs, nav) must use Google Sans for speed of recognition and a modern, airy feel.
 
 ## 4. Elevation
 

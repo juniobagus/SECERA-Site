@@ -80,9 +80,15 @@ export default function Hero({
         </AnimatePresence>
 
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: isMediaLoaded ? 1 : 0 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
+          initial={{ opacity: 0, scale: 1.1 }}
+          animate={{ 
+            opacity: isMediaLoaded ? 1 : 0,
+            scale: isMediaLoaded ? 1 : 1.1
+          }}
+          transition={{ 
+            opacity: { duration: 1.4, ease: [0.25, 1, 0.5, 1] },
+            scale: { duration: 2.5, ease: [0.16, 1, 0.3, 1] }
+          }}
           className="w-full h-full"
         >
           {drivePreviewUrl && !shouldReduceMotion ? (
@@ -135,8 +141,8 @@ export default function Hero({
           {subtitle && (
             <motion.p
               initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.7, ease: 'easeOut' }}
+              animate={isMediaLoaded ? { opacity: 1, y: 0 } : {}}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 1, delay: 0.4, ease: [0.25, 1, 0.5, 1] }}
               className={`text-label text-white/70 mb-4 uppercase tracking-widest ${alignment === 'center' ? 'text-center' : ''}`}
             >
               {subtitle}
@@ -144,9 +150,9 @@ export default function Hero({
           )}
 
           <motion.h1
-            initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.85, ease: 'easeOut' }}
+            initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            animate={isMediaLoaded ? { opacity: 1, y: 0 } : {}}
+            transition={shouldReduceMotion ? { duration: 0 } : { duration: 1.2, delay: 0.55, ease: [0.25, 1, 0.5, 1] }}
             className={`${alignment === 'center' ? 'text-5xl md:text-7xl lg:text-8xl' : 'text-display'} font-serif mb-10 leading-tight text-white`}
           >
             {title}
@@ -155,8 +161,8 @@ export default function Hero({
           {cta && (
             <motion.div
               initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 18 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.7, delay: 0.16, ease: 'easeOut' }}
+              animate={isMediaLoaded ? { opacity: 1, y: 0 } : {}}
+              transition={shouldReduceMotion ? { duration: 0 } : { duration: 1, delay: 0.75, ease: [0.25, 1, 0.5, 1] }}
               className={`flex flex-wrap items-center gap-6 ${alignment === 'center' ? 'justify-center' : ''}`}
             >
               {cta.type === 'link' ? (

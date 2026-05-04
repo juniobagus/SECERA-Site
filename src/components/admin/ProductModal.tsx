@@ -31,7 +31,14 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     cms_content: {
       features: { title: 'What\'s in the box', items: [] },
       editorial: { title: 'Features & Details', sections: [] },
-      accordions: { material: '', specs: '', shipping: '' }
+      accordions: { material: '', specs: '', shipping: '' },
+      size_guide: {
+        title: 'Panduan Ukuran',
+        description: 'Bandingkan dengan pakaian serupa yang Anda miliki. Ukur lebar dada, lebar bahu, dan panjang lengan di permukaan datar untuk mendapatkan ukuran terbaik.',
+        column1_label: 'Dada',
+        column2_label: 'Panjang',
+        table: []
+      }
     },
     variants: [{ id: 'v1', sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
   });
@@ -100,6 +107,18 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               material: product.cms_content?.accordions?.material || '',
               specs: product.cms_content?.accordions?.specs || '',
               shipping: product.cms_content?.accordions?.shipping || ''
+            },
+            size_guide: {
+              title: product.cms_content?.size_guide?.title || 'Panduan Ukuran',
+              description: product.cms_content?.size_guide?.description || 'Bandingkan dengan pakaian serupa yang Anda miliki. Ukur lebar dada, lebar bahu, dan panjang lengan di permukaan datar untuk mendapatkan ukuran terbaik.',
+              column1_label: product.cms_content?.size_guide?.column1_label || 'Dada',
+              column2_label: product.cms_content?.size_guide?.column2_label || 'Panjang',
+              table: (product.cms_content?.size_guide?.table || []).map((row: any) => ({
+                id: row.id || generateId(),
+                label: row.label || '',
+                dada: row.dada || '',
+                panjang: row.panjang || ''
+              }))
             }
           }
         });
@@ -117,7 +136,14 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           cms_content: {
             features: { title: 'What\'s in the box', items: [] },
             editorial: { title: 'Features & Details', sections: [] },
-            accordions: { material: '', specs: '', shipping: '' }
+            accordions: { material: '', specs: '', shipping: '' },
+            size_guide: {
+              title: 'Panduan Ukuran',
+              description: 'Bandingkan dengan pakaian serupa yang Anda miliki. Ukur lebar dada, lebar bahu, dan panjang lengan di permukaan datar untuk mendapatkan ukuran terbaik.',
+              column1_label: 'Dada',
+              column2_label: 'Panjang',
+              table: []
+            }
           },
           variants: [{ id: generateId(), sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
         });
@@ -138,8 +164,8 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
   const handleBulkDeleteVariants = () => {
     if (window.confirm(`Delete ${selectedVariants.length} variants?`)) {
       const newVariants = formData.variants.filter((_: any, i: number) => !selectedVariants.includes(i));
-      setFormData({ 
-        ...formData, 
+      setFormData({
+        ...formData,
         variants: newVariants.length > 0 ? newVariants : [{ id: generateId(), sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
       });
       setSelectedVariants([]);
@@ -198,11 +224,10 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition-all ${
-                activeTab === tab.id 
-                  ? 'bg-white text-[#722F38] shadow-sm border border-gray-100' 
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
-              }`}
+              className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === tab.id
+                ? 'bg-white text-[#722F38] shadow-sm border border-gray-100'
+                : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
+                }`}
             >
               <tab.icon className="w-4 h-4" />
               {tab.label}
@@ -366,6 +391,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 <ImageUpload
                   value={formData.thumbnail_url}
                   onChange={(url) => setFormData({ ...formData, thumbnail_url: url })}
+                  aspectRatio={1}
                 />
               </div>
             </div>
@@ -376,9 +402,9 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <h3 className="text-md font-bold text-gray-900 flex items-center gap-2">
                     Manage Inventory
-                    <span className="bg-[#722F38]/10 text-[#722F38] text-[10px] px-2 py-0.5 rounded-full">{formData.variants.length} Variants</span>
+                    <span className="bg-[#722F38]/10 text-label text-[10px] px-2 py-0.5 rounded-full">{formData.variants.length} Variants</span>
                   </h3>
                   <p className="text-xs text-gray-400 mt-1">Set prices and stock levels for each SKU</p>
                 </div>
@@ -425,26 +451,26 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 </div>
               )}
 
-              <Reorder.Group 
-                axis="y" 
-                values={formData.variants} 
+              <Reorder.Group
+                axis="y"
+                values={formData.variants}
                 onReorder={(newVariants) => setFormData({ ...formData, variants: newVariants })}
                 className="space-y-4"
               >
                 {formData.variants.map((variant: any, idx: number) => (
-                  <Reorder.Item 
-                    key={variant.id} 
+                  <Reorder.Item
+                    key={variant.id}
                     value={variant}
                     className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group"
                   >
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-2 text-gray-200 group-hover:text-gray-400 transition-colors">
                       <GripVertical className="w-5 h-5" />
                     </div>
-                    
+
                     <div className="pl-10">
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-4">
-                          <input 
+                          <input
                             type="checkbox"
                             checked={selectedVariants.includes(idx)}
                             onChange={() => {
@@ -475,31 +501,31 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Color</label>
-                              <input type="text" value={variant.color} onChange={e => { const v = [...formData.variants]; v[idx].color = e.target.value; setFormData({...formData, variants: v})}} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" placeholder="e.g. Sage" />
+                              <input type="text" value={variant.color} onChange={e => { const v = [...formData.variants]; v[idx].color = e.target.value; setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" placeholder="e.g. Sage" />
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Size/Option</label>
-                              <input type="text" value={variant.option_name} onChange={e => { const v = [...formData.variants]; v[idx].option_name = e.target.value; setFormData({...formData, variants: v})}} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" placeholder="e.g. XL" />
+                              <input type="text" value={variant.option_name} onChange={e => { const v = [...formData.variants]; v[idx].option_name = e.target.value; setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" placeholder="e.g. XL" />
                             </div>
                           </div>
                           <div className="grid grid-cols-3 gap-4">
                             <div>
                               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Price</label>
-                              <input type="number" value={variant.price} onChange={e => { const v = [...formData.variants]; v[idx].price = parseInt(e.target.value); setFormData({...formData, variants: v})}} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
+                              <input type="number" value={variant.price} onChange={e => { const v = [...formData.variants]; v[idx].price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Promo</label>
-                              <input type="number" value={variant.promo_price} onChange={e => { const v = [...formData.variants]; v[idx].promo_price = parseInt(e.target.value); setFormData({...formData, variants: v})}} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
+                              <input type="number" value={variant.promo_price} onChange={e => { const v = [...formData.variants]; v[idx].promo_price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
                             </div>
                             <div>
                               <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Stock</label>
-                              <input type="number" value={variant.stock} onChange={e => { const v = [...formData.variants]; v[idx].stock = parseInt(e.target.value); setFormData({...formData, variants: v})}} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
+                              <input type="number" value={variant.stock} onChange={e => { const v = [...formData.variants]; v[idx].stock = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
                             </div>
                           </div>
                         </div>
                         <div className="w-full md:w-64 shrink-0">
                           <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Variant Image</label>
-                          <ImageUpload value={variant.image_url} onChange={url => { const v = [...formData.variants]; v[idx].image_url = url; setFormData({...formData, variants: v})}} />
+                          <ImageUpload value={variant.image_url} onChange={url => { const v = [...formData.variants]; v[idx].image_url = url; setFormData({ ...formData, variants: v }) }} />
                         </div>
                       </div>
                     </div>
@@ -515,16 +541,16 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               {/* Info Accordions */}
               <div className="bg-gray-50/50 rounded-[2rem] p-8 border border-gray-100 space-y-8">
                 <div>
-                  <h3 className="text-sm font-bold text-gray-900">Product Information Accordions</h3>
+                  <h3 className="text-sm tracking-normal font-bold text-gray-900">Product Information Accordions</h3>
                   <p className="text-xs text-gray-400 mt-1">Details shown in collapsible sections on the product page</p>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                   <div className="space-y-3">
                     <label className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" /> Material & Perawatan
                     </label>
-                    <textarea 
+                    <textarea
                       rows={5}
                       value={formData.cms_content.accordions?.material}
                       onChange={e => setFormData({
@@ -542,7 +568,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                     <label className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" /> Spesifikasi Produk
                     </label>
-                    <textarea 
+                    <textarea
                       rows={5}
                       value={formData.cms_content.accordions?.specs}
                       onChange={e => setFormData({
@@ -560,7 +586,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                     <label className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-[#722F38]" /> Informasi Pengiriman
                     </label>
-                    <textarea 
+                    <textarea
                       rows={5}
                       value={formData.cms_content.accordions?.shipping}
                       onChange={e => setFormData({
@@ -581,7 +607,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900">Iconic Features</h3>
+                    <h3 className="text-sm tracking-normal font-bold text-gray-900">Iconic Features</h3>
                     <p className="text-xs text-gray-400 mt-1">Grid of icons showing product highlights</p>
                   </div>
                   <button type="button" onClick={() => {
@@ -592,29 +618,29 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                     <Plus className="w-4 h-4" /> Add Feature
                   </button>
                 </div>
-                
-                <Reorder.Group axis="y" values={formData.cms_content.features.items} onReorder={items => setFormData({...formData, cms_content: {...formData.cms_content, features: {...formData.cms_content.features, items}}})} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <Reorder.Group axis="y" values={formData.cms_content.features.items} onReorder={items => setFormData({ ...formData, cms_content: { ...formData.cms_content, features: { ...formData.cms_content.features, items } } })} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {formData.cms_content.features.items.map((item: any, idx: number) => (
                     <Reorder.Item key={item.id} value={item} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm relative group space-y-4">
                       <div className="flex justify-between items-center">
                         <div className="cursor-grab active:cursor-grabbing text-gray-200 group-hover:text-gray-400"><GripVertical className="w-4 h-4" /></div>
-                        <button type="button" onClick={() => { const items = formData.cms_content.features.items.filter((_: any, i: number) => i !== idx); setFormData({...formData, cms_content: {...formData.cms_content, features: {...formData.cms_content.features, items}}})}} className="text-gray-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                        <button type="button" onClick={() => { const items = formData.cms_content.features.items.filter((_: any, i: number) => i !== idx); setFormData({ ...formData, cms_content: { ...formData.cms_content, features: { ...formData.cms_content.features, items } } }) }} className="text-gray-300 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
                       </div>
                       <div className="flex gap-4">
                         <div className="w-1/3">
                           <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Icon</label>
-                          <select value={item.icon} onChange={e => { const items = [...formData.cms_content.features.items]; items[idx].icon = e.target.value; setFormData({...formData, cms_content: {...formData.cms_content, features: {...formData.cms_content.features, items}}})}} className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-[#722F38]">
+                          <select value={item.icon} onChange={e => { const items = [...formData.cms_content.features.items]; items[idx].icon = e.target.value; setFormData({ ...formData, cms_content: { ...formData.cms_content, features: { ...formData.cms_content.features, items } } }) }} className="w-full px-3 py-2 text-xs border border-gray-200 rounded-xl outline-none focus:border-[#722F38]">
                             {['Package', 'Truck', 'Shield', 'Star', 'Layers', 'Gem', 'Sparkles', 'Heart'].map(icon => <option key={icon} value={icon}>{icon}</option>)}
                           </select>
                         </div>
                         <div className="w-2/3">
                           <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Title</label>
-                          <input type="text" value={item.title} onChange={e => { const items = [...formData.cms_content.features.items]; items[idx].title = e.target.value; setFormData({...formData, cms_content: {...formData.cms_content, features: {...formData.cms_content.features, items}}})}} className="w-full px-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-[#722F38]" />
+                          <input type="text" value={item.title} onChange={e => { const items = [...formData.cms_content.features.items]; items[idx].title = e.target.value; setFormData({ ...formData, cms_content: { ...formData.cms_content, features: { ...formData.cms_content.features, items } } }) }} className="w-full px-4 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:border-[#722F38]" />
                         </div>
                       </div>
                       <div>
                         <label className="text-[10px] font-bold text-gray-400 uppercase block mb-1.5">Description</label>
-                        <textarea rows={2} value={item.description} onChange={e => { const items = [...formData.cms_content.features.items]; items[idx].description = e.target.value; setFormData({...formData, cms_content: {...formData.cms_content, features: {...formData.cms_content.features, items}}})}} className="w-full px-4 py-2 text-sm border border-gray-200 rounded-xl outline-none resize-none focus:border-[#722F38]" />
+                        <textarea rows={2} value={item.description} onChange={e => { const items = [...formData.cms_content.features.items]; items[idx].description = e.target.value; setFormData({ ...formData, cms_content: { ...formData.cms_content, features: { ...formData.cms_content.features, items } } }) }} className="w-full px-4 py-2 text-sm border border-gray-200 rounded-xl outline-none resize-none focus:border-[#722F38]" />
                       </div>
                     </Reorder.Item>
                   ))}
@@ -625,7 +651,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               <div className="space-y-6 pt-8 border-t border-gray-100">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h3 className="text-sm font-bold text-gray-900">Editorial Blocks</h3>
+                    <h3 className="text-sm tracking-normal font-bold text-gray-900">Editorial Blocks</h3>
                     <p className="text-xs text-gray-400 mt-1">Full-width storytelling sections with text and image</p>
                   </div>
                   <button type="button" onClick={() => {
@@ -636,45 +662,190 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                     <Plus className="w-4 h-4" /> Add Block
                   </button>
                 </div>
-                
-                <Reorder.Group axis="y" values={formData.cms_content.editorial.sections} onReorder={sections => setFormData({...formData, cms_content: {...formData.cms_content, editorial: {...formData.cms_content.editorial, sections}}})} className="space-y-8">
+
+                <Reorder.Group axis="y" values={formData.cms_content.editorial.sections} onReorder={sections => setFormData({ ...formData, cms_content: { ...formData.cms_content, editorial: { ...formData.cms_content.editorial, sections } } })} className="space-y-8">
                   {formData.cms_content.editorial.sections.map((section: any, idx: number) => (
                     <Reorder.Item key={section.id} value={section} className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm relative group space-y-6">
                       <div className="flex justify-between items-center">
                         <div className="cursor-grab active:cursor-grabbing text-gray-200 group-hover:text-gray-400"><GripVertical className="w-5 h-5" /></div>
-                        <button type="button" onClick={() => { const sections = formData.cms_content.editorial.sections.filter((_: any, i: number) => i !== idx); setFormData({...formData, cms_content: {...formData.cms_content, editorial: {...formData.cms_content.editorial, sections}}})}} className="text-gray-300 hover:text-red-500"><Trash2 className="w-5 h-5" /></button>
+                        <button type="button" onClick={() => { const sections = formData.cms_content.editorial.sections.filter((_: any, i: number) => i !== idx); setFormData({ ...formData, cms_content: { ...formData.cms_content, editorial: { ...formData.cms_content.editorial, sections } } }) }} className="text-gray-300 hover:text-red-500"><Trash2 className="w-5 h-5" /></button>
                       </div>
                       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                         <div className="lg:col-span-7 space-y-6">
                           <div>
                             <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Block Title</label>
-                            <input type="text" value={section.title} onChange={e => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].title = e.target.value; setFormData({...formData, cms_content: {...formData.cms_content, editorial: {...formData.cms_content.editorial, sections}}})}} className="w-full px-5 py-3 text-sm border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38]" />
+                            <input type="text" value={section.title} onChange={e => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].title = e.target.value; setFormData({ ...formData, cms_content: { ...formData.cms_content, editorial: { ...formData.cms_content.editorial, sections } } }) }} className="w-full px-5 py-3 text-sm border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38]" />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Description</label>
-                            <textarea rows={4} value={section.description} onChange={e => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].description = e.target.value; setFormData({...formData, cms_content: {...formData.cms_content, editorial: {...formData.cms_content.editorial, sections}}})}} className="w-full px-5 py-3 text-sm border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] resize-none leading-relaxed" />
+                            <textarea rows={4} value={section.description} onChange={e => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].description = e.target.value; setFormData({ ...formData, cms_content: { ...formData.cms_content, editorial: { ...formData.cms_content.editorial, sections } } }) }} className="w-full px-5 py-3 text-sm border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38] resize-none leading-relaxed" />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Video URL (Optional)</label>
-                            <input type="text" value={section.videoUrl || ''} onChange={e => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].videoUrl = e.target.value; setFormData({...formData, cms_content: {...formData.cms_content, editorial: {...formData.cms_content.editorial, sections}}})}} className="w-full px-5 py-3 text-sm border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38]" placeholder="https://.../video.mp4" />
+                            <input type="text" value={section.videoUrl || ''} onChange={e => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].videoUrl = e.target.value; setFormData({ ...formData, cms_content: { ...formData.cms_content, editorial: { ...formData.cms_content.editorial, sections } } }) }} className="w-full px-5 py-3 text-sm border border-gray-100 rounded-2xl outline-none bg-gray-50 focus:bg-white focus:border-[#722F38]" placeholder="https://.../video.mp4" />
                           </div>
                           <div>
                             <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Image Position</label>
                             <div className="flex gap-4">
                               {['left', 'right'].map(pos => (
-                                <button key={pos} type="button" onClick={() => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].imagePosition = pos; setFormData({...formData, cms_content: {...formData.cms_content, editorial: {...formData.cms_content.editorial, sections}}})}} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${section.imagePosition === pos ? 'bg-[#722F38] text-white border-[#722F38]' : 'bg-white text-gray-400 border-gray-100'}`}>{pos.toUpperCase()}</button>
+                                <button key={pos} type="button" onClick={() => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].imagePosition = pos; setFormData({ ...formData, cms_content: { ...formData.cms_content, editorial: { ...formData.cms_content.editorial, sections } } }) }} className={`flex-1 py-2 rounded-xl text-xs font-bold border transition-all ${section.imagePosition === pos ? 'bg-[#722F38] text-white border-[#722F38]' : 'bg-white text-gray-400 border-gray-100'}`}>{pos.toUpperCase()}</button>
                               ))}
                             </div>
                           </div>
                         </div>
                         <div className="lg:col-span-5">
                           <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Section Image (Poster)</label>
-                          <ImageUpload value={section.imageUrl} onChange={url => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].imageUrl = url; setFormData({...formData, cms_content: {...formData.cms_content, editorial: {...formData.cms_content.editorial, sections}}})}} className="h-64" />
+                          <ImageUpload value={section.imageUrl} onChange={url => { const sections = [...formData.cms_content.editorial.sections]; sections[idx].imageUrl = url; setFormData({ ...formData, cms_content: { ...formData.cms_content, editorial: { ...formData.cms_content.editorial, sections } } }) }} className="h-64" />
                         </div>
                       </div>
                     </Reorder.Item>
                   ))}
                 </Reorder.Group>
+              </div>
+
+              {/* Size Guide Section */}
+              <div className="bg-gray-50/50 rounded-[2rem] p-8 border border-gray-100 space-y-8">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-900">Size Guide Table</h3>
+                    <p className="text-xs text-gray-400 mt-1">Configure sizing details for the storefront modal</p>
+                  </div>
+                  <button type="button" onClick={() => {
+                    const newGuide = { ...formData.cms_content.size_guide };
+                    newGuide.table.push({ id: generateId(), label: '', dada: '', panjang: '' });
+                    setFormData({ ...formData, cms_content: { ...formData.cms_content, size_guide: newGuide } });
+                  }} className="text-xs font-bold text-[#722F38] hover:bg-[#722F38]/5 px-4 py-2 rounded-xl border border-[#722F38]/20 flex items-center gap-2 transition-all">
+                    <Plus className="w-4 h-4" /> Add Row
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Guide Title</label>
+                      <input
+                        type="text"
+                        value={formData.cms_content.size_guide.title}
+                        onChange={e => setFormData({
+                          ...formData,
+                          cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, title: e.target.value } }
+                        })}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm outline-none focus:border-[#722F38]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Column 1 Label</label>
+                      <input
+                        type="text"
+                        value={formData.cms_content.size_guide.column1_label}
+                        onChange={e => setFormData({
+                          ...formData,
+                          cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, column1_label: e.target.value } }
+                        })}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm outline-none focus:border-[#722F38]"
+                        placeholder="e.g. Bust (Dada)"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Column 2 Label</label>
+                      <input
+                        type="text"
+                        value={formData.cms_content.size_guide.column2_label}
+                        onChange={e => setFormData({
+                          ...formData,
+                          cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, column2_label: e.target.value } }
+                        })}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm outline-none focus:border-[#722F38]"
+                        placeholder="e.g. Length (Panjang)"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase block mb-2">Guide Description</label>
+                      <input
+                        type="text"
+                        value={formData.cms_content.size_guide.description}
+                        onChange={e => setFormData({
+                          ...formData,
+                          cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, description: e.target.value } }
+                        })}
+                        className="w-full px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-sm outline-none focus:border-[#722F38]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="overflow-hidden border border-gray-100 rounded-2xl bg-white">
+                    <table className="w-full border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-100">
+                          <th className="py-3 px-4 text-left font-bold text-gray-400 uppercase">Size Label</th>
+                          <th className="py-3 px-4 text-left font-bold text-gray-400 uppercase">{formData.cms_content.size_guide.column1_label}</th>
+                          <th className="py-3 px-4 text-left font-bold text-gray-400 uppercase">{formData.cms_content.size_guide.column2_label}</th>
+                          <th className="py-3 px-4 text-right"></th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {formData.cms_content.size_guide.table.map((row: any, idx: number) => (
+                          <tr key={row.id}>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={row.label}
+                                onChange={e => {
+                                  const table = [...formData.cms_content.size_guide.table];
+                                  table[idx].label = e.target.value;
+                                  setFormData({ ...formData, cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, table } } });
+                                }}
+                                placeholder="e.g. S"
+                                className="w-full px-3 py-2 bg-gray-50 border-transparent focus:bg-white focus:border-[#722F38]/20 border rounded-lg outline-none"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={row.dada}
+                                onChange={e => {
+                                  const table = [...formData.cms_content.size_guide.table];
+                                  table[idx].dada = e.target.value;
+                                  setFormData({ ...formData, cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, table } } });
+                                }}
+                                placeholder="88 cm"
+                                className="w-full px-3 py-2 bg-gray-50 border-transparent focus:bg-white focus:border-[#722F38]/20 border rounded-lg outline-none"
+                              />
+                            </td>
+                            <td className="p-2">
+                              <input
+                                type="text"
+                                value={row.panjang}
+                                onChange={e => {
+                                  const table = [...formData.cms_content.size_guide.table];
+                                  table[idx].panjang = e.target.value;
+                                  setFormData({ ...formData, cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, table } } });
+                                }}
+                                placeholder="66 cm"
+                                className="w-full px-3 py-2 bg-gray-50 border-transparent focus:bg-white focus:border-[#722F38]/20 border rounded-lg outline-none"
+                              />
+                            </td>
+                            <td className="p-2 text-right">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const table = formData.cms_content.size_guide.table.filter((_: any, i: number) => i !== idx);
+                                  setFormData({ ...formData, cms_content: { ...formData.cms_content, size_guide: { ...formData.cms_content.size_guide, table } } });
+                                }}
+                                className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {formData.cms_content.size_guide.table.length === 0 && (
+                      <div className="p-8 text-center text-gray-400 italic">No sizing rows added yet.</div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           )}
