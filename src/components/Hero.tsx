@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, useReducedMotion, AnimatePresence } from 'motion/react';
 import { normalizeVideoUrl, getGoogleDrivePreviewUrl } from '../utils/media';
 import CTAButton from './CTAButton';
-import { buildDerivedSrcSet, defaultResponsiveSizes } from '../utils/responsiveMedia';
 
 interface HeroProps {
   title: React.ReactNode;
@@ -35,8 +34,6 @@ export default function Hero({
 
   const normalizedUrl = useMemo(() => normalizeVideoUrl(videoUrl || ''), [videoUrl]);
   const drivePreviewUrl = useMemo(() => getGoogleDrivePreviewUrl(normalizedUrl), [normalizedUrl]);
-  const webpSrcSet = useMemo(() => buildDerivedSrcSet(imageUrl, 'webp'), [imageUrl]);
-  const heroSizes = useMemo(() => defaultResponsiveSizes('hero'), []);
 
   useEffect(() => {
     setVideoFailed(false);
@@ -128,8 +125,6 @@ export default function Hero({
           ) : (
             <img
               src={imageUrl}
-              srcSet={webpSrcSet}
-              sizes={heroSizes}
               alt="Hero Background"
               onLoad={() => setIsMediaLoaded(true)}
               className="w-full h-full object-cover object-center"

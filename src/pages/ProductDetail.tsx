@@ -6,12 +6,9 @@ import { formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { getProductById, getProductBySlug } from '../utils/api';
 import SEO from '../components/SEO';
-import { buildDerivedSrcSet, defaultResponsiveSizes } from '../utils/responsiveMedia';
 import CTAButton from '../components/CTAButton';
 
 const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, className?: string, id: string }) => {
-  const srcSet = buildDerivedSrcSet(src, 'webp');
-  const sizes = defaultResponsiveSizes('product');
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -54,8 +51,6 @@ const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, 
         ref={imgRef}
         key={`img-${src}`}
         src={src}
-        srcSet={srcSet}
-        sizes={sizes}
         alt={alt}
         onLoad={() => setIsLoaded(true)}
         initial={{ opacity: 0, scale: 1.05 }}
@@ -72,8 +67,6 @@ const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, 
 };
 
 const ThumbnailImage = ({ src }: { src: string }) => {
-  const srcSet = buildDerivedSrcSet(src, 'webp');
-  const sizes = '(max-width: 768px) 25vw, 120px';
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -89,8 +82,6 @@ const ThumbnailImage = ({ src }: { src: string }) => {
       <img
         ref={imgRef}
         src={src}
-        srcSet={srcSet}
-        sizes={sizes}
         alt=""
         onLoad={() => setIsLoaded(true)}
         className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
