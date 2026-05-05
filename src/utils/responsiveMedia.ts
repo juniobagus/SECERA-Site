@@ -1,21 +1,15 @@
-const CANDIDATE_WIDTHS = [480, 768, 1080, 1440, 2000];
-
-export function buildDerivedSrcSet(url?: string | null, format: 'webp' | 'avif' = 'webp'): string | undefined {
+export function buildDerivedSrcSet(url?: string | null, _format: 'webp' | 'avif' = 'webp'): string | undefined {
   if (!url) return undefined;
 
   // Expected upload URL: /uploads/derived/<assetId>-w<width>.webp
   const m = url.match(/^\/uploads\/derived\/(.+)-w(\d+)\.(webp|avif)$/i);
   if (!m) return undefined;
-
-  const assetId = m[1];
-  const maxAvailableWidth = Number(m[2] || 0);
-  if (!maxAvailableWidth) return undefined;
-  const widths = CANDIDATE_WIDTHS.filter((w) => w <= maxAvailableWidth);
-  if (!widths.length) widths.push(maxAvailableWidth);
-
-  return widths
-    .map((w) => `/uploads/derived/${assetId}-w${w}.${format} ${w}w`)
-    .join(', ');
+  // NOTE:
+  // We previously inferred multiple widths from a single URL. After slot-based
+  // processing, generated widths are profile-specific and not safely inferable
+  // from filename alone, causing 404s. Return undefined until variant arrays
+  // are fully wired through CMS/storefront.
+  return undefined;
 }
 
 export function defaultResponsiveSizes(kind: 'hero' | 'product' = 'product'): string {
