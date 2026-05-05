@@ -248,18 +248,7 @@ router.post('/', upload.single('image'), async (req, res) => {
   try {
     const meta = await sharp(req.file.buffer).metadata();
     const requiredMinWidth = Math.max(MIN_IMAGE_WIDTH, profile.minSourceWidth || MIN_IMAGE_WIDTH);
-    if (!meta.width || meta.width < requiredMinWidth) {
-      return res.status(400).json({
-        message: `Image resolution too small. Minimum width is ${requiredMinWidth}px for slot ${profile.family}.`,
-        code: 'IMAGE_RESOLUTION_TOO_SMALL',
-        meta: {
-          slot: profile.family,
-          minWidth: requiredMinWidth,
-          detectedWidth: meta.width || 0,
-          detectedHeight: meta.height || 0,
-        },
-      });
-    }
+    const isBelowRecommendedWidth = !meta.width || meta.width < requiredMinWidth;
 
     const result = await createImageVariants(req.file.buffer, assetId, profile);
     res.json({
@@ -269,9 +258,13 @@ router.post('/', upload.single('image'), async (req, res) => {
       variants: result.variants,
       meta: { width: result.width, height: result.height },
       qualityReport: result.qualityReport,
-      warning: result.qualityReport?.belowTargetMin
-        ? `Output is below recommended minimum size for slot ${profile.family}. Upload is allowed by user preference.`
-        : undefined,
+      warning: isBelowRecommendedWidth
+        ? `Source width is below recommended ${requiredMinWidth}px for slot ${profile.family}. Upload is still allowed.`
+        : (
+          result.qualityReport?.belowTargetMin
+            ? `Output is below recommended minimum size for slot ${profile.family}. Upload is allowed by user preference.`
+            : undefined
+        ),
     });
   } catch (err) {
     console.error(err);
