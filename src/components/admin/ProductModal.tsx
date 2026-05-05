@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { Reorder } from 'motion/react';
-import { X, Plus, Trash2, Upload, Search, CheckSquare, Edit2, Save, FileText, LayoutGrid, GripVertical, Layers } from 'lucide-react';
+import { X, Plus, Trash2, Upload, Search, CheckSquare, Edit2, Save, FileText, LayoutGrid, GripVertical, Layers, Star, Copy, Globe } from 'lucide-react';
 import ImageUpload from './ImageUpload';
+import SEOFields from './SEOFields';
 import { getCategories, createCategory } from '../../utils/api';
 
 const generateId = () => Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
@@ -12,6 +13,7 @@ interface ProductModalProps {
   onClose: () => void;
   onSave: (product: any) => void;
   product?: any;
+  existingTags?: string[];
 }
 
 export default function ProductModal({ isOpen, onClose, onSave, product }: ProductModalProps) {
@@ -22,6 +24,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     name: '',
     short_name: '',
     thumbnail_url: '',
+    images: [],
     category_id: '',
     material: 'Ceruty Babydoll Premium',
     weight: 100,
@@ -40,12 +43,18 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
         table: []
       }
     },
-    variants: [{ id: 'v1', sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
+    variants: [{ id: 'v1', sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }],
+    tags: [],
+    slug: '',
+    seo_title: '',
+    seo_description: '',
+    og_image_url: ''
   });
+  const [tagInput, setTagInput] = useState('');
   const [selectedVariants, setSelectedVariants] = useState<number[]>([]);
   const [bulkEditValues, setBulkEditValues] = useState({ price: '', promo_price: '', stock: '' });
   const [showBulkEdit, setShowBulkEdit] = useState(false);
-  const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'cms'>('basic');
+  const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'cms' | 'seo'>('basic');
   const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
@@ -66,6 +75,13 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           name: product.name || '',
           short_name: product.short_name || product.shortName || '',
           thumbnail_url: product.thumbnail_url || '',
+          images: (() => {
+            const imgs = product.product_images || product.images || [];
+            if (Array.isArray(imgs)) {
+              return imgs.map((img: any) => typeof img === 'string' ? img : img.image_url);
+            }
+            return product.thumbnail_url ? [product.thumbnail_url] : [];
+          })(),
           category_id: product.category_id || '',
           material: product.material || '',
           weight: product.weight || 100,
@@ -120,13 +136,18 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 panjang: row.panjang || ''
               }))
             }
-          }
+          },
+          slug: product.slug || '',
+          seo_title: product.seo_title || '',
+          seo_description: product.seo_description || '',
+          og_image_url: product.og_image_url || ''
         });
       } else {
         setFormData({
           name: '',
           short_name: '',
           thumbnail_url: '',
+          images: [],
           category_id: categories.length > 0 ? categories[0].id : '',
           material: 'Ceruty Babydoll Premium',
           weight: 100,
@@ -145,7 +166,12 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               table: []
             }
           },
-          variants: [{ id: generateId(), sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
+          variants: [{ id: generateId(), sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }],
+          tags: [],
+          slug: '',
+          seo_title: '',
+          seo_description: '',
+          og_image_url: ''
         });
       }
       setSelectedVariants([]);
@@ -159,6 +185,34 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
       ...formData,
       variants: [...formData.variants, { id: generateId(), sku: '', color: '', option_name: '', price: 0, promo_price: 0, stock: 0, image_url: '' }]
     });
+  };
+
+  const handleDuplicateVariant = (idx: number) => {
+    const variant = formData.variants[idx];
+    const newVariant = {
+      ...variant,
+      id: generateId(),
+      sku: variant.sku ? `${variant.sku}-copy` : ''
+    };
+    const newVariants = [...formData.variants];
+    newVariants.splice(idx + 1, 0, newVariant);
+    setFormData({ ...formData, variants: newVariants });
+    toast.success('Variant duplicated');
+  };
+
+  const handleDuplicateColorGroup = (colorName: string) => {
+    const groupVariants = formData.variants.filter((v: any) => v.color === colorName);
+    const duplicatedVariants = groupVariants.map((v: any) => ({
+      ...v,
+      id: generateId(),
+      color: `${v.color} (Copy)`,
+      sku: v.sku ? `${v.sku}-copy` : ''
+    }));
+    setFormData({
+      ...formData,
+      variants: [...formData.variants, ...duplicatedVariants]
+    });
+    toast.success(`Color group "${colorName}" duplicated`);
   };
 
   const handleBulkDeleteVariants = () => {
@@ -190,7 +244,11 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     e.preventDefault();
     const loadingToast = toast.loading('Saving product...');
     try {
-      await onSave(formData);
+      const dataToSave = {
+        ...formData,
+        images: (formData.images || []).filter((img: string) => img && img.trim() !== '')
+      };
+      await onSave(dataToSave);
       toast.success('Product saved successfully', { id: loadingToast });
     } catch (error: any) {
       toast.error(error.message || 'Failed to save product', { id: loadingToast });
@@ -218,7 +276,8 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           {[
             { id: 'basic', label: 'Basic Information', icon: LayoutGrid },
             { id: 'variants', label: 'Inventory & Variants', icon: Layers },
-            { id: 'cms', label: 'Page Content (CMS)', icon: FileText }
+            { id: 'cms', label: 'Page Content (CMS)', icon: FileText },
+            { id: 'seo', label: 'SEO Settings', icon: Globe }
           ].map((tab: any) => (
             <button
               key={tab.id}
@@ -375,6 +434,66 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Product Tags (Styles, Collections, etc.)</label>
+                <div className="relative">
+                  <div className="flex flex-wrap gap-2 p-3 bg-gray-50 border border-gray-100 rounded-2xl focus-within:bg-white focus-within:border-[#722F38] transition-all min-h-[52px]">
+                    {formData.tags?.map((tag: string) => (
+                      <span key={tag} className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-100 text-gray-700 text-[10px] font-bold rounded-xl shadow-sm animate-in zoom-in-95">
+                        {tag}
+                        <button 
+                          type="button" 
+                          onClick={() => setFormData({ ...formData, tags: formData.tags.filter((t: string) => t !== tag) })} 
+                          className="p-0.5 text-gray-400 hover:text-red-500 transition-colors"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && tagInput.trim()) {
+                          e.preventDefault();
+                          if (!formData.tags?.includes(tagInput.trim())) {
+                            setFormData({ ...formData, tags: [...(formData.tags || []), tagInput.trim()] });
+                          }
+                          setTagInput('');
+                        }
+                      }}
+                      className="flex-1 min-w-[150px] bg-transparent outline-none text-sm placeholder:text-gray-300 px-2"
+                      placeholder="Add style (e.g. Ethnic, Modern)..."
+                    />
+                  </div>
+                  
+                  {tagInput.trim() && (
+                    <div className="absolute z-50 left-0 right-0 top-full mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto animate-in fade-in zoom-in-95">
+                      <div className="p-2 border-b border-gray-50 bg-gray-50/50">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-2">Suggestions</span>
+                      </div>
+                      {existingTags
+                        .filter(t => t.toLowerCase().includes(tagInput.toLowerCase()) && !(formData.tags || []).includes(t))
+                        .map(tag => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => {
+                              setFormData({ ...formData, tags: [...(formData.tags || []), tag] });
+                              setTagInput('');
+                            }}
+                            className="w-full px-4 py-3 text-left text-sm text-gray-600 hover:bg-[#722F38]/5 hover:text-[#722F38] transition-colors flex items-center justify-between group"
+                          >
+                            {tag}
+                            <Plus className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div>
                 <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Product Description</label>
                 <textarea
@@ -386,13 +505,109 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Thumbnail (Main Listing Image)</label>
-                <ImageUpload
-                  value={formData.thumbnail_url}
-                  onChange={(url) => setFormData({ ...formData, thumbnail_url: url })}
-                  aspectRatio={1}
-                />
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Product Gallery</label>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, images: [...(formData.images || []), ''] })}
+                    className="text-xs font-bold text-[#722F38] hover:bg-[#722F38]/5 px-4 py-2 rounded-xl border border-[#722F38]/20 flex items-center gap-2 transition-all active:scale-95"
+                  >
+                    <Plus className="w-4 h-4" /> Add Image
+                  </button>
+                </div>
+
+                <Reorder.Group
+                  axis="x"
+                  values={formData.images || []}
+                  onReorder={(newImages) => setFormData({ ...formData, images: newImages })}
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+                >
+                  {(formData.images || []).map((img: string, idx: number) => (
+                    <Reorder.Item
+                      key={idx}
+                      value={img}
+                      className="relative group aspect-square rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 shadow-sm"
+                    >
+                      <ImageUpload
+                        value={img}
+                        onChange={(url) => {
+                          const newImages = [...formData.images];
+                          newImages[idx] = url;
+                          const isThumb = formData.thumbnail_url === img;
+                          setFormData({
+                            ...formData,
+                            images: newImages,
+                            ...(isThumb ? { thumbnail_url: url } : (formData.thumbnail_url === '' ? { thumbnail_url: url } : {}))
+                          });
+                        }}
+                        aspectRatio={1}
+                        className="h-full w-full"
+                      />
+                      
+                      {/* Controls Overlay */}
+                      <div className="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, thumbnail_url: img })}
+                          title="Set as Thumbnail"
+                          className={`p-1.5 rounded-lg border shadow-sm transition-all ${formData.thumbnail_url === img
+                            ? 'bg-[#722F38] border-[#722F38] text-white'
+                            : 'bg-white border-gray-100 text-gray-400 hover:text-[#722F38] hover:border-[#722F38]/30'
+                            }`}
+                        >
+                          <Star className={`w-3.5 h-3.5 ${formData.thumbnail_url === img ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newImages = formData.images.filter((_: any, i: number) => i !== idx);
+                            setFormData({
+                              ...formData,
+                              images: newImages,
+                              ...(formData.thumbnail_url === img ? { thumbnail_url: newImages[0] || '' } : {})
+                            });
+                          }}
+                          title="Delete Image"
+                          className="p-1.5 bg-white border border-gray-100 rounded-lg text-gray-400 hover:text-red-500 shadow-sm transition-all"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+
+                      {/* Grab Handle */}
+                      <div className="absolute top-2 left-2 p-1 bg-white/80 backdrop-blur-sm rounded-lg border border-white/50 text-gray-400 cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                        <GripVertical className="w-3.5 h-3.5" />
+                      </div>
+
+                      {/* Thumbnail Badge */}
+                      {formData.thumbnail_url === img && img && (
+                        <div className="absolute bottom-2 left-2 right-2 px-2 py-1 bg-[#722F38] text-white text-[8px] font-bold uppercase tracking-widest text-center rounded-md shadow-lg z-10">
+                          Main Thumbnail
+                        </div>
+                      )}
+                    </Reorder.Item>
+                  ))}
+
+                  {(formData.images || []).length === 0 && (
+                    <div className="col-span-full py-12 border-2 border-dashed border-gray-100 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-gray-400">
+                      <div className="w-12 h-12 rounded-full bg-gray-50 flex items-center justify-center">
+                        <Upload className="w-6 h-6" />
+                      </div>
+                      <p className="text-xs font-medium">No photos uploaded yet</p>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, images: [''] })}
+                        className="text-[10px] font-bold text-[#722F38] uppercase tracking-widest hover:underline"
+                      >
+                        Start Uploading
+                      </button>
+                    </div>
+                  )}
+                </Reorder.Group>
+                <p className="text-[10px] text-gray-400 italic mt-2">
+                  * Drag and drop to reorder. Use the star icon to select the main display image.
+                </p>
               </div>
             </div>
           )}
@@ -451,87 +666,138 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 </div>
               )}
 
-              <Reorder.Group
-                axis="y"
-                values={formData.variants}
-                onReorder={(newVariants) => setFormData({ ...formData, variants: newVariants })}
-                className="space-y-4"
-              >
-                {formData.variants.map((variant: any, idx: number) => (
-                  <Reorder.Item
-                    key={variant.id}
-                    value={variant}
-                    className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group"
-                  >
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 cursor-grab active:cursor-grabbing p-2 text-gray-200 group-hover:text-gray-400 transition-colors">
-                      <GripVertical className="w-5 h-5" />
-                    </div>
-
-                    <div className="pl-10">
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-4">
-                          <input
-                            type="checkbox"
-                            checked={selectedVariants.includes(idx)}
-                            onChange={() => {
-                              setSelectedVariants(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
-                            }}
-                            className="w-4 h-4 rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
-                          />
-                          <input
-                            type="text"
-                            placeholder="SKU Code"
-                            value={variant.sku}
-                            onChange={(e) => {
-                              const newVariants = [...formData.variants];
-                              newVariants[idx].sku = e.target.value;
-                              setFormData({ ...formData, variants: newVariants });
-                            }}
-                            className="px-3 py-1 bg-gray-50 border border-transparent rounded-lg text-xs font-bold focus:bg-white focus:border-[#722F38] outline-none"
-                          />
-                        </div>
-                        <button type="button" onClick={() => {
-                          const newVariants = formData.variants.filter((_: any, i: number) => i !== idx);
-                          setFormData({ ...formData, variants: newVariants });
-                        }} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
+              <div className="space-y-10">
+                {Object.entries(
+                  formData.variants.reduce((acc: any, variant: any, idx: number) => {
+                    const color = variant.color || 'Uncategorized';
+                    if (!acc[color]) acc[color] = [];
+                    acc[color].push({ ...variant, originalIndex: idx });
+                    return acc;
+                  }, {})
+                ).map(([color, colorVariants]: [string, any]) => (
+                  <div key={color} className="space-y-4">
+                    <div className="flex items-center gap-4 px-2">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-3 h-3 rounded-full border border-gray-200"
+                          style={{ 
+                            backgroundColor: 
+                              color.toLowerCase() === 'black' ? '#1a1a1a' :
+                              color.toLowerCase() === 'white' ? '#ffffff' :
+                              color.toLowerCase() === 'navy' ? '#000080' :
+                              '#cbd5e1'
+                          }}
+                        />
+                        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">{color}</h3>
                       </div>
-
-                      <div className="flex flex-col md:flex-row gap-8">
-                        <div className="flex-1 space-y-6">
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Color</label>
-                              <input type="text" value={variant.color} onChange={e => { const v = [...formData.variants]; v[idx].color = e.target.value; setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" placeholder="e.g. Sage" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Size/Option</label>
-                              <input type="text" value={variant.option_name} onChange={e => { const v = [...formData.variants]; v[idx].option_name = e.target.value; setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" placeholder="e.g. XL" />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-3 gap-4">
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Price</label>
-                              <input type="number" value={variant.price} onChange={e => { const v = [...formData.variants]; v[idx].price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Promo</label>
-                              <input type="number" value={variant.promo_price} onChange={e => { const v = [...formData.variants]; v[idx].promo_price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
-                            </div>
-                            <div>
-                              <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Stock</label>
-                              <input type="number" value={variant.stock} onChange={e => { const v = [...formData.variants]; v[idx].stock = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none" />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="w-full md:w-64 shrink-0">
-                          <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Variant Image</label>
-                          <ImageUpload value={variant.image_url} onChange={url => { const v = [...formData.variants]; v[idx].image_url = url; setFormData({ ...formData, variants: v }) }} />
-                        </div>
+                      <div className="h-px flex-1 bg-gray-100" />
+                      <div className="flex items-center gap-4">
+                        <button 
+                          type="button" 
+                          onClick={() => handleDuplicateColorGroup(color)}
+                          className="text-[10px] font-bold text-gray-400 hover:text-[#722F38] uppercase tracking-widest flex items-center gap-1.5 transition-colors"
+                        >
+                          <Copy className="w-3 h-3" /> Duplicate Group
+                        </button>
+                        <span className="text-[10px] font-bold text-gray-300 uppercase">{colorVariants.length} Sizes</span>
                       </div>
                     </div>
-                  </Reorder.Item>
+
+                    <div className="grid grid-cols-1 gap-4">
+                      {colorVariants.map((variant: any) => {
+                        const idx = variant.originalIndex;
+                        return (
+                          <div
+                            key={variant.id}
+                            className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm hover:shadow-md transition-all relative group"
+                          >
+                            <div className="flex items-center justify-between mb-6">
+                              <div className="flex items-center gap-4">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedVariants.includes(idx)}
+                                  onChange={() => {
+                                    setSelectedVariants(prev => prev.includes(idx) ? prev.filter(i => i !== idx) : [...prev, idx]);
+                                  }}
+                                  className="w-4 h-4 rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
+                                />
+                                <div className="flex flex-col">
+                                  <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-1">SKU Reference</span>
+                                  <input
+                                    type="text"
+                                    placeholder="SKU Code"
+                                    value={variant.sku}
+                                    onChange={(e) => {
+                                      const newVariants = [...formData.variants];
+                                      newVariants[idx].sku = e.target.value;
+                                      setFormData({ ...formData, variants: newVariants });
+                                    }}
+                                    className="px-3 py-1.5 bg-gray-50 border border-transparent rounded-lg text-xs font-bold focus:bg-white focus:border-[#722F38] outline-none w-48"
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button 
+                                  type="button" 
+                                  onClick={() => handleDuplicateVariant(idx)} 
+                                  className="p-2 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
+                                  title="Duplicate Size"
+                                >
+                                  <Copy className="w-4 h-4" />
+                                </button>
+                                <button type="button" onClick={() => {
+                                  const newVariants = formData.variants.filter((_: any, i: number) => i !== idx);
+                                  setFormData({ ...formData, variants: newVariants });
+                                }} className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"><Trash2 className="w-4 h-4" /></button>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row gap-8">
+                              <div className="flex-1 space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Color Label</label>
+                                    <input type="text" value={variant.color} onChange={e => { const v = [...formData.variants]; v[idx].color = e.target.value; setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-medium" placeholder="e.g. Sage" />
+                                  </div>
+                                  <div>
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Size / Option</label>
+                                    <input type="text" value={variant.option_name} onChange={e => { const v = [...formData.variants]; v[idx].option_name = e.target.value; setFormData({ ...formData, variants: v }) }} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-medium" placeholder="e.g. XL" />
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-3 gap-4">
+                                  <div className="space-y-2">
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Price</label>
+                                    <div className="relative">
+                                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">Rp</span>
+                                      <input type="number" value={variant.price} onChange={e => { const v = [...formData.variants]; v[idx].price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-bold" />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Promo Price</label>
+                                    <div className="relative">
+                                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">Rp</span>
+                                      <input type="number" value={variant.promo_price} onChange={e => { const v = [...formData.variants]; v[idx].promo_price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-bold text-[#722F38]" />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Stock Level</label>
+                                    <input type="number" value={variant.stock} onChange={e => { const v = [...formData.variants]; v[idx].stock = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className={`w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-bold ${variant.stock < 10 ? 'text-orange-500' : 'text-gray-900'}`} />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="w-full md:w-56 shrink-0">
+                                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Variant Asset</label>
+                                <ImageUpload value={variant.image_url} onChange={url => { const v = [...formData.variants]; v[idx].image_url = url; setFormData({ ...formData, variants: v }) }} />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 ))}
-              </Reorder.Group>
+              </div>
+
             </div>
           )}
 
@@ -847,6 +1113,22 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+          {/* SEO TAB */}
+          {activeTab === 'seo' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <SEOFields
+                slug={formData.slug}
+                setSlug={(slug) => setFormData({ ...formData, slug })}
+                seoTitle={formData.seo_title}
+                setSeoTitle={(seo_title) => setFormData({ ...formData, seo_title })}
+                seoDescription={formData.seo_description}
+                setSeoDescription={(seo_description) => setFormData({ ...formData, seo_description })}
+                ogImage={formData.og_image_url}
+                setOgImage={(og_image_url) => setFormData({ ...formData, og_image_url })}
+                titlePlaceholder={formData.name}
+              />
             </div>
           )}
         </form>

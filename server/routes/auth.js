@@ -8,7 +8,7 @@ const { v4: uuidv4 } = require('uuid'); // I need to install uuid
 // Secret for JWT
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
-const { authenticator } = require('otplib');
+const otplib = require('otplib');
 const qrcode = require('qrcode');
 
 // Login
@@ -68,7 +68,7 @@ router.post('/login/2fa', async (req, res) => {
     const [rows] = await db.query('SELECT * FROM users WHERE id = ?', [decoded.id]);
     const user = rows[0];
 
-    const isValid = authenticator.check(code, user.two_factor_secret);
+    const isValid = otplib.verify({ token: code, secret: user.two_factor_secret });
     if (!isValid) {
       return res.status(401).json({ message: 'Kode 2FA tidak valid' });
     }
@@ -102,8 +102,12 @@ router.post('/2fa/setup', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const secret = authenticator.generateSecret();
-    const otpauth = authenticator.keyuri(decoded.email, 'SECERA Admin', secret);
+    const secret = otplib.generateSecret();
+    const otpauth = otplib.generateURI({ 
+      secret, 
+      label: decoded.email, 
+      issuer: 'SECERA Admin' 
+    });
     const qrCodeUrl = await qrcode.toDataURL(otpauth);
 
     await db.query('UPDATE users SET two_factor_secret = ? WHERE id = ?', [secret, decoded.id]);
@@ -126,7 +130,7 @@ router.post('/2fa/enable', async (req, res) => {
     const [rows] = await db.query('SELECT two_factor_secret FROM users WHERE id = ?', [decoded.id]);
     const secret = rows[0].two_factor_secret;
 
-    const isValid = authenticator.check(code, secret);
+    const isValid = otplib.verify({ token: code, secret });
     if (!isValid) {
       return res.status(400).json({ message: 'Kode tidak valid' });
     }

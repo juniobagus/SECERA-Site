@@ -1,5 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Check, RotateCw, ZoomIn, ZoomOut } from 'lucide-react';
+import { Cropper, ReactCropperElement } from 'react-cropper';
+import 'cropperjs/dist/cropper.css';
 
 interface CropModalProps {
   isOpen: boolean;
@@ -10,93 +13,23 @@ interface CropModalProps {
 }
 
 export default function CropModal({ isOpen, onClose, imageSrc, onCrop, aspectRatio = 16 / 9 }: CropModalProps) {
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ x: 0, y: 0 });
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-  const imageRef = useRef<HTMLImageElement>(null);
+  const cropperRef = useRef<ReactCropperElement>(null);
 
-  useEffect(() => {
-    if (isOpen) {
-      setZoom(1);
-      setRotation(0);
-      setPosition({ x: 0, y: 0 });
-    }
-  }, [isOpen]);
+  const handleSave = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const cropper = cropperRef.current?.cropper;
+    if (!cropper) return;
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    setIsDragging(true);
-    setDragStart({ x: e.clientX - position.x, y: e.clientY - position.y });
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!isDragging) return;
-    setPosition({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y
+    const canvas = cropper.getCroppedCanvas({
+      width: 1200,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: 'high',
     });
-  };
 
-  const handleMouseUp = () => {
-    setIsDragging(false);
-  };
+    if (!canvas) return;
 
-  const handleSave = async () => {
-    if (!imageRef.current || !containerRef.current) return;
-
-    const img = imageRef.current;
-    const container = containerRef.current;
-    
-    // 1. Setup output canvas
-    const outputWidth = 1200;
-    const outputHeight = outputWidth / aspectRatio;
-    const canvas = document.createElement('canvas');
-    canvas.width = outputWidth;
-    canvas.height = outputHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // 2. Clear with white background
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // 3. Calculate scales
-    const guideWidth = container.clientWidth * (aspectRatio > 1 ? 0.8 : 0.8 * aspectRatio);
-    const outputScale = outputWidth / guideWidth;
-    const displayedWidth = img.clientWidth;
-    const displayedHeight = img.clientHeight;
-
-    // 4. Apply transformations to match the UI state
-    ctx.save();
-    // Move to the center of the output canvas (which is the center of the guide)
-    ctx.translate(canvas.width / 2, canvas.height / 2);
-    
-    // Scale everything to match output resolution
-    ctx.scale(outputScale, outputScale);
-    
-    // Apply the drag position (in displayed pixels)
-    ctx.translate(position.x, position.y);
-    
-    // Apply rotation around the image's center
-    ctx.rotate((rotation * Math.PI) / 180);
-    
-    // Apply zoom
-    ctx.scale(zoom, zoom);
-    
-    // Draw the image centered at its own center
-    ctx.drawImage(
-      img,
-      -displayedWidth / 2,
-      -displayedHeight / 2,
-      displayedWidth,
-      displayedHeight
-    );
-    
-    ctx.restore();
-
-    // 5. Export as WebP
     canvas.toBlob((blob) => {
       if (blob) {
         const file = new File([blob], 'cropped-image.webp', { type: 'image/webp' });
@@ -105,147 +38,117 @@ export default function CropModal({ isOpen, onClose, imageSrc, onCrop, aspectRat
     }, 'image/webp', 0.9);
   };
 
+  const handleRotate = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    cropperRef.current?.cropper.rotate(90);
+  };
+
+  const handleZoom = (e: React.MouseEvent, delta: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    cropperRef.current?.cropper.zoom(delta);
+  };
+
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col border border-white/20">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+  // Using Portal to move the modal to the body level
+  // This completely prevents event bubbling to the Reorder component
+  return createPortal(
+    <div 
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div 
+        className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col border border-white/20 animate-in fade-in zoom-in-95 duration-200"
+      >
+        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/30">
           <div>
             <h2 className="text-xl font-bold text-gray-900">Crop Image</h2>
-            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Adjust placement and zoom</p>
+            <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Precision framing and adjustment</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-400" />
+          <button 
+            type="button" 
+            onClick={(e) => { e.stopPropagation(); onClose(); }} 
+            className="p-2 hover:bg-gray-100 rounded-full transition-colors group"
+          >
+            <X className="w-5 h-5 text-gray-400 group-hover:text-gray-600" />
           </button>
         </div>
 
-        <div className="relative bg-gray-900 h-[450px] overflow-hidden cursor-move select-none"
-          ref={containerRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-        >
-          {/* Darkened Overlay around crop area */}
-          <div className="absolute inset-0 pointer-events-none z-20">
-            <div className="absolute inset-0 bg-black/60" style={{
-              clipPath: `polygon(
-                0% 0%, 0% 100%, 
-                calc(50% - ${aspectRatio > 1 ? '40%' : `${40 * aspectRatio}%`}) 100%, 
-                calc(50% - ${aspectRatio > 1 ? '40%' : `${40 * aspectRatio}%`}) calc(50% - ${aspectRatio > 1 ? `${40 / aspectRatio}%` : '40%'}), 
-                calc(50% + ${aspectRatio > 1 ? '40%' : `${40 * aspectRatio}%`}) calc(50% - ${aspectRatio > 1 ? `${40 / aspectRatio}%` : '40%'}), 
-                calc(50% + ${aspectRatio > 1 ? '40%' : `${40 * aspectRatio}%`}) calc(50% + ${aspectRatio > 1 ? `${40 / aspectRatio}%` : '40%'}), 
-                calc(50% - ${aspectRatio > 1 ? '40%' : `${40 * aspectRatio}%`}) calc(50% + ${aspectRatio > 1 ? `${40 / aspectRatio}%` : '40%'}), 
-                calc(50% - ${aspectRatio > 1 ? '40%' : `${40 * aspectRatio}%`}) 100%, 
-                100% 100%, 100% 0%
-              )`
-            }} />
-            
-            {/* White border frame */}
-            <div 
-              className="absolute border-2 border-white/90 shadow-[0_0_20px_rgba(0,0,0,0.5)]"
-              style={{
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: aspectRatio > 1 ? '80%' : `${80 * aspectRatio}%`,
-                height: aspectRatio > 1 ? `${80 / aspectRatio}%` : '80%',
-              }}
-            >
-              <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 opacity-20">
-                <div className="border-r border-b border-white" />
-                <div className="border-r border-b border-white" />
-                <div className="border-b border-white" />
-                <div className="border-r border-b border-white" />
-                <div className="border-r border-b border-white" />
-                <div className="border-b border-white" />
-                <div className="border-r border-white" />
-                <div className="border-r border-white" />
-                <div />
-              </div>
-              
-              {/* Corner Accents */}
-              <div className="absolute -top-1 -left-1 w-4 h-4 border-t-2 border-l-2 border-white" />
-              <div className="absolute -top-1 -right-1 w-4 h-4 border-t-2 border-r-2 border-white" />
-              <div className="absolute -bottom-1 -left-1 w-4 h-4 border-b-2 border-l-2 border-white" />
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 border-b-2 border-r-2 border-white" />
-            </div>
-          </div>
-
-          <img
-            ref={imageRef}
+        <div className="relative bg-[#1a1a1a] h-[400px] overflow-hidden flex items-center justify-center">
+          <Cropper
             src={imageSrc}
-            alt="Crop me"
-            draggable={false}
-            onLoad={() => {
-              // Center the image on load
-              setPosition({ x: 0, y: 0 });
-            }}
-            className="absolute transition-none max-w-none origin-center"
-            style={{
-              transform: `translate(${position.x}px, ${position.y}px) scale(${zoom}) rotate(${rotation}deg)`,
-              left: '50%',
-              top: '50%',
-              marginLeft: imageRef.current ? -imageRef.current.width / 2 : 0,
-              marginTop: imageRef.current ? -imageRef.current.height / 2 : 0,
-            }}
+            style={{ height: '100%', width: '100%' }}
+            initialAspectRatio={aspectRatio}
+            aspectRatio={aspectRatio}
+            guides={true}
+            ref={cropperRef}
+            viewMode={1}
+            dragMode="move"
+            background={false}
+            responsive={true}
+            autoCropArea={1}
+            checkOrientation={false}
+            className="rounded-none"
           />
         </div>
 
-        <div className="p-8 bg-gray-50 space-y-6">
-          <div className="flex items-center gap-6">
-            <div className="flex-1 space-y-2">
-              <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                <span>Zoom</span>
-                <span>{Math.round(zoom * 100)}%</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <button onClick={() => setZoom(Math.max(0.1, zoom - 0.1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ZoomOut className="w-4 h-4 text-gray-400" /></button>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="3"
-                  step="0.01"
-                  value={zoom}
-                  onChange={(e) => setZoom(parseFloat(e.target.value))}
-                  className="flex-1 accent-[#722F38]"
-                />
-                <button onClick={() => setZoom(Math.min(3, zoom + 0.1))} className="p-1.5 hover:bg-white rounded-lg transition-colors"><ZoomIn className="w-4 h-4 text-gray-400" /></button>
-              </div>
-            </div>
-            <div className="w-1/3 space-y-2">
-              <div className="flex justify-between text-[10px] font-bold text-gray-400 uppercase tracking-widest">
-                <span>Rotation</span>
-                <span>{rotation}°</span>
-              </div>
-              <div className="flex items-center gap-4">
+        <div className="p-8 bg-white space-y-6">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-6 sm:gap-8">
+            <div className="w-full sm:flex-1 space-y-3">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Zoom Controls</span>
+              <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => setRotation((rotation + 90) % 360)}
-                  className="w-full flex items-center justify-center gap-2 py-2 bg-white border border-gray-100 rounded-xl text-xs font-bold text-gray-600 hover:border-[#722F38] hover:text-[#722F38] transition-all"
+                  type="button" 
+                  onClick={(e) => handleZoom(e, -0.1)} 
+                  className="p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all active:scale-90"
                 >
-                  <RotateCw className="w-3 h-3" /> Rotate
+                  <ZoomOut className="w-5 h-5 text-gray-600" />
+                </button>
+                <div className="flex-1 h-1 bg-gray-100 rounded-full overflow-hidden" />
+                <button 
+                  type="button" 
+                  onClick={(e) => handleZoom(e, 0.1)} 
+                  className="p-3 bg-gray-50 hover:bg-gray-100 rounded-xl transition-all active:scale-90"
+                >
+                  <ZoomIn className="w-5 h-5 text-gray-600" />
                 </button>
               </div>
             </div>
+
+            <div className="w-full sm:w-1/3 space-y-3">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block">Orientation</span>
+              <button 
+                type="button"
+                onClick={handleRotate}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-100 hover:text-[#722F38] transition-all active:scale-95"
+              >
+                <RotateCw className="w-4 h-4" /> Rotate 90°
+              </button>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-4">
+          <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 pt-4 border-t border-gray-50">
             <button
-              onClick={onClose}
-              className="px-8 py-3 rounded-2xl text-sm font-bold text-gray-400 hover:bg-gray-200 transition-all"
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onClose(); }}
+              className="px-8 py-3 rounded-2xl text-sm font-bold text-gray-400 hover:text-gray-600 hover:bg-gray-50 transition-all text-center"
             >
-              Cancel
+              Discard Changes
             </button>
             <button
+              type="button"
               onClick={handleSave}
-              className="px-10 py-3 bg-[#722F38] text-white rounded-2xl text-sm font-bold flex items-center gap-2 hover:bg-[#5a252d] shadow-xl shadow-[#722F38]/20 transition-all active:scale-95"
+              className="px-10 py-3 bg-[#722F38] text-white rounded-2xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-[#5a252d] shadow-xl shadow-[#722F38]/20 transition-all active:scale-95"
             >
               <Check className="w-4 h-4" /> Apply & Save
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

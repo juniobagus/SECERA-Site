@@ -178,14 +178,14 @@ export const initialCMSContent: CMSContent = {
         title: "Modern",
         subtitle: "Minimalist & Kontemporer",
         cta: "Lihat Koleksi",
-        link: "/shop?style=modern",
+        link: "/shop?tag=Modern",
         imageUrl: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?q=80&w=2070&auto=format&fit=crop"
       },
       {
         title: "Etnik",
         subtitle: "Sentuhan Budaya & Warisan",
         cta: "Lihat Koleksi",
-        link: "/shop?style=etnik",
+        link: "/shop?tag=Etnik",
         imageUrl: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=2070&auto=format&fit=crop"
       }
     ]

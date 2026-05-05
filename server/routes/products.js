@@ -28,15 +28,21 @@ router.get('/', async (req, res) => {
 
     const [products] = await db.query(query, queryParams);
     
-    // Fetch variants and images in parallel
+    // Fetch variants, images, and tags in parallel
     const [variants] = await db.query('SELECT * FROM product_variants ORDER BY display_order ASC');
     const [images] = await db.query('SELECT * FROM product_images ORDER BY display_order ASC');
+    const [tags] = await db.query(`
+      SELECT m.product_id, t.name, t.slug 
+      FROM product_tag_map m 
+      JOIN product_tags t ON m.tag_id = t.id
+    `);
 
     // Map them together
     const result = products.map(p => ({
       ...p,
       product_variants: variants.filter(v => v.product_id === p.id),
-      product_images: images.filter(i => i.product_id === p.id)
+      product_images: images.filter(i => i.product_id === p.id),
+      tags: tags.filter(t => t.product_id === p.id).map(t => t.name)
     }));
 
     res.json(result);
@@ -54,30 +60,76 @@ router.get('/:id', async (req, res) => {
 
     const [variants] = await db.query('SELECT * FROM product_variants WHERE product_id = ? ORDER BY display_order ASC', [req.params.id]);
     const [images] = await db.query('SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order ASC', [req.params.id]);
+    const [tags] = await db.query(`
+      SELECT t.name 
+      FROM product_tag_map m 
+      JOIN product_tags t ON m.tag_id = t.id 
+      WHERE m.product_id = ?
+    `, [req.params.id]);
 
     res.json({
       ...products[0],
       product_variants: variants,
-      product_images: images
+      product_images: images,
+      tags: tags.map(t => t.name)
     });
   } catch (err) {
     res.status(500).json({ message: 'Error fetching product' });
   }
 });
 
+// GET product by slug
+router.get('/slug/:slug', async (req, res) => {
+  try {
+    const [products] = await db.query('SELECT * FROM products WHERE slug = ?', [req.params.slug]);
+    if (products.length === 0) return res.status(404).json({ message: 'Product not found' });
+
+    const productId = products[0].id;
+    const [variants] = await db.query('SELECT * FROM product_variants WHERE product_id = ? ORDER BY display_order ASC', [productId]);
+    const [images] = await db.query('SELECT * FROM product_images WHERE product_id = ? ORDER BY display_order ASC', [productId]);
+    const [tags] = await db.query(`
+      SELECT t.name 
+      FROM product_tag_map m 
+      JOIN product_tags t ON m.tag_id = t.id 
+      WHERE m.product_id = ?
+    `, [productId]);
+
+    res.json({
+      ...products[0],
+      product_variants: variants,
+      product_images: images,
+      tags: tags.map(t => t.name)
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching product by slug' });
+  }
+});
+
 // CREATE product
 router.post('/', authenticateAdmin, async (req, res) => {
-  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content, variants, images } = req.body;
+  const { 
+    name, short_name, description, category_id, thumbnail_url, material, weight, 
+    shopee_link, tiktok_link, details, cms_content, variants, images, tags,
+    slug, seo_title, seo_description, og_image_url
+  } = req.body;
   const productId = uuidv4();
 
   const connection = await db.getConnection();
   try {
     await connection.beginTransaction();
 
+    // Generate slug if not provided
+    const finalSlug = slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + productId.substring(0, 4);
+
     // 1. Insert product
     await connection.query(
-      'INSERT INTO products (id, name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [productId, name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null, cms_content ? JSON.stringify(cms_content) : null]
+      'INSERT INTO products (id, name, short_name, slug, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content, seo_title, seo_description, og_image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        productId, name || null, short_name || null, finalSlug, description || null, category_id || null, 
+        thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, 
+        details ? JSON.stringify(details) : null, cms_content ? JSON.stringify(cms_content) : null,
+        seo_title || null, seo_description || null, og_image_url || null
+      ]
     );
 
     // 2. Insert variants
@@ -101,6 +153,33 @@ router.post('/', authenticateAdmin, async (req, res) => {
       }
     }
 
+    // 4. Handle Tags
+    if (tags && Array.isArray(tags)) {
+      for (const tagName of tags) {
+        if (!tagName) continue;
+        
+        // Find or create tag
+        let [existingTags] = await connection.query('SELECT id FROM product_tags WHERE name = ?', [tagName]);
+        let tagId;
+        
+        if (existingTags.length === 0) {
+          tagId = uuidv4();
+          const tagSlug = tagName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          await connection.query(
+            'INSERT INTO product_tags (id, name, slug) VALUES (?, ?, ?)',
+            [tagId, tagName, tagSlug]
+          );
+        } else {
+          tagId = existingTags[0].id;
+        }
+
+        await connection.query(
+          'INSERT IGNORE INTO product_tag_map (product_id, tag_id) VALUES (?, ?)',
+          [productId, tagId]
+        );
+      }
+    }
+
     await connection.commit();
     res.status(201).json({ id: productId, message: 'Product created successfully' });
   } catch (err) {
@@ -115,7 +194,11 @@ router.post('/', authenticateAdmin, async (req, res) => {
 // UPDATE product
 router.put('/:id', authenticateAdmin, async (req, res) => {
   const productId = req.params.id;
-  const { name, short_name, description, category_id, thumbnail_url, material, weight, shopee_link, tiktok_link, details, cms_content, variants, images } = req.body;
+  const { 
+    name, short_name, description, category_id, thumbnail_url, material, weight, 
+    shopee_link, tiktok_link, details, cms_content, variants, images, tags,
+    slug, seo_title, seo_description, og_image_url
+  } = req.body;
 
   const connection = await db.getConnection();
   try {
@@ -123,8 +206,13 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
 
     // 1. Update product
     await connection.query(
-      'UPDATE products SET name = ?, short_name = ?, description = ?, category_id = ?, thumbnail_url = ?, material = ?, weight = ?, shopee_link = ?, tiktok_link = ?, details = ?, cms_content = ? WHERE id = ?',
-      [name || null, short_name || null, description || null, category_id || null, thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, details ? JSON.stringify(details) : null, cms_content ? JSON.stringify(cms_content) : null, productId]
+      'UPDATE products SET name = ?, short_name = ?, slug = ?, description = ?, category_id = ?, thumbnail_url = ?, material = ?, weight = ?, shopee_link = ?, tiktok_link = ?, details = ?, cms_content = ?, seo_title = ?, seo_description = ?, og_image_url = ? WHERE id = ?',
+      [
+        name || null, short_name || null, slug || null, description || null, category_id || null, 
+        thumbnail_url || null, material || null, weight || null, shopee_link || null, tiktok_link || null, 
+        details ? JSON.stringify(details) : null, cms_content ? JSON.stringify(cms_content) : null,
+        seo_title || null, seo_description || null, og_image_url || null, productId
+      ]
     );
 
     // 2. Refresh variants
@@ -150,6 +238,24 @@ router.put('/:id', authenticateAdmin, async (req, res) => {
       }
     }
 
+    // 4. Update tags
+    if (tags && Array.isArray(tags)) {
+      await connection.query('DELETE FROM product_tag_map WHERE product_id = ?', [productId]);
+      for (const tagName of tags) {
+        if (!tagName) continue;
+        let [existingTags] = await connection.query('SELECT id FROM product_tags WHERE name = ?', [tagName]);
+        let tagId;
+        if (existingTags.length === 0) {
+          tagId = uuidv4();
+          const tagSlug = tagName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+          await connection.query('INSERT INTO product_tags (id, name, slug) VALUES (?, ?, ?)', [tagId, tagName, tagSlug]);
+        } else {
+          tagId = existingTags[0].id;
+        }
+        await connection.query('INSERT INTO product_tag_map (product_id, tag_id) VALUES (?, ?)', [productId, tagId]);
+      }
+    }
+
     await connection.commit();
     res.json({ message: 'Product updated successfully' });
   } catch (err) {
@@ -169,8 +275,10 @@ router.patch('/:id', authenticateAdmin, async (req, res) => {
   // Separate product fields from nested relations
   const variants = updates.variants;
   const images = updates.images;
+  const tags = updates.tags;
   delete updates.variants;
   delete updates.images;
+  delete updates.tags;
   delete updates.id;
   delete updates.created_at;
   delete updates.updated_at;
@@ -183,7 +291,7 @@ router.patch('/:id', authenticateAdmin, async (req, res) => {
     const fields = Object.keys(updates);
     if (fields.length > 0) {
       const setClause = fields.map(f => `${f} = ?`).join(', ');
-      const values = fields.map(f => (f === 'details' || f === 'cms_content') ? JSON.stringify(updates[f]) : updates[f]);
+      const values = fields.map(f => (f === 'details' || f === 'cms_content' || f === 'tags') ? JSON.stringify(updates[f]) : updates[f]);
       await connection.query(
         `UPDATE products SET ${setClause} WHERE id = ?`,
         [...values, productId]

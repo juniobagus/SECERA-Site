@@ -10,7 +10,6 @@ import AuthModal from './AuthModal';
 export default function Navbar() {
   const location = useLocation();
   const path = location.pathname;
-  const isSolidPage = path.startsWith('/product/') || ['/profile', '/my-orders', '/shop', '/checkout'].includes(path);
   const { totalItems, toggleCart } = useCart();
   const { user, isLoggedIn, setShowAuthModal, showAuthModal, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -39,29 +38,51 @@ export default function Navbar() {
     };
   }, [mobileOpen]);
 
+  const [slugs, setSlugs] = useState({
+    shop: '/shop',
+    about: '/about'
+  });
+
+  const isSolidPage = path.startsWith('/product/') || 
+                      path.startsWith('/karir/') ||
+                      (path.startsWith('/careers/') && path !== '/careers') ||
+                      ['/my-orders', '/profile', '/checkout'].includes(path);
+
   useEffect(() => {
     async function loadCMS() {
-      const data = await getCMSContent('main_site');
-      if (data?.global?.siteTitle) {
-        const title = data.global.siteTitle.split('|')[0].trim();
+      // Fetch main site data for title/footer
+      const mainData = await getCMSContent('main_site');
+      if (mainData?.global?.siteTitle) {
+        const title = mainData.global.siteTitle.split('|')[0].trim();
         setSiteTitle(title);
       }
-      if (data?.footer) {
+      if (mainData?.footer) {
         setFooterInfo({
-          email: data.footer.email || 'care@secera.id',
-          phone: data.footer.phone || '6285750990000',
-          copyright: data.footer.copyright || '©Copyright 2026 Secera'
+          email: mainData.footer.email || 'care@secera.id',
+          phone: mainData.footer.phone || '6285750990000',
+          copyright: mainData.footer.copyright || '©Copyright 2026 Secera'
         });
       }
+
+      // Fetch individual page slugs
+      const [shopData, aboutData] = await Promise.all([
+        getCMSContent('shop_page'),
+        getCMSContent('about_page')
+      ]);
+
+      setSlugs({
+        shop: shopData?.seo?.slug ? `/${shopData.seo.slug}` : '/shop',
+        about: aboutData?.seo?.slug ? `/${aboutData.seo.slug}` : '/about'
+      });
     }
     loadCMS();
   }, []);
 
   const links = [
     { to: '/', label: 'Beranda' },
-    { to: '/shop', label: 'Koleksi' },
+    { to: slugs.shop, label: 'Koleksi' },
     { to: '/my-orders', label: 'Pesanan Saya' },
-    { to: '/about', label: 'Tentang' },
+    { to: slugs.about, label: 'Tentang' },
     ...(isLoggedIn ? [{ to: '/profile', label: 'Profil' }] : [])
   ];
 

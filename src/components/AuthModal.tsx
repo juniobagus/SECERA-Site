@@ -82,13 +82,13 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.9, opacity: 0, y: 30 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="relative bg-white rounded-[2rem] w-full max-w-md overflow-hidden shadow-[0_30px_60px_-20px_rgba(0,0,0,0.15)]"
+          className="relative bg-white rounded-none w-full max-w-md overflow-hidden shadow-[0_30px_60px_-20px_rgba(0,0,0,0.15)]"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-5 right-5 w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition-colors z-10"
+            className="absolute top-5 right-5 w-8 h-8 rounded-none bg-zinc-100 flex items-center justify-center hover:bg-zinc-200 transition-colors z-10"
           >
             <X className="w-4 h-4 text-zinc-500" />
           </button>
@@ -104,12 +104,12 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
           </div>
 
           {/* Tabs */}
-          <div className="flex mx-8 mb-6 bg-zinc-100 rounded-2xl p-1">
+          <div className="flex mx-8 mb-6 bg-zinc-100 rounded-none p-1">
             <button
               onClick={() => switchTab('login')}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${
+              className={`flex-1 py-2.5 text-sm font-bold rounded-none transition-all ${
                 tab === 'login'
-                  ? 'bg-white text-[#722F38] shadow-sm'
+                  ? 'bg-white text-[#722F38] shadow-none border border-ink/5'
                   : 'text-zinc-400 hover:text-zinc-600'
               }`}
             >
@@ -117,9 +117,9 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
             </button>
             <button
               onClick={() => switchTab('register')}
-              className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${
+              className={`flex-1 py-2.5 text-sm font-bold rounded-none transition-all ${
                 tab === 'register'
-                  ? 'bg-white text-[#722F38] shadow-sm'
+                  ? 'bg-white text-[#722F38] shadow-none border border-ink/5'
                   : 'text-zinc-400 hover:text-zinc-600'
               }`}
             >
@@ -139,7 +139,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     required
-                    className="w-full bg-zinc-50 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
+                    className="w-full bg-zinc-50 rounded-none pl-11 pr-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
                   />
                 </div>
                 <div className="relative">
@@ -149,7 +149,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
                     placeholder="No. HP / WhatsApp"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="w-full bg-zinc-50 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
+                    className="w-full bg-zinc-50 rounded-none pl-11 pr-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
                   />
                 </div>
               </>
@@ -163,7 +163,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-zinc-50 rounded-2xl pl-11 pr-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
+                className="w-full bg-zinc-50 rounded-none pl-11 pr-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
               />
             </div>
 
@@ -176,7 +176,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="w-full bg-zinc-50 rounded-2xl pl-11 pr-12 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
+                className="w-full bg-zinc-50 rounded-none pl-11 pr-12 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all"
               />
               <button
                 type="button"
@@ -191,7 +191,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="bg-zinc-50 rounded-2xl h-12 flex-1 flex items-center justify-center overflow-hidden border border-zinc-100 cursor-pointer"
+                    className="bg-zinc-50 rounded-none h-12 flex-1 flex items-center justify-center overflow-hidden border border-zinc-100 cursor-pointer"
                     onClick={refreshCaptcha}
                     title="Klik untuk segarkan captcha"
                   >
@@ -217,7 +217,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
                   value={captcha}
                   onChange={(e) => setCaptcha(e.target.value)}
                   required
-                  className="w-full bg-zinc-50 rounded-2xl px-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all text-center font-bold tracking-widest"
+                  className="w-full bg-zinc-50 rounded-none px-4 py-3.5 text-sm text-[#3A3A3A] border border-transparent focus:border-[#722F38]/20 focus:bg-white outline-none transition-all text-center font-bold tracking-widest"
                 />
               </div>
             )}
@@ -227,7 +227,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
               <motion.p
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-red-500 text-xs text-center bg-red-50 rounded-xl py-2.5 px-4"
+                className="text-red-500 text-xs text-center bg-red-50 rounded-none py-2.5 px-4"
               >
                 {error}
               </motion.p>
@@ -237,7 +237,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#722F38] hover:bg-[#5a252d] disabled:opacity-50 text-white text-sm font-bold py-4 rounded-2xl uppercase tracking-wider transition-all flex items-center justify-center gap-2"
+              className="w-full bg-[#722F38] hover:bg-[#5a252d] disabled:opacity-50 text-white text-sm font-bold py-4 rounded-none uppercase tracking-wider transition-all flex items-center justify-center gap-2"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -259,7 +259,7 @@ export default function AuthModal({ onClose, onContinueAsGuest }: AuthModalProps
                 <button
                   type="button"
                   onClick={onContinueAsGuest}
-                  className="w-full text-[#722F38] text-sm font-bold py-3 rounded-2xl border border-[#722F38]/10 hover:bg-[#722F38]/5 transition-all"
+                  className="w-full text-[#722F38] text-sm font-bold py-3 rounded-none border border-[#722F38]/10 hover:bg-[#722F38]/5 transition-all"
                 >
                   Lanjut sebagai Tamu
                 </button>

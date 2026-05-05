@@ -109,7 +109,12 @@ export default function GlobalCTA() {
           viewport={{ once: true }}
           transition={shouldReduceMotion ? { duration: 0 } : { duration: 0.65, delay: 0.14, ease: 'easeOut' }}
         >
-          <CTAButton to={cms.cta.buttonLink || '/shop'}>{cms.cta.buttonText}</CTAButton>
+          <CTAButton 
+            to={cms.cta.buttonLink || '/shop'}
+            variant="transparent"
+          >
+            {cms.cta.buttonText}
+          </CTAButton>
         </motion.div>
       </div>
     </section>

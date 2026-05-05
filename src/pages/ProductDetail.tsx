@@ -4,7 +4,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { ArrowLeft, Heart, Loader2, Plus, ShoppingBag } from 'lucide-react';
 import { formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
-import { getProductById } from '../utils/api';
+import { getProductById, getProductBySlug } from '../utils/api';
+import SEO from '../components/SEO';
+import CTAButton from '../components/CTAButton';
 
 const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, className?: string, id: string }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -90,7 +92,8 @@ const ThumbnailImage = ({ src }: { src: string }) => {
 };
 
 export default function ProductDetail() {
-  const { id } = useParams<{ id: string }>();
+  const { id, slug } = useParams<{ id?: string, slug?: string }>();
+  const identifier = id || slug;
   const { addItem } = useCart();
 
   const [product, setProduct] = useState<any>(null);
@@ -104,17 +107,31 @@ export default function ProductDetail() {
 
   useEffect(() => {
     async function loadProduct() {
-      if (!id) return;
+      if (!identifier) return;
       setIsLoading(true);
       try {
-        const data = await getProductById(id);
+        // Try UUID first if it matches UUID format, else try slug
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
+        let data;
+        if (isUuid) {
+          data = await getProductById(identifier);
+        } else {
+          data = await getProductBySlug(identifier);
+        }
+        
+        // Fallback: if not found by one, try the other
+        if (!data) {
+          if (isUuid) data = await getProductBySlug(identifier);
+          else data = await getProductById(identifier);
+        }
+ 
         setProduct(data);
       } finally {
         setIsLoading(false);
       }
     }
     loadProduct();
-  }, [id]);
+  }, [identifier]);
 
   const variants = useMemo(() => {
     if (!product) return [];
@@ -151,17 +168,19 @@ export default function ProductDetail() {
   const allImages = useMemo(() => {
     if (!product) return [];
     
-    // 1. Start with color-specific variant images
-    const images = colorVariants.map((variant: any) => variant.image_url || variant.image).filter(Boolean);
+    // 1. Collect gallery images from the new structure
+    const galleryImages = (product.product_images || product.images || [])
+      .map((img: any) => typeof img === 'string' ? img : img.image_url)
+      .filter(Boolean);
+
+    // 2. Collect color-specific variant images
+    const variantImages = colorVariants.map((variant: any) => variant.image_url || variant.image).filter(Boolean);
     
-    // 2. Add product-level images if available
-    if (Array.isArray(product.images)) {
-      images.push(...product.images.filter(Boolean));
-    }
+    // Combine them, starting with gallery images then variant images
+    const combined = [...galleryImages, ...variantImages];
+    const uniqueImages = Array.from(new Set(combined)) as string[];
     
-    const uniqueImages = Array.from(new Set(images)) as string[];
-    
-    // 3. Ensure the thumbnail is included and at the front
+    // 3. Ensure the thumbnail is included and at the very front
     const thumb = product?.thumbnail_url || product?.thumbnailUrl || product?.image_url || product?.image;
     if (thumb) {
       const thumbIndex = uniqueImages.indexOf(thumb);
@@ -248,6 +267,12 @@ export default function ProductDetail() {
 
   return (
     <main className="min-h-screen bg-paper font-sans w-full max-w-full pt-[72px] pb-24 md:pb-0">
+      <SEO 
+        title={product?.seo_title || product?.name}
+        description={product?.seo_description || product?.description}
+        ogImage={product?.og_image_url || product?.thumbnail_url}
+        type="product"
+      />
       <section className="border-b border-ink/5 px-4 md:px-8 lg:px-10 py-4 bg-white/30">
         <div className="max-w-[1900px] mx-auto">
           <div className="hidden md:flex items-center gap-3 text-label text-muted/80">
@@ -324,9 +349,20 @@ export default function ProductDetail() {
             transition={{ duration: 0.45 }}
             className="lg:sticky lg:top-[100px] h-fit max-w-[760px]"
           >
-            <p className="text-label text-muted mb-4">
-              {product.category || 'Collection'}
-            </p>
+            <div className="flex flex-wrap gap-4 items-center mb-4">
+              <p className="text-label text-muted">
+                {product.category || 'Collection'}
+              </p>
+              {product.tags && Array.isArray(product.tags) && product.tags.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {product.tags.map((tag: string) => (
+                    <span key={tag} className="px-2.5 py-0.5 border border-ink/10 text-[10px] font-bold text-muted/60 uppercase tracking-widest rounded-none bg-ink/[0.02]">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
             <h1 className="text-headline text-ink mb-4">
               {productName}
             </h1>
@@ -415,14 +451,14 @@ export default function ProductDetail() {
               )}
 
               <div className="flex items-stretch gap-3 pt-4">
-                <button
-                  type="button"
+                <CTAButton
                   onClick={handleAddToCart}
                   disabled={!activeVariant || (activeVariant?.stock ?? 1) === 0}
-                  className="flex-1 h-14 bg-brand-wine text-white text-label hover:bg-brand-wine-deep transition-all shadow-xl shadow-brand-wine/15 disabled:opacity-40 disabled:grayscale"
+                  variant="wine"
+                  className="flex-1"
                 >
                   {addedFeedback ? 'Berhasil' : 'Masukkan ke Keranjang'}
-                </button>
+                </CTAButton>
                 <button
                   type="button"
                   className="w-14 h-14 border border-ink/10 flex items-center justify-center hover:border-brand-wine hover:bg-brand-wine/5 transition-all"
@@ -486,14 +522,14 @@ export default function ProductDetail() {
               {formatPrice((activeVariant?.promo_price || activeVariant?.promoPrice) ?? activeVariant?.price ?? 0)}
             </p>
           </div>
-          <button
-            type="button"
+          <CTAButton
             onClick={handleAddToCart}
             disabled={!activeVariant || (activeVariant?.stock ?? 1) === 0}
-            className="h-12 px-6 bg-brand-wine text-white text-label shadow-lg shadow-brand-wine/20 disabled:opacity-45 inline-flex items-center gap-2"
+            variant="wine"
+            className="h-12 px-6"
           >
-            <ShoppingBag className="w-4 h-4" /> Beli Sekarang
-          </button>
+            <ShoppingBag className="w-4 h-4 mr-2" /> Beli Sekarang
+          </CTAButton>
         </div>
       </div>
 

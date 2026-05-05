@@ -13,7 +13,7 @@ interface HeroProps {
   };
   imageUrl?: string;
   videoUrl?: string;
-  alignment?: 'center' | 'bottom';
+  alignment?: 'center' | 'bottom' | 'left';
   height?: string;
   className?: string;
 }
@@ -50,6 +50,14 @@ export default function Hero({
 
   useEffect(() => {
     setIsMediaLoaded(false);
+    
+    // Safety timeout: if media doesn't load within 2 seconds, force it
+    // This ensures content visibility even if the image is slow or fails
+    const timer = setTimeout(() => {
+      setIsMediaLoaded(true);
+    }, 2000);
+
+    return () => clearTimeout(timer);
   }, [videoUrl, imageUrl]);
 
   return (
@@ -73,7 +81,7 @@ export default function Hero({
                   repeat: Infinity,
                   ease: "linear",
                 }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent w-full h-full"
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent w-full h-full"
               />
             </motion.div>
           )}
@@ -126,11 +134,9 @@ export default function Hero({
         </motion.div>
         
         {/* Editorial Overlays */}
-        <div className="absolute inset-0 bg-[#3A3A3A]/35" />
-        <div className="absolute inset-0 bg-[#722F38]/10" />
-        {alignment === 'bottom' && (
-          <div className="absolute inset-0 bg-gradient-to-b from-[#5A252D]/65 via-[#5A252D]/35 to-[#3A3A3A]/15" />
-        )}
+        <div className="absolute inset-0 bg-[#261F1F]/40 mix-blend-multiply" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#261F1F]/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/pinstripe-dark.png')]" />
       </div>
 
       {/* Content Container */}
@@ -165,18 +171,13 @@ export default function Hero({
               transition={shouldReduceMotion ? { duration: 0 } : { duration: 1, delay: 0.75, ease: [0.25, 1, 0.5, 1] }}
               className={`flex flex-wrap items-center gap-6 ${alignment === 'center' ? 'justify-center' : ''}`}
             >
-              {cta.type === 'link' ? (
-                <a
-                  href={cta.link}
-                  className="inline-flex items-center justify-center bg-white text-brand-wine-deep text-label py-4 px-10 transition-all shadow-xl hover:translate-y-[-2px] active:translate-y-0"
-                >
-                  {cta.text}
-                </a>
-              ) : (
-                <CTAButton to={cta.link} className="w-full sm:w-auto">
-                  {cta.text}
-                </CTAButton>
-              )}
+              <CTAButton 
+                to={cta.link} 
+                variant="transparent"
+                className="w-full sm:w-auto"
+              >
+                {cta.text}
+              </CTAButton>
             </motion.div>
           )}
         </div>

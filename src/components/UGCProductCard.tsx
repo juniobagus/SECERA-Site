@@ -27,7 +27,7 @@ export default function UGCProductCard({ product, thumbnail, isActive }: UGCProd
       className="w-full"
     >
       <Link
-        to={`/product/${product.id}`}
+        to={product.slug ? `/${product.slug}` : `/product/${product.id}`}
         className={`group flex items-center gap-3 p-2 bg-paper hover:shadow-md transition-all ${isActive ? 'border-brand-wine/20' : 'opacity-70'
           }`}
       >

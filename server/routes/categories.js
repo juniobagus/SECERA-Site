@@ -17,18 +17,21 @@ router.get('/', async (req, res) => {
 
 // CREATE category
 router.post('/', authenticateAdmin, async (req, res) => {
-  const { name } = req.body;
+  const { name, slug, seo_title, seo_description, og_image_url } = req.body;
   if (!name) return res.status(400).json({ message: 'Name is required' });
 
   try {
     const id = crypto.randomUUID();
-    const slug = name.toLowerCase()
+    const finalSlug = slug || name.toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_]+/g, '-')
       .replace(/^-+|-+$/g, '');
       
-    await db.query('INSERT INTO categories (id, name, slug) VALUES (?, ?, ?)', [id, name, slug]);
-    res.status(201).json({ id, name, slug });
+    await db.query(
+      'INSERT INTO categories (id, name, slug, seo_title, seo_description, og_image_url) VALUES (?, ?, ?, ?, ?, ?)', 
+      [id, name, finalSlug, seo_title || null, seo_description || null, og_image_url || null]
+    );
+    res.status(201).json({ id, name, slug: finalSlug });
   } catch (err) {
     console.error('Error creating category:', err);
     res.status(500).json({ message: 'Error creating category', error: err.message });
@@ -38,17 +41,20 @@ router.post('/', authenticateAdmin, async (req, res) => {
 // UPDATE category
 router.patch('/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  const { name } = req.body;
+  const { name, slug, seo_title, seo_description, og_image_url } = req.body;
   if (!name) return res.status(400).json({ message: 'Name is required' });
 
   try {
-    const slug = name.toLowerCase()
+    const finalSlug = slug || name.toLowerCase()
       .replace(/[^\w\s-]/g, '')
       .replace(/[\s_]+/g, '-')
       .replace(/^-+|-+$/g, '');
       
-    await db.query('UPDATE categories SET name = ?, slug = ? WHERE id = ?', [name, slug, id]);
-    res.json({ id, name, slug });
+    await db.query(
+      'UPDATE categories SET name = ?, slug = ?, seo_title = ?, seo_description = ?, og_image_url = ? WHERE id = ?', 
+      [name, finalSlug, seo_title || null, seo_description || null, og_image_url || null, id]
+    );
+    res.json({ id, name, slug: finalSlug });
   } catch (err) {
     console.error('Error updating category:', err);
     res.status(500).json({ message: 'Error updating category' });

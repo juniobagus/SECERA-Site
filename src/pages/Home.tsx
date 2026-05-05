@@ -16,6 +16,7 @@ import CTAButton from '../components/CTAButton';
 import UGCPlayer from '../components/UGCPlayer';
 import UGCProductCard from '../components/UGCProductCard';
 import Hero from '../components/Hero';
+import SEO from '../components/SEO';
 
 
 export default function Home() {
@@ -72,25 +73,6 @@ export default function Home() {
             stylePreference: { ...initialCMSContent.stylePreference, ...cmsData.stylePreference }
           };
           setCms(newCms);
-
-          // SEO Update
-          if (newCms.global.siteTitle) document.title = newCms.global.siteTitle;
-
-          let metaDesc = document.querySelector('meta[name="description"]');
-          if (!metaDesc) {
-            metaDesc = document.createElement('meta');
-            metaDesc.setAttribute('name', 'description');
-            document.head.appendChild(metaDesc);
-          }
-          metaDesc.setAttribute('content', newCms.global.seoDescription);
-
-          let metaKeywords = document.querySelector('meta[name="keywords"]');
-          if (!metaKeywords) {
-            metaKeywords = document.createElement('meta');
-            metaKeywords.setAttribute('name', 'keywords');
-            document.head.appendChild(metaKeywords);
-          }
-          metaKeywords.setAttribute('content', newCms.global.seoKeywords);
         }
 
         // Process Products
@@ -122,6 +104,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO 
+        title={cms.seo?.title || cms.global.siteTitle}
+        description={cms.seo?.description || cms.global.seoDescription}
+        ogImage={cms.seo?.ogImage}
+      />
       <div className="min-h-screen w-full bg-[#F9F9F9] flex flex-col font-sans">
         <Hero
           title={cms.hero.title}
@@ -186,9 +173,12 @@ export default function Home() {
                     viewport={{ once: true }}
                     transition={{ duration: 1, delay: 0.5, ease: [0.25, 1, 0.5, 1] }}
                   >
-                    <div className="inline-block bg-white text-ink px-8 py-3.5 text-label uppercase tracking-widest group-hover:bg-brand-wine group-hover:text-white transition-all duration-300">
+                    <CTAButton 
+                      as="div"
+                      variant="transparent"
+                    >
                       {item.cta}
-                    </div>
+                    </CTAButton>
                   </motion.div>
                 </div>
 
@@ -325,7 +315,7 @@ export default function Home() {
                 key={i}
                 onClick={() => scrollToUgc(i)}
                 aria-label={`Lihat video pelanggan ke-${i + 1}`}
-                className={`w-2 h-2 rounded-full transition-all ${activeUgcIndex === i ? 'w-8 bg-brand-wine' : 'bg-zinc-200'}`}
+                className={`w-2 h-2 transition-all ${activeUgcIndex === i ? 'w-8 bg-brand-wine' : 'bg-zinc-200'} rounded-none`}
               />
             ))}
           </div>

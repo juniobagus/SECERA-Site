@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useCart } from '../context/CartContext';
 import { formatPrice } from '../data/products';
 import { Link } from 'react-router-dom';
+import CTAButton from './CTAButton';
 
 export default function CartDrawer() {
   const { items, isOpen, setCartOpen, removeItem, updateQuantity, totalItems, subtotal } = useCart();
@@ -38,7 +39,7 @@ export default function CartDrawer() {
               </div>
               <button
                 onClick={() => setCartOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#722F38]/10 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-none hover:bg-[#722F38]/10 transition-colors"
               >
                 <X className="w-5 h-5 text-[#3A3A3A]" />
               </button>
@@ -66,9 +67,9 @@ export default function CartDrawer() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: 50 }}
-                      className="flex gap-4 bg-white rounded-2xl p-3 shadow-sm"
+                      className="flex gap-4 bg-white rounded-none p-3 shadow-none border border-ink/5"
                     >
-                      <div className="w-20 h-24 rounded-xl overflow-hidden bg-[#F9F9F9] shrink-0">
+                      <div className="w-20 h-24 rounded-none overflow-hidden bg-[#F9F9F9] shrink-0">
                         <img
                           src={item.image}
                           alt={item.productName}
@@ -94,7 +95,7 @@ export default function CartDrawer() {
                           </span>
                         </div>
                         <div className="flex items-center justify-between mt-auto pt-2">
-                          <div className="flex items-center gap-2 border border-[#722F38]/15 rounded-full px-2 py-1">
+                          <div className="flex items-center gap-2 border border-[#722F38]/15 rounded-none px-2 py-1">
                             <button
                               onClick={() => updateQuantity(item.sku, item.quantity - 1)}
                               className="text-[#722F38] hover:opacity-70"
@@ -137,13 +138,14 @@ export default function CartDrawer() {
                 <p className="text-xs text-[#3A3A3A]/50">
                   Ongkir dihitung saat checkout. Gratis ongkir untuk pesanan di atas Rp 200.000.
                 </p>
-                <Link
+                <CTAButton
                   to="/checkout"
                   onClick={() => setCartOpen(false)}
-                  className="block w-full bg-[#722F38] hover:bg-[#5a252d] text-white text-sm font-bold py-4 px-6 rounded-xl uppercase tracking-wider transition-colors text-center"
+                  variant="wine"
+                  className="w-full"
                 >
                   Lanjutkan ke Checkout
-                </Link>
+                </CTAButton>
               </div>
             )}
           </motion.div>

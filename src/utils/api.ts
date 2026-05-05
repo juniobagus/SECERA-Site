@@ -121,6 +121,63 @@ export async function deleteCategory(id: string) {
   }
 }
 
+// === Tags ===
+
+export async function getTags() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tags`);
+    if (!response.ok) throw new Error('Failed to fetch tags');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getTags):', error);
+    return [];
+  }
+}
+
+export async function createTag(name: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tags`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!response.ok) throw new Error('Failed to create tag');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (createTag):', error);
+    throw error;
+  }
+}
+
+export async function updateTag(id: string, data: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tags/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error('Failed to update tag');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (updateTag):', error);
+    throw error;
+  }
+}
+
+export async function deleteTag(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/tags/${id}`, {
+      method: 'DELETE',
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (deleteTag):', error);
+    return false;
+  }
+}
+
+
+
 export async function getProductById(productId: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/products/${productId}`);
@@ -128,6 +185,21 @@ export async function getProductById(productId: string) {
     return await response.json();
   } catch (error) {
     console.error('API Error (getProductById):', error);
+    return null;
+  }
+}
+
+export async function getProductBySlug(slug: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/products/slug/${slug}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error('Failed to fetch product');
+    return await response.json();
+  } catch (error) {
+    // Only log actual errors, not 404s
+    if (error instanceof Error && !error.message.includes('404')) {
+      console.error('API Error (getProductBySlug):', error);
+    }
     return null;
   }
 }
@@ -581,6 +653,154 @@ export async function markAllAsRead() {
     return response.ok;
   } catch (error) {
     console.error('API Error (markAllAsRead):', error);
+    return false;
+  }
+}
+
+// === Jobs & Careers ===
+
+export async function getJobs() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs`);
+    if (!response.ok) throw new Error('Failed to fetch jobs');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getJobs):', error);
+    return [];
+  }
+}
+
+
+
+export async function getJobById(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch job');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getJobById):', error);
+    return null;
+  }
+}
+
+export async function getJobBySlug(slug: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/slug/${slug}`);
+    if (response.status === 404) return null;
+    if (!response.ok) throw new Error('Failed to fetch job');
+    return await response.json();
+  } catch (error) {
+    // Only log actual errors, not 404s
+    if (error instanceof Error && !error.message.includes('404')) {
+      console.error('API Error (getJobBySlug):', error);
+    }
+    return null;
+  }
+}
+
+export async function applyForJob(jobId: string, applicationData: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/${jobId}/apply`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(applicationData),
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.message || 'Failed to submit application');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (applyForJob):', error);
+    throw error;
+  }
+}
+
+export async function getAdminJobs() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/admin/all`);
+    if (!response.ok) throw new Error('Failed to fetch admin jobs');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getAdminJobs):', error);
+    return [];
+  }
+}
+
+export async function createJob(jobData: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(jobData),
+    });
+    if (!response.ok) throw new Error('Failed to create job');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (createJob):', error);
+    throw error;
+  }
+}
+
+export async function updateJob(id: string, jobData: any) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(jobData),
+    });
+    if (!response.ok) throw new Error('Failed to update job');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (updateJob):', error);
+    throw error;
+  }
+}
+
+export async function deleteJob(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/${id}`, {
+      method: 'DELETE',
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (deleteJob):', error);
+    return false;
+  }
+}
+
+export async function getAdminApplications() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/admin/applications`);
+    if (!response.ok) throw new Error('Failed to fetch applications');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getAdminApplications):', error);
+    return [];
+  }
+}
+
+export async function getApplicationById(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/admin/applications/${id}`);
+    if (!response.ok) throw new Error('Failed to fetch application details');
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getApplicationById):', error);
+    return null;
+  }
+}
+
+export async function updateApplicationStatus(id: string, status: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/jobs/admin/applications/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status }),
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (updateApplicationStatus):', error);
     return false;
   }
 }

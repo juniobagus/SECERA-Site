@@ -59,6 +59,8 @@ const settingsRoutes = require('./routes/cms_settings');
 const customerRoutes = require('./routes/customers');
 const captchaRoutes = require('./routes/captcha');
 const notificationRoutes = require('./routes/notifications');
+const jobRoutes = require('./routes/jobs');
+const tagRoutes = require('./routes/tags');
 const path = require('path');
 
 app.use('/api/auth', authRoutes);
@@ -73,6 +75,8 @@ app.use('/api/shipping', shippingRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/jobs', jobRoutes);
+app.use('/api/tags', tagRoutes);
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));

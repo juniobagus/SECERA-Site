@@ -108,7 +108,7 @@ export default function ProductCard({ product, index }: any) {
       >
         {/* Image */}
         <Link
-          to={`/product/${product.id}`}
+          to={product.slug ? `/${product.slug}` : `/product/${product.id}`}
           className="relative aspect-square w-full overflow-hidden bg-white mb-4 block"
         >
           {hasPromo && (
@@ -141,10 +141,27 @@ export default function ProductCard({ product, index }: any) {
         </Link>
 
         {/* Info */}
-        <Link to={`/product/${product.id}`} className="flex flex-col flex-1">
-          <span className="text-label text-[#722F38]/50 mb-1">
-            {product.category}
-          </span>
+        <Link to={product.slug ? `/${product.slug}` : `/product/${product.id}`} className="flex flex-col flex-1">
+          <div className="flex flex-wrap gap-2 items-center mb-1">
+            <span className="text-label text-[#722F38]/50 uppercase tracking-widest">
+              {product.category}
+            </span>
+            {product.tags && Array.isArray(product.tags) && product.tags.length > 0 && (
+              <div className="flex gap-1.5 items-center">
+                <span className="w-[1px] h-3 bg-[#722F38]/20" />
+                <div className="flex gap-1.5 overflow-hidden">
+                  {product.tags.slice(0, 2).map((tag: string) => (
+                    <span key={tag} className="text-[9px] font-bold text-[#722F38]/30 uppercase tracking-[0.1em]">
+                      {tag}
+                    </span>
+                  ))}
+                  {product.tags.length > 2 && (
+                    <span className="text-[9px] text-[#722F38]/20">+</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <h3 className="text-sm md:text-base font-serif text-[#722F38] mb-1.5 hover:opacity-80 transition-opacity leading-snug">
             {shortName}
           </h3>

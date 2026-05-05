@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import { motion } from 'motion/react';
 import { Search, Filter, Plus, Edit2, Trash2, Loader2, CheckSquare, X, Archive, RotateCcw, XCircle, ArrowUpCircle } from 'lucide-react';
@@ -25,6 +25,11 @@ export default function AdminProducts() {
   const [currentTab, setCurrentTab] = useState<'active' | 'archived' | 'trash'>('active');
   
   const categories = ['All', ...allCategories.map(c => c.name)];
+  
+  const existingTags = useMemo(() => {
+    const tags = products.flatMap(p => p.tags || []);
+    return Array.from(new Set(tags)).sort();
+  }, [products]);
   
   const fetchProducts = async () => {
     setIsLoading(true);
@@ -366,11 +371,14 @@ export default function AdminProducts() {
                       {sortBy === 'name' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
                     </button>
                   </th>
-                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <button onClick={() => handleSort('category')} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
                       Category
                       {sortBy === 'category' && (sortOrder === 'asc' ? ' ↑' : ' ↓')}
                     </button>
+                  </th>
+                  <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Tags
                   </th>
                   <th className="px-6 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                     <button onClick={() => handleSort('stock')} className="flex items-center gap-1 hover:text-gray-900 transition-colors">
@@ -443,6 +451,83 @@ export default function AdminProducts() {
                         )}
                       </td>
                       <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1.5 min-w-[140px]">
+                          {(product.tags || []).map((tag: string) => (
+                            <button
+                              key={tag}
+                              onClick={() => {
+                                const newTags = (product.tags || []).filter((t: string) => t !== tag);
+                                updateProduct(product.id, { tags: newTags }).then(() => fetchProducts());
+                                toast.success(`Tag "${tag}" removed`);
+                              }}
+                              className="group/tag inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-white border border-gray-100 text-gray-500 hover:border-red-200 hover:text-red-500 transition-all shadow-sm"
+                            >
+                              {tag}
+                              <X className="w-2.5 h-2.5 opacity-0 group-hover/tag:opacity-100 transition-opacity" />
+                            </button>
+                          ))}
+                          {editingCell?.id === product.id && editingCell?.field === 'tags' ? (
+                            <div className="relative">
+                              <input
+                                autoFocus
+                                type="text"
+                                value={editValue}
+                                onChange={(e) => setEditValue(e.target.value)}
+                                className="w-24 px-2 py-0.5 text-[10px] font-bold border border-[#722F38] rounded-md outline-none"
+                                placeholder="Add tag..."
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    const val = editValue.trim();
+                                    if (val) {
+                                      const newTags = [...(product.tags || []), val];
+                                      updateProduct(product.id, { tags: newTags }).then(() => fetchProducts());
+                                      setEditingCell(null);
+                                      setEditValue('');
+                                      toast.success('Tag added');
+                                    }
+                                  } else if (e.key === 'Escape') {
+                                    setEditingCell(null);
+                                    setEditValue('');
+                                  }
+                                }}
+                              />
+                              {editValue.trim() && (
+                                <div className="absolute z-50 left-0 top-full mt-1 w-32 bg-white border border-gray-100 rounded-lg shadow-xl overflow-hidden max-h-40 overflow-y-auto animate-in fade-in slide-in-from-top-1">
+                                  {existingTags
+                                    .filter(t => t.toLowerCase().includes(editValue.toLowerCase()) && !(product.tags || []).includes(t))
+                                    .map(tag => (
+                                      <button
+                                        key={tag}
+                                        type="button"
+                                        onClick={() => {
+                                          const newTags = [...(product.tags || []), tag];
+                                          updateProduct(product.id, { tags: newTags }).then(() => fetchProducts());
+                                          setEditingCell(null);
+                                          setEditValue('');
+                                          toast.success('Tag added');
+                                        }}
+                                        className="w-full px-3 py-2 text-left text-[10px] font-bold text-gray-600 hover:bg-[#722F38]/5 hover:text-[#722F38] transition-colors border-b border-gray-50 last:border-0"
+                                      >
+                                        {tag}
+                                      </button>
+                                    ))}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setEditingCell({ id: product.id, field: 'tags' });
+                                setEditValue('');
+                              }}
+                              className="p-1 text-gray-300 hover:text-[#722F38] hover:bg-[#722F38]/5 rounded-md transition-all"
+                            >
+                              <Plus className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">{variants.length} options</div>
                         <div className={`text-xs ${totalStock < 10 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
                           {totalStock} in stock
@@ -454,6 +539,7 @@ export default function AdminProducts() {
                           <div className="text-xs text-green-600 font-medium">Active Promo</div>
                         )}
                       </td>
+
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           {currentTab === 'active' && (
@@ -512,6 +598,7 @@ export default function AdminProducts() {
         onClose={() => { setIsModalOpen(false); setEditingProduct(null); }}
         onSave={handleSaveProduct}
         product={editingProduct}
+        existingTags={existingTags}
       />
 
       <BulkEditModal 

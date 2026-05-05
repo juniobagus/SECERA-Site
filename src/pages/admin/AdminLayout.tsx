@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Package, ShoppingCart, Settings, LogOut, LayoutDashboard, Monitor, Users, Bell, Check, Trash2 } from 'lucide-react';
+import { Package, ShoppingCart, Settings, LogOut, LayoutDashboard, Monitor, Users, Bell, Check, Trash2, Briefcase, FileUser } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useState, useEffect, useRef } from 'react';
 import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '../../utils/api';
@@ -69,6 +69,8 @@ export default function AdminLayout() {
     { path: '/admin/products', label: 'Products', icon: Package },
     { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
     { path: '/admin/customers', label: 'Customers', icon: Users },
+    { path: '/admin/jobs', label: 'Careers', icon: Briefcase },
+    { path: '/admin/applications', label: 'Applications', icon: FileUser },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 

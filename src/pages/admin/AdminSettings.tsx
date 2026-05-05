@@ -3,7 +3,12 @@ import { Save, Globe, CreditCard, Tag, Plus, Trash2, Loader2, Edit2, X, MapPin, 
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
-import { getCategories, createCategory, deleteCategory, updateCategory, getSettings, updateSettings, searchDestination } from '../../utils/api';
+import { 
+  getCategories, createCategory, deleteCategory, updateCategory, 
+  getSettings, updateSettings, searchDestination,
+  getTags, createTag, updateTag, deleteTag 
+} from '../../utils/api';
+import SEOFields from '../../components/admin/SEOFields';
 
 interface Suggestion {
   id: number;
@@ -19,6 +24,16 @@ export default function AdminSettings() {
   const [selectedCats, setSelectedCats] = useState<string[]>([]);
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingCatName, setEditingCatName] = useState('');
+  const [showSEOModal, setShowSEOModal] = useState(false);
+  const [seoTarget, setSeoTarget] = useState<{ type: 'category' | 'tag', item: any } | null>(null);
+
+  // Tags State
+  const [tags, setTags] = useState<any[]>([]);
+  const [newTag, setNewTag] = useState('');
+  const [isLoadingTags, setIsLoadingTags] = useState(false);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [editingTagId, setEditingTagId] = useState<string | null>(null);
+  const [editingTagName, setEditingTagName] = useState('');
 
   // Settings State
   const [settings, setSettings] = useState({
@@ -43,6 +58,7 @@ export default function AdminSettings() {
 
   useEffect(() => {
     fetchCategories();
+    fetchTags();
     fetchSettings();
   }, []);
 
@@ -77,6 +93,13 @@ export default function AdminSettings() {
     const data = await getCategories();
     setCategories(data);
     setIsLoadingCats(false);
+  };
+
+  const fetchTags = async () => {
+    setIsLoadingTags(true);
+    const data = await getTags();
+    setTags(data);
+    setIsLoadingTags(false);
   };
 
   const fetchSettings = async () => {
@@ -153,6 +176,77 @@ export default function AdminSettings() {
     setSettings({ ...settings, shipping_origin_id: String(s.id), shipping_origin_name: s.label });
     setOriginSearch(s.label);
     setShowSuggestions(false);
+  };
+
+  const handleAddTag = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTag.trim()) return;
+    const loadingToast = toast.loading('Adding tag...');
+    try {
+      await createTag(newTag.trim());
+      toast.success('Tag added', { id: loadingToast });
+      setNewTag('');
+      fetchTags();
+    } catch (error) {
+      toast.error('Failed to add tag', { id: loadingToast });
+    }
+  };
+
+  const handleRenameTag = async (id: string) => {
+    if (!editingTagName.trim()) return;
+    const loadingToast = toast.loading('Updating tag...');
+    try {
+      await updateTag(id, { name: editingTagName.trim() });
+      toast.success('Tag updated', { id: loadingToast });
+      setEditingTagId(null);
+      fetchTags();
+    } catch (error) {
+      toast.error('Failed to update tag', { id: loadingToast });
+    }
+  };
+
+  const handleBulkDeleteTags = async () => {
+    if (window.confirm(`Delete ${selectedTags.length} tags?`)) {
+      const loadingToast = toast.loading('Deleting tags...');
+      try {
+        await Promise.all(selectedTags.map(id => deleteTag(id)));
+        toast.success('Tags deleted', { id: loadingToast });
+        setSelectedTags([]);
+        fetchTags();
+      } catch (error) {
+        toast.error('Failed to delete some tags', { id: loadingToast });
+      }
+    }
+  };
+
+  const handleSaveSEO = async (seoData: any) => {
+    if (!seoTarget) return;
+    const loadingToast = toast.loading('Saving SEO settings...');
+    try {
+      if (seoTarget.type === 'category') {
+        await updateCategory(seoTarget.item.id, { 
+          name: seoTarget.item.name,
+          slug: seoData.slug,
+          seo_title: seoData.title,
+          seo_description: seoData.description,
+          og_image_url: seoData.ogImage
+        });
+        fetchCategories();
+      } else {
+        await updateTag(seoTarget.item.id, { 
+          name: seoTarget.item.name,
+          slug: seoData.slug,
+          seo_title: seoData.title,
+          seo_description: seoData.description,
+          og_image_url: seoData.ogImage
+        });
+        fetchTags();
+      }
+      toast.success('SEO settings saved!', { id: loadingToast });
+      setShowSEOModal(false);
+    } catch (error) {
+      toast.error('Failed to save SEO settings', { id: loadingToast });
+    }
   };
 
   return (
@@ -445,6 +539,16 @@ export default function AdminSettings() {
                       <td className="px-4 py-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button 
+                            onClick={() => {
+                              setSeoTarget({ type: 'category', item: cat });
+                              setShowSEOModal(true);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                            title="SEO Settings"
+                          >
+                            <Globe className="w-4 h-4" />
+                          </button>
+                          <button 
                             onClick={() => { setEditingCatId(String(cat.id)); setEditingCatName(cat.name); }}
                             className="p-1.5 text-gray-400 hover:text-[#722F38] transition-colors"
                           >
@@ -452,6 +556,141 @@ export default function AdminSettings() {
                           </button>
                           <button 
                             onClick={() => { setSelectedCats([String(cat.id)]); handleBulkDeleteCats(); }}
+                            className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        {/* Tag Management */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Plus className="w-5 h-5 text-[#722F38]" />
+              <h2 className="text-lg font-bold text-gray-900">Tag/Style Management</h2>
+            </div>
+            {selectedTags.length > 0 && (
+              <button 
+                onClick={handleBulkDeleteTags}
+                className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 transition-all flex items-center gap-2"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Delete Selected ({selectedTags.length})
+              </button>
+            )}
+          </div>
+          <div className="p-6 space-y-6">
+            <form onSubmit={handleAddTag} className="flex gap-3">
+              <input 
+                type="text" 
+                placeholder="New tag name (e.g. Pashmina, Square)..." 
+                value={newTag}
+                onChange={e => setNewTag(e.target.value)}
+                className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none" 
+              />
+              <button 
+                type="submit"
+                className="bg-gray-900 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add
+              </button>
+            </form>
+
+            <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 w-10">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedTags.length === tags.length && tags.length > 0}
+                        onChange={() => setSelectedTags(selectedTags.length === tags.length ? [] : tags.map(t => String(t.id)))}
+                        className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
+                      />
+                    </th>
+                    <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase">Tag Name</th>
+                    <th className="px-4 py-3 text-xs font-bold text-gray-500 uppercase text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {isLoadingTags ? (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-8 text-center">
+                        <Loader2 className="w-5 h-5 text-[#722F38] animate-spin mx-auto" />
+                      </td>
+                    </tr>
+                  ) : tags.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-8 text-center text-gray-400 text-sm italic">
+                        No tags found. Add one above.
+                      </td>
+                    </tr>
+                  ) : tags.map(tag => (
+                    <tr key={tag.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-4 py-3">
+                        <input 
+                          type="checkbox" 
+                          checked={selectedTags.includes(String(tag.id))}
+                          onChange={() => setSelectedTags(prev => prev.includes(String(tag.id)) ? prev.filter(id => id !== String(tag.id)) : [...prev, String(tag.id)])}
+                          className="rounded border-gray-300 text-[#722F38] focus:ring-[#722F38]"
+                        />
+                      </td>
+                      <td className="px-4 py-3 text-sm font-medium text-gray-700">
+                        {editingTagId === String(tag.id) ? (
+                          <div className="flex items-center gap-2">
+                            <input 
+                              type="text" 
+                              value={editingTagName}
+                              onChange={e => setEditingTagName(e.target.value)}
+                              className="px-2 py-1 border border-[#722F38] rounded outline-none text-sm w-full"
+                              autoFocus
+                            />
+                            <button 
+                              onClick={() => handleRenameTag(tag.id)}
+                              className="p-1 text-green-600 hover:bg-green-50 rounded transition-colors"
+                            >
+                              <Save className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => setEditingTagId(null)}
+                              className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          tag.name
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <button 
+                            onClick={() => {
+                              setSeoTarget({ type: 'tag', item: tag });
+                              setShowSEOModal(true);
+                            }}
+                            className="p-1.5 text-gray-400 hover:text-blue-600 transition-colors"
+                            title="SEO Settings"
+                          >
+                            <Globe className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => { setEditingTagId(String(tag.id)); setEditingTagName(tag.name); }}
+                            className="p-1.5 text-gray-400 hover:text-[#722F38] transition-colors"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => { setSelectedTags([String(tag.id)]); handleBulkDeleteTags(); }}
                             className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -502,6 +741,35 @@ export default function AdminSettings() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {showSEOModal && seoTarget && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl"
+            >
+              <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">SEO Settings: {seoTarget.item.name}</h2>
+                  <p className="text-xs text-gray-500 mt-1 uppercase tracking-widest font-bold">Manage Custom Slug & Meta Data</p>
+                </div>
+                <button onClick={() => setShowSEOModal(false)} className="p-2 hover:bg-gray-200 rounded-full transition-colors">
+                  <X className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+              <div className="p-8">
+                <SEOModalContent 
+                  target={seoTarget} 
+                  onSave={handleSaveSEO} 
+                  onCancel={() => setShowSEOModal(false)} 
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -637,6 +905,43 @@ function TwoFactorSetup({ setup2FA, enable2FA }: { setup2FA: any, enable2FA: any
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function SEOModalContent({ target, onSave, onCancel }: { target: any, onSave: (data: any) => void, onCancel: () => void }) {
+  const [slug, setSlug] = useState(target.item.slug || '');
+  const [seoTitle, setSeoTitle] = useState(target.item.seo_title || '');
+  const [seoDescription, setSeoDescription] = useState(target.item.seo_description || '');
+  const [ogImage, setOgImage] = useState(target.item.og_image_url || '');
+
+  return (
+    <div className="space-y-8">
+      <SEOFields
+        slug={slug}
+        setSlug={setSlug}
+        seoTitle={seoTitle}
+        setSeoTitle={setSeoTitle}
+        seoDescription={seoDescription}
+        setSeoDescription={setSeoDescription}
+        ogImage={ogImage}
+        setOgImage={setOgImage}
+        titlePlaceholder={target.item.name}
+      />
+      <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+        <button
+          onClick={onCancel}
+          className="px-6 py-2.5 rounded-xl font-bold text-gray-500 hover:bg-gray-100 transition-all"
+        >
+          Cancel
+        </button>
+        <button
+          onClick={() => onSave({ slug, title: seoTitle, description: seoDescription, ogImage })}
+          className="px-8 py-2.5 bg-[#722F38] text-white rounded-xl font-bold hover:bg-[#5a252d] transition-all shadow-lg shadow-[#722F38]/20"
+        >
+          Save SEO Settings
+        </button>
+      </div>
     </div>
   );
 }

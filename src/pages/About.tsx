@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCMSContent } from '../utils/api';
 import Hero from '../components/Hero';
+import SEO from '../components/SEO';
 
 const initialAboutContent = {
   hero: {
@@ -38,18 +39,17 @@ export default function About() {
           mission: { ...initialAboutContent.mission, ...data.mission }
         });
       }
-
-      // Also fetch global settings for title
-      const globalData = await getCMSContent('main_site');
-      if (globalData && globalData.global?.siteTitle) {
-        document.title = `${globalData.global.siteTitle} | About`;
-      }
     }
     loadContent();
   }, []);
 
   return (
     <div className="min-h-screen w-full bg-[#F9F9F9] flex flex-col font-sans">
+      <SEO 
+        title={(content as any).seo?.title || "About Us"}
+        description={(content as any).seo?.description}
+        ogImage={(content as any).seo?.ogImage}
+      />
       <Hero
         title={content.hero.title}
         subtitle={content.hero.subtitle}
