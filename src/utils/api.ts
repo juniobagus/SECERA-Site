@@ -357,9 +357,12 @@ export async function saveCMSContent(key: string, content: any) {
     inflight.delete(key);
   }
 }
-export async function uploadImage(file: File): Promise<string | null> {
+export type UploadImageSlot = 'hero_16x9' | 'product_detail' | 'product_listing' | 'generic';
+
+export async function uploadImage(file: File, slot: UploadImageSlot = 'generic'): Promise<string | null> {
   const formData = new FormData();
   formData.append('image', file);
+  formData.append('slot', slot);
 
   try {
     const response = await fetch(`${API_BASE_URL}/uploads`, {

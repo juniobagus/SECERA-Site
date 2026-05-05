@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, ImageIcon, Loader2, Crop } from 'lucide-react';
-import { uploadImage } from '../../utils/api';
+import { uploadImage, type UploadImageSlot } from '../../utils/api';
 import CropModal from './CropModal';
 
 interface ImageUploadProps {
@@ -9,9 +9,10 @@ interface ImageUploadProps {
   label?: string;
   className?: string;
   aspectRatio?: number;
+  slot?: UploadImageSlot;
 }
 
-export default function ImageUpload({ value, onChange, label, className = '', aspectRatio = 16 / 9 }: ImageUploadProps) {
+export default function ImageUpload({ value, onChange, label, className = '', aspectRatio = 16 / 9, slot = 'generic' }: ImageUploadProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [showCropModal, setShowCropModal] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState<string>('');
@@ -42,7 +43,7 @@ export default function ImageUpload({ value, onChange, label, className = '', as
     setShowCropModal(false);
     setIsUploading(true);
     try {
-      const url = await uploadImage(croppedFile);
+      const url = await uploadImage(croppedFile, slot);
       if (url) onChange(url);
       else alert('Failed to upload image.');
     } catch (err: any) {

@@ -30,6 +30,54 @@ if (!fs.existsSync(derivedDir)) fs.mkdirSync(derivedDir, { recursive: true });
 const IMAGE_WIDTHS = [480, 768, 1080, 1440, 2000];
 const MIN_IMAGE_WIDTH = 1200;
 const VIDEO_HEIGHTS = [720, 1080];
+const MAX_HARD_STOP_BYTES = 1024 * 1024; // 1MB
+
+const SLOT_PROFILES = {
+  hero_16x9: {
+    family: 'hero_16x9',
+    ratio: 16 / 9,
+    targetMinBytes: 700 * 1024,
+    targetMaxBytes: 900 * 1024,
+    hardMaxBytes: MAX_HARD_STOP_BYTES,
+    widths: [1280, 1920],
+    minSourceWidth: 1600,
+    qualityStart: 92,
+    qualityFloor: 82,
+  },
+  product_detail: {
+    family: 'product_detail',
+    ratio: null,
+    targetMinBytes: 250 * 1024,
+    targetMaxBytes: 500 * 1024,
+    hardMaxBytes: MAX_HARD_STOP_BYTES,
+    widths: [720, 1080, 1440],
+    minSourceWidth: 1200,
+    qualityStart: 90,
+    qualityFloor: 80,
+  },
+  product_listing: {
+    family: 'product_listing',
+    ratio: 1,
+    targetMinBytes: 80 * 1024,
+    targetMaxBytes: 250 * 1024,
+    hardMaxBytes: MAX_HARD_STOP_BYTES,
+    widths: [480, 720, 1080],
+    minSourceWidth: 1200,
+    qualityStart: 88,
+    qualityFloor: 78,
+  },
+  generic: {
+    family: 'generic',
+    ratio: null,
+    targetMinBytes: 250 * 1024,
+    targetMaxBytes: 500 * 1024,
+    hardMaxBytes: MAX_HARD_STOP_BYTES,
+    widths: IMAGE_WIDTHS,
+    minSourceWidth: 1200,
+    qualityStart: 90,
+    qualityFloor: 78,
+  },
+};
 
 function runFfmpeg(args) {
   return new Promise((resolve, reject) => {
@@ -48,39 +96,94 @@ function runFfmpeg(args) {
   });
 }
 
-async function createImageVariants(buffer, assetId) {
+function resolveProfile(slotInput) {
+  const slot = String(slotInput || 'generic').toLowerCase();
+  return SLOT_PROFILES[slot] || SLOT_PROFILES.generic;
+}
+
+async function encodeWebpBuffer(buffer, width, ratio, quality) {
+  const transformer = sharp(buffer).rotate();
+  if (ratio) {
+    const targetHeight = Math.round(width / ratio);
+    transformer.resize(width, targetHeight, { fit: 'cover', position: 'attention' });
+  } else {
+    transformer.resize(width, null, { fit: 'inside', withoutEnlargement: true });
+  }
+  return transformer.webp({ quality }).toBuffer({ resolveWithObject: true });
+}
+
+async function createImageVariants(buffer, assetId, profile) {
   const meta = await sharp(buffer).metadata();
   const maxWidth = meta.width || 0;
-  const widths = IMAGE_WIDTHS.filter((w) => w <= maxWidth);
+  const widths = profile.widths.filter((w) => w <= maxWidth);
   if (!widths.length && maxWidth > 0) widths.push(maxWidth);
 
   const variants = [];
-  for (const width of widths) {
-    const webpFilename = `${assetId}-w${width}.webp`;
-    const webpPath = path.join(derivedDir, webpFilename);
-    await sharp(buffer)
-      .resize(width, null, { fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 78 })
-      .toFile(webpPath);
-    variants.push({ width, format: 'webp', url: `/uploads/derived/${webpFilename}` });
+  const qualityReport = [];
+  let totalDimensionSteps = 0;
 
-    try {
-      const avifFilename = `${assetId}-w${width}.avif`;
-      const avifPath = path.join(derivedDir, avifFilename);
-      await sharp(buffer)
-        .resize(width, null, { fit: 'inside', withoutEnlargement: true })
-        .avif({ quality: 50 })
-        .toFile(avifPath);
-      variants.push({ width, format: 'avif', url: `/uploads/derived/${avifFilename}` });
-    } catch (_) {
-      // AVIF can fail on some hosts/builds; WebP remains primary fallback.
+  for (const targetWidth of widths) {
+    let effectiveWidth = targetWidth;
+    let quality = profile.qualityStart;
+    let dimensionSteps = 0;
+
+    // Step quality down first, then dimension down if still too large.
+    let encoded = await encodeWebpBuffer(buffer, effectiveWidth, profile.ratio, quality);
+    while (encoded.info.size > profile.targetMaxBytes && quality > profile.qualityFloor) {
+      quality -= 3;
+      encoded = await encodeWebpBuffer(buffer, effectiveWidth, profile.ratio, quality);
     }
+
+    while (encoded.info.size > profile.targetMaxBytes && effectiveWidth > 640) {
+      effectiveWidth = Math.max(640, Math.round(effectiveWidth * 0.9));
+      dimensionSteps += 1;
+      totalDimensionSteps += 1;
+      encoded = await encodeWebpBuffer(buffer, effectiveWidth, profile.ratio, quality);
+    }
+
+    const webpFilename = `${assetId}-w${effectiveWidth}.webp`;
+    const webpPath = path.join(derivedDir, webpFilename);
+    await fs.promises.writeFile(webpPath, encoded.data);
+
+    variants.push({
+      slot: profile.family,
+      width: encoded.info.width || effectiveWidth,
+      height: encoded.info.height || null,
+      format: 'webp',
+      bytes: encoded.info.size,
+      url: `/uploads/derived/${webpFilename}`,
+    });
+
+    qualityReport.push({
+      targetWidth,
+      finalWidth: encoded.info.width || effectiveWidth,
+      startQuality: profile.qualityStart,
+      endQuality: quality,
+      dimensionSteps,
+      finalBytes: encoded.info.size,
+    });
   }
 
-  const defaultWidth = widths.includes(1080) ? 1080 : widths[widths.length - 1];
-  const defaultUrl = `/uploads/derived/${assetId}-w${defaultWidth}.webp`;
+  const sorted = variants.slice().sort((a, b) => a.width - b.width);
+  const preferred = sorted.find((v) => v.width >= 1080) || sorted[sorted.length - 1];
+  const status = qualityReport.some((r) => r.finalBytes > profile.hardMaxBytes || (r.endQuality <= profile.qualityFloor && r.finalBytes > profile.targetMaxBytes))
+    ? 'needs_review'
+    : 'ready';
 
-  return { defaultUrl, variants, width: meta.width || null, height: meta.height || null };
+  return {
+    defaultUrl: preferred?.url || null,
+    variants,
+    width: meta.width || null,
+    height: meta.height || null,
+    status,
+    qualityReport: {
+      profile: profile.family,
+      targetBytesRange: [profile.targetMinBytes, profile.targetMaxBytes],
+      hardMaxBytes: profile.hardMaxBytes,
+      totalDimensionSteps,
+      entries: qualityReport,
+    },
+  };
 }
 
 async function createVideoVariants(inputPath, assetId) {
@@ -134,26 +237,32 @@ router.post('/', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
   const assetId = uuidv4();
+  const profile = resolveProfile(req.body?.slot || req.query?.slot);
 
   try {
     const meta = await sharp(req.file.buffer).metadata();
-    if (!meta.width || meta.width < MIN_IMAGE_WIDTH) {
+    const requiredMinWidth = Math.max(MIN_IMAGE_WIDTH, profile.minSourceWidth || MIN_IMAGE_WIDTH);
+    if (!meta.width || meta.width < requiredMinWidth) {
       return res.status(400).json({
-        message: `Image resolution too small. Minimum width is ${MIN_IMAGE_WIDTH}px.`,
+        message: `Image resolution too small. Minimum width is ${requiredMinWidth}px for slot ${profile.family}.`,
         code: 'IMAGE_RESOLUTION_TOO_SMALL',
         meta: {
-          minWidth: MIN_IMAGE_WIDTH,
+          slot: profile.family,
+          minWidth: requiredMinWidth,
           detectedWidth: meta.width || 0,
           detectedHeight: meta.height || 0,
         },
       });
     }
 
-    const result = await createImageVariants(req.file.buffer, assetId);
+    const result = await createImageVariants(req.file.buffer, assetId, profile);
     res.json({
+      family: profile.family,
+      status: result.status,
       url: result.defaultUrl,
       variants: result.variants,
       meta: { width: result.width, height: result.height },
+      qualityReport: result.qualityReport,
     });
   } catch (err) {
     console.error(err);
