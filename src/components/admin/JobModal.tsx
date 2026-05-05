@@ -27,6 +27,22 @@ export default function JobModal({ isOpen, onClose, onSave, job }: JobModalProps
   });
   const [activeTab, setActiveTab] = useState<'general' | 'seo'>('general');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [urlPrefix, setUrlPrefix] = useState('karir');
+
+  useEffect(() => {
+    async function fetchPrefix() {
+      try {
+        const { getCMSContent } = await import('../../utils/api');
+        const careerData = await getCMSContent('career_page');
+        if (careerData?.seo?.slug) {
+          setUrlPrefix(careerData.seo.slug);
+        }
+      } catch (err) {
+        console.error('Failed to fetch career prefix:', err);
+      }
+    }
+    fetchPrefix();
+  }, []);
 
   useEffect(() => {
     if (job) {
@@ -252,7 +268,7 @@ export default function JobModal({ isOpen, onClose, onSave, job }: JobModalProps
                 ogImage={formData.og_image_url}
                 setOgImage={(og_image_url) => setFormData({ ...formData, og_image_url })}
                 titlePlaceholder={formData.title}
-                urlPrefix="karir"
+                urlPrefix={urlPrefix}
               />
             </div>
           )}

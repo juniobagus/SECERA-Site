@@ -156,6 +156,48 @@ CREATE TABLE IF NOT EXISTS notifications (
     type VARCHAR(50) NOT NULL,
     message TEXT NOT NULL,
     data JSON,
+    role VARCHAR(50) DEFAULT 'admin',
+    recipient_id VARCHAR(36) NULL,
+    event_type VARCHAR(100) NULL,
+    metadata JSON NULL,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_events (
+    id VARCHAR(36) PRIMARY KEY,
+    event_type VARCHAR(100) NOT NULL,
+    entity_id VARCHAR(36) NULL,
+    actor_id VARCHAR(36) NULL,
+    payload JSON,
+    idempotency_key VARCHAR(255) NOT NULL UNIQUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS notification_deliveries (
+    id VARCHAR(36) PRIMARY KEY,
+    event_id VARCHAR(36) NOT NULL,
+    role VARCHAR(50) NULL,
+    recipient_id VARCHAR(36) NULL,
+    recipient_email VARCHAR(255) NULL,
+    recipient_phone VARCHAR(50) NULL,
+    channel ENUM('in_app','email','whatsapp') NOT NULL,
+    status ENUM('queued','sent','failed','retried','skipped') NOT NULL DEFAULT 'queued',
+    attempt_count INT NOT NULL DEFAULT 1,
+    provider_response TEXT NULL,
+    error_message TEXT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES notification_events(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS notification_preferences (
+    id VARCHAR(36) PRIMARY KEY,
+    role VARCHAR(50) NOT NULL,
+    recipient_id VARCHAR(36) NOT NULL,
+    event_type VARCHAR(100) NOT NULL,
+    channel ENUM('in_app','email','whatsapp') NOT NULL,
+    is_enabled BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uniq_pref (role, recipient_id, event_type, channel)
 );

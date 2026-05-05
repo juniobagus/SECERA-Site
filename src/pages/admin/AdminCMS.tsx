@@ -3,7 +3,7 @@ import { Save, Globe, Home, Info, Plus, Trash2, Video, MessageSquare, Star, Sear
 import { motion, Reorder } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 import { initialCMSContent } from '../../data/cms';
-import { getCMSContent, saveCMSContent, getProducts, uploadVideo } from '../../utils/api';
+import { getCMSContent, saveCMSContent, getProducts, uploadVideo, getSettings } from '../../utils/api';
 import ImageUpload from '../../components/admin/ImageUpload';
 import SEOFields from '../../components/admin/SEOFields';
 import { formatPrice } from '../../data/products';
@@ -95,6 +95,7 @@ export default function AdminCMS() {
   const [shopContent, setShopContent] = useState(initialShopContent);
   const [careerContent, setCareerContent] = useState(initialCareerContent);
   const [products, setProducts] = useState<any[]>([]);
+  const [heroImageSlot, setHeroImageSlot] = useState<'hero_16x9' | 'hero_original'>('hero_16x9');
 
   useEffect(() => {
     async function loadProducts() {
@@ -102,6 +103,15 @@ export default function AdminCMS() {
       setProducts(data);
     }
     loadProducts();
+  }, []);
+
+  useEffect(() => {
+    async function loadMediaSettings() {
+      const settings = await getSettings();
+      const mode = String(settings?.hero_image_mode || 'compressed').toLowerCase();
+      setHeroImageSlot(mode === 'original' ? 'hero_original' : 'hero_16x9');
+    }
+    loadMediaSettings();
   }, []);
 
   useEffect(() => {
@@ -423,7 +433,7 @@ export default function AdminCMS() {
                       label="Hero Image (Poster)"
                       value={homeContent.hero.imageUrl || ''}
                       onChange={(url) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, imageUrl: url } })}
-                      slot="hero_16x9"
+                      slot={heroImageSlot}
                     />
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -972,7 +982,7 @@ export default function AdminCMS() {
                 label="Hero Image (Poster)"
                 value={aboutContent.hero.imageUrl}
                 onChange={(url) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, imageUrl: url } })}
-                slot="hero_16x9"
+                slot={heroImageSlot}
               />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -1150,7 +1160,7 @@ export default function AdminCMS() {
                     label="Hero Image (Poster)"
                     value={shopContent.hero.imageUrl}
                     onChange={(url) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, imageUrl: url } })}
-                    slot="hero_16x9"
+                    slot={heroImageSlot}
                   />
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -1243,7 +1253,7 @@ export default function AdminCMS() {
               label="Hero Image (Poster)"
               value={careerContent.hero.imageUrl}
               onChange={(url) => setCareerContent({ ...careerContent, hero: { ...careerContent.hero, imageUrl: url } })}
-              slot="hero_16x9"
+              slot={heroImageSlot}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -1662,7 +1672,7 @@ export default function AdminCMS() {
               label="CTA Background Image (Fallback/Poster)"
               value={homeContent.cta.backgroundImageUrl || ''}
               onChange={(url) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, backgroundImageUrl: url } })}
-              slot="hero_16x9"
+              slot={heroImageSlot}
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">CTA Background Video URL (Optional)</label>

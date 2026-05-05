@@ -46,6 +46,7 @@ export default function Navbar() {
   const isSolidPage = path.startsWith('/product/') || 
                       path.startsWith('/karir/') ||
                       (path.startsWith('/careers/') && path !== '/careers') ||
+                      (path.split('/').length === 3 && path.split('/')[1] !== 'admin') || // Catch-all for detail pages like /shop/slug
                       ['/my-orders', '/profile', '/checkout'].includes(path);
 
   useEffect(() => {

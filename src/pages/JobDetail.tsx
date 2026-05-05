@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Briefcase, MapPin, Clock, ArrowLeft, Loader2, Upload, Send, CheckCircle2, FileText, Monitor, Phone, Mail, User } from 'lucide-react';
-import { getJobById, getJobBySlug, applyForJob, uploadImage } from '../utils/api';
+import { getJobById, getJobBySlug, applyForJob, uploadDocument } from '../utils/api';
 import { toast } from 'react-hot-toast';
 import SEO from '../components/SEO';
 import CTAButton from '../components/CTAButton';
@@ -16,6 +16,7 @@ export default function JobDetail() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [uploadingResume, setUploadingResume] = useState(false);
+  const [resumeFileName, setResumeFileName] = useState('');
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -68,19 +69,28 @@ export default function JobDetail() {
       return;
     }
 
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Format CV harus PDF, DOC, atau DOCX');
+      return;
+    }
+
     setUploadingResume(true);
     try {
-      // Using uploadImage as a generic uploader for now, 
-      // but ideally we should have a specific file uploader for documents.
-      const url = await uploadImage(file);
+      const url = await uploadDocument(file);
       if (url) {
         setFormData({ ...formData, resume_url: url });
+        setResumeFileName(file.name);
         toast.success('CV berhasil diunggah');
       } else {
         throw new Error();
       }
     } catch (error) {
-      toast.error('Gagal mengunggah file');
+      toast.error('Gagal mengunggah CV');
     } finally {
       setUploadingResume(false);
     }
@@ -126,16 +136,19 @@ export default function JobDetail() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-paper p-4">
+      <div className="min-h-screen flex items-center justify-center bg-paper px-4 py-20 md:py-28">
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          className="max-w-xl w-full bg-white p-16 border border-ink/10 text-center"
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="max-w-xl w-full bg-white px-8 py-12 md:px-16 md:py-16 border border-ink/10 text-center"
         >
-          <div className="w-24 h-px bg-brand-wine mx-auto mb-10 opacity-30" />
-          <CheckCircle2 className="w-12 h-12 text-brand-wine mx-auto mb-8" />
-          <h2 className="text-4xl font-serif text-ink mb-6">Lamaran Terkirim!</h2>
-          <p className="text-ink/60 mb-12 leading-relaxed italic text-lg">
+          <div className="w-24 h-px bg-brand-wine mx-auto mb-10 opacity-25" />
+          <div className="mx-auto mb-8 w-12 h-12 border border-brand-wine/30 flex items-center justify-center">
+            <CheckCircle2 className="w-7 h-7 text-brand-wine" aria-hidden="true" />
+          </div>
+          <h2 className="text-3xl md:text-4xl font-serif text-ink mb-5">Lamaran Terkirim!</h2>
+          <p className="text-ink/65 mb-10 leading-relaxed text-base md:text-lg">
             Terima kasih telah melamar. Tim kami akan meninjau kualifikasi Anda dan menghubungi Anda kembali melalui email jika Anda terpilih untuk tahap selanjutnya.
           </p>
           <CTAButton 
@@ -319,6 +332,18 @@ export default function JobDetail() {
                       <>
                         <CheckCircle2 className="w-6 h-6 text-brand-wine" />
                         <p className="text-[10px] font-bold text-brand-wine uppercase tracking-[0.2em]">CV Siap Dikirim</p>
+                        <p className="text-xs text-brand-wine/70 break-all text-center max-w-full">
+                          {resumeFileName || formData.resume_url.split('/').pop()}
+                        </p>
+                        <a
+                          href={formData.resume_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-wine underline underline-offset-4"
+                        >
+                          Preview File
+                        </a>
                       </>
                     ) : (
                       <>

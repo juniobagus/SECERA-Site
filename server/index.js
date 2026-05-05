@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+app.set('trust proxy', 1);
 
 // Rate Limiter for general API
 const apiLimiter = rateLimit({
@@ -59,9 +60,11 @@ const settingsRoutes = require('./routes/cms_settings');
 const customerRoutes = require('./routes/customers');
 const captchaRoutes = require('./routes/captcha');
 const notificationRoutes = require('./routes/notifications');
+const notificationDeliveryRoutes = require('./routes/admin/notification-deliveries');
 const jobRoutes = require('./routes/jobs');
 const tagRoutes = require('./routes/tags');
 const path = require('path');
+const { startLowStockMonitor } = require('./services/lowStockMonitor');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/customer', customerAuthRoutes);
@@ -75,12 +78,23 @@ app.use('/api/shipping', shippingRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin/notification-deliveries', notificationDeliveryRoutes);
 app.use('/api/jobs', jobRoutes);
 app.use('/api/tags', tagRoutes);
 
 // Serve static files
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  if (res.headersSent) return next(err);
+  res.status(500).json({
+    message: 'Internal server error',
+    error: err?.message || 'Unknown error'
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  startLowStockMonitor();
 });

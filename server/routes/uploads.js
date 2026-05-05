@@ -101,6 +101,15 @@ function resolveProfile(slotInput) {
   return SLOT_PROFILES[slot] || SLOT_PROFILES.generic;
 }
 
+function extFromImageMime(mime) {
+  const m = String(mime || '').toLowerCase();
+  if (m.includes('png')) return 'png';
+  if (m.includes('webp')) return 'webp';
+  if (m.includes('avif')) return 'avif';
+  if (m.includes('gif')) return 'gif';
+  return 'jpg';
+}
+
 async function encodeWebpBuffer(buffer, width, ratio, quality) {
   const transformer = sharp(buffer).rotate();
   if (ratio) {
@@ -244,7 +253,34 @@ router.post('/', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
   const assetId = uuidv4();
-  const profile = resolveProfile(req.body?.slot || req.query?.slot);
+  const slotInput = String(req.body?.slot || req.query?.slot || 'generic').toLowerCase();
+  if (slotInput === 'hero_original') {
+    try {
+      const ext = extFromImageMime(req.file.mimetype);
+      const filename = `${assetId}.${ext}`;
+      const filepath = path.join(uploadDir, filename);
+      await fs.promises.writeFile(filepath, req.file.buffer);
+      const meta = await sharp(req.file.buffer).metadata().catch(() => ({}));
+      return res.json({
+        family: 'hero_original',
+        status: 'ready',
+        url: `/uploads/${filename}`,
+        variants: [{
+          slot: 'hero_original',
+          width: meta.width || null,
+          height: meta.height || null,
+          format: ext,
+          bytes: req.file.buffer.length,
+          url: `/uploads/${filename}`,
+        }],
+        meta: { width: meta.width || null, height: meta.height || null },
+      });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Error saving original image' });
+    }
+  }
+  const profile = resolveProfile(slotInput);
 
   try {
     const meta = await sharp(req.file.buffer).metadata();

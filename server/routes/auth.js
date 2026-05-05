@@ -10,12 +10,30 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
 const otplib = require('otplib');
 const qrcode = require('qrcode');
+let authSchemaChecked = false;
+let hasTwoFactorEnabled = false;
+let hasTwoFactorSecret = false;
+
+async function ensureAuthSchema() {
+  if (authSchemaChecked) return;
+  try {
+    const [cols] = await db.query('SHOW COLUMNS FROM users');
+    const names = cols.map((c) => c.Field);
+    hasTwoFactorEnabled = names.includes('two_factor_enabled');
+    hasTwoFactorSecret = names.includes('two_factor_secret');
+  } catch (err) {
+    console.error('Error checking users schema:', err.message);
+  } finally {
+    authSchemaChecked = true;
+  }
+}
 
 // Login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
   try {
+    await ensureAuthSchema();
     const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (rows.length === 0) {
       return res.status(401).json({ message: 'Email atau password salah' });
@@ -28,7 +46,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Check if 2FA is enabled
-    if (user.two_factor_enabled) {
+    if (hasTwoFactorEnabled && user.two_factor_enabled) {
       return res.json({ 
         requires2FA: true, 
         tempToken: jwt.sign({ id: user.id, purpose: '2fa_verify' }, JWT_SECRET, { expiresIn: '5m' }) 
@@ -101,6 +119,8 @@ router.post('/2fa/setup', async (req, res) => {
   if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
+    await ensureAuthSchema();
+    if (!hasTwoFactorSecret) return res.status(400).json({ message: '2FA belum diaktifkan di database.' });
     const decoded = jwt.verify(token, JWT_SECRET);
     const secret = otplib.generateSecret();
     const otpauth = otplib.generateURI({ 
@@ -126,6 +146,8 @@ router.post('/2fa/enable', async (req, res) => {
   if (!token) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
+    await ensureAuthSchema();
+    if (!hasTwoFactorSecret || !hasTwoFactorEnabled) return res.status(400).json({ message: '2FA belum diaktifkan di database.' });
     const decoded = jwt.verify(token, JWT_SECRET);
     const [rows] = await db.query('SELECT two_factor_secret FROM users WHERE id = ?', [decoded.id]);
     const secret = rows[0].two_factor_secret;
@@ -172,8 +194,12 @@ router.get('/session', async (req, res) => {
   if (!token) return res.status(401).json({ message: 'Not authenticated' });
 
   try {
+    await ensureAuthSchema();
     const decoded = jwt.verify(token, JWT_SECRET);
-    const [rows] = await db.query('SELECT id, email, name, role, two_factor_enabled FROM users WHERE id = ?', [decoded.id]);
+    const sql = hasTwoFactorEnabled
+      ? 'SELECT id, email, name, role, two_factor_enabled FROM users WHERE id = ?'
+      : 'SELECT id, email, name, role FROM users WHERE id = ?';
+    const [rows] = await db.query(sql, [decoded.id]);
     if (rows.length === 0) return res.status(401).json({ message: 'User not found' });
 
     res.json({ user: rows[0] });

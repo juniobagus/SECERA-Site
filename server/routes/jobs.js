@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const { authenticateAdmin } = require('../middleware/auth');
+const { emitNotification, CHANNELS } = require('../services/notificationService');
 
 // --- PUBLIC ROUTES ---
 
@@ -41,23 +42,43 @@ router.get('/slug/:slug', async (req, res) => {
   }
 });
 
-// POST apply for job
+// POST apply for job (accepts UUID id or slug)
 router.post('/:id/apply', async (req, res) => {
   const { full_name, email, phone, resume_url, portfolio_url, cover_letter } = req.body;
-  const jobId = req.params.id;
+  const jobIdentifier = req.params.id;
   const id = uuidv4();
 
   try {
-    // Check if job exists and is active
-    const [jobs] = await db.query('SELECT status FROM jobs WHERE id = ?', [jobId]);
+    // Check if job exists and is active by UUID id or slug.
+    const [jobs] = await db.query(
+      'SELECT id, status FROM jobs WHERE id = ? OR slug = ? LIMIT 1',
+      [jobIdentifier, jobIdentifier]
+    );
     if (jobs.length === 0 || jobs[0].status !== 'active') {
       return res.status(400).json({ message: 'Job is no longer active' });
     }
+    const resolvedJobId = jobs[0].id;
 
     await db.query(
       'INSERT INTO job_applications (id, job_id, full_name, email, phone, resume_url, portfolio_url, cover_letter) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [id, jobId, full_name, email, phone, resume_url, portfolio_url || null, cover_letter || null]
+      [id, resolvedJobId, full_name, email, phone, resume_url, portfolio_url || null, cover_letter || null]
     );
+
+    // Keep application submission successful even when notification systems are unavailable.
+    try {
+      await emitNotification({
+        event_type: 'job_application_submitted',
+        entity_id: id,
+        idempotency_key: `job_application_submitted:${id}`,
+        payload: { application_id: id, job_title: req.body.job_title || 'Posisi', candidate_name: full_name },
+        recipients: [
+          { role: 'admin', recipient_id: 'admin', channels: [CHANNELS.IN_APP, CHANNELS.EMAIL, CHANNELS.WHATSAPP], email: process.env.ADMIN_EMAIL, phone: process.env.ADMIN_WHATSAPP },
+          { role: 'candidate', recipient_id: id, channels: [CHANNELS.EMAIL], email }
+        ]
+      });
+    } catch (notificationErr) {
+      console.error('Non-blocking notification error (job_application_submitted):', notificationErr);
+    }
 
     res.status(201).json({ message: 'Application submitted successfully', applicationId: id });
   } catch (err) {
@@ -179,6 +200,25 @@ router.patch('/admin/applications/:id', authenticateAdmin, async (req, res) => {
   const { status } = req.body;
   try {
     await db.query('UPDATE job_applications SET status = ? WHERE id = ?', [status, req.params.id]);
+    const [apps] = await db.query(`
+      SELECT ja.id, ja.email, j.title as job_title
+      FROM job_applications ja
+      JOIN jobs j ON j.id = ja.job_id
+      WHERE ja.id = ? LIMIT 1
+    `, [req.params.id]);
+    const app = apps[0];
+    if (app) {
+      await emitNotification({
+        event_type: 'job_application_status_changed',
+        entity_id: app.id,
+        idempotency_key: `job_application_status_changed:${app.id}:${status}`,
+        payload: { status, job_title: app.job_title, application_id: app.id },
+        recipients: [
+          { role: 'admin', recipient_id: 'admin', channels: [CHANNELS.IN_APP], email: process.env.ADMIN_EMAIL, phone: process.env.ADMIN_WHATSAPP },
+          { role: 'candidate', recipient_id: app.id, channels: [CHANNELS.EMAIL], email: app.email }
+        ]
+      });
+    }
     res.json({ message: 'Application status updated' });
   } catch (err) {
     console.error(err);

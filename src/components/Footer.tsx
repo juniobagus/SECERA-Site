@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Instagram, Linkedin, Twitter, ArrowRight, MessageCircle, Facebook } from 'lucide-react';
 import { initialCMSContent } from '../data/cms';
 import { getCMSContent, getSettings } from '../utils/api';
+import TikTokIcon from './icons/TikTokIcon';
 
 export default function Footer() {
   const [cms, setCms] = useState(initialCMSContent);
@@ -46,22 +47,33 @@ export default function Footer() {
                 <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
               </a>
             </div>
-            <div className="flex items-center gap-4 text-[#F9F9F9]/85">
+            <div className="flex items-center gap-2 text-[#F9F9F9]/85">
+              {/*
+                Normalize icon sizing/optical alignment:
+                - fixed hit-area box
+                - all icons rendered at the same SVG size
+              */}
               {settings.instagram_url && (
-                <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Instagram"><Instagram className="w-5 h-5" /></a>
-              )}
-              {settings.facebook_url && (
-                <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Facebook"><Facebook className="w-5 h-5" /></a>
-              )}
-              {settings.twitter_url && (
-                <a href={settings.twitter_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="Twitter"><Twitter className="w-5 h-5" /></a>
-              )}
-              {settings.tiktok_url && (
-                <a href={settings.tiktok_url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="TikTok">
-                  <i className="fa-brands fa-tiktok text-lg"></i>
+                <a href={settings.instagram_url} target="_blank" rel="noopener noreferrer" className="inline-flex w-9 h-9 items-center justify-center hover:text-white transition-colors" aria-label="Instagram">
+                  <Instagram className="w-5 h-5" />
                 </a>
               )}
-              <a href={`https://wa.me/${settings.whatsapp_number || cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors" aria-label="WhatsApp">
+              {settings.facebook_url && (
+                <a href={settings.facebook_url} target="_blank" rel="noopener noreferrer" className="inline-flex w-9 h-9 items-center justify-center hover:text-white transition-colors" aria-label="Facebook">
+                  <Facebook className="w-5 h-5" />
+                </a>
+              )}
+              {settings.twitter_url && (
+                <a href={settings.twitter_url} target="_blank" rel="noopener noreferrer" className="inline-flex w-9 h-9 items-center justify-center hover:text-white transition-colors" aria-label="Twitter">
+                  <Twitter className="w-5 h-5" />
+                </a>
+              )}
+              {settings.tiktok_url && (
+                <a href={settings.tiktok_url} target="_blank" rel="noopener noreferrer" className="inline-flex w-9 h-9 items-center justify-center hover:text-white transition-colors" aria-label="TikTok">
+                  <TikTokIcon className="w-5 h-5" />
+                </a>
+              )}
+              <a href={`https://wa.me/${settings.whatsapp_number || cms.footer.phone}`} target="_blank" rel="noopener noreferrer" className="inline-flex w-9 h-9 items-center justify-center hover:text-white transition-colors" aria-label="WhatsApp">
                 <MessageCircle className="w-5 h-5" />
               </a>
             </div>

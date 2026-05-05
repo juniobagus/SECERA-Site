@@ -8,6 +8,7 @@ export interface CMSContent {
     videoUrl?: string;
   };
   showcase: {
+    label: string;
     title: string;
     description: string;
     productIds: string[];
@@ -98,6 +99,7 @@ export const initialCMSContent: CMSContent = {
     videoUrl: ""
   },
   showcase: {
+    label: "Pilihan Kurasi",
     title: "Kualitas premium yang terasa personal, bukan sekadar busana",
     description: "Pilihan terbaik untuk melengkapi gaya modest modern Anda hari ini.",
     productIds: []

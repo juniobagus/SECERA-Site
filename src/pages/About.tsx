@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { getCMSContent } from '../utils/api';
+import { getCMSContent, getSettings } from '../utils/api';
 import Hero from '../components/Hero';
 import SEO from '../components/SEO';
+import { applyCdn } from '../utils/mediaUrl';
 
 const initialAboutContent = {
   hero: {
@@ -26,10 +27,15 @@ const initialAboutContent = {
 
 export default function About() {
   const [content, setContent] = useState(initialAboutContent);
+  const [cdnBaseUrl, setCdnBaseUrl] = useState('');
 
   useEffect(() => {
     async function loadContent() {
-      const data = await getCMSContent('about_page');
+      const [data, settings] = await Promise.all([
+        getCMSContent('about_page'),
+        getSettings()
+      ]);
+      setCdnBaseUrl(settings?.cdn_base_url || '');
       if (data) {
         setContent({
           ...initialAboutContent,
@@ -53,7 +59,7 @@ export default function About() {
       <Hero
         title={content.hero.title}
         subtitle={content.hero.subtitle}
-        imageUrl={content.hero.imageUrl}
+        imageUrl={applyCdn(content.hero.imageUrl, cdnBaseUrl)}
         videoUrl={content.hero.videoUrl}
         alignment="center"
       />

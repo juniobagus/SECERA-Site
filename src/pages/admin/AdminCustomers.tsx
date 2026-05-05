@@ -4,6 +4,7 @@ import { formatPrice } from '../../data/products';
 import { getCustomers } from '../../utils/api';
 import { motion, AnimatePresence } from 'motion/react';
 import CustomerDetailModal from '../../components/admin/CustomerDetailModal';
+import AdminDataTable from '../../components/admin/AdminDataTable';
 
 export default function AdminCustomers() {
   const [customers, setCustomers] = useState<any[]>([]);
@@ -78,9 +79,8 @@ export default function AdminCustomers() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
-        {/* Toolbar */}
-        <div className="p-4 border-b border-gray-200 flex flex-col sm:flex-row gap-4 bg-gray-50/50">
+      <AdminDataTable toolbar={
+        <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input 
@@ -111,6 +111,7 @@ export default function AdminCustomers() {
             ))}
           </div>
         </div>
+      }>
 
         {/* Table */}
         <div className="overflow-x-auto flex-1">
@@ -190,7 +191,7 @@ export default function AdminCustomers() {
             </table>
           )}
         </div>
-      </div>
+      </AdminDataTable>
 
       <CustomerDetailModal 
         isOpen={isModalOpen}

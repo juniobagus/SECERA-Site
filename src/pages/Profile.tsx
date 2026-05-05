@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { updateProfile, getMyOrders, getCMSContent } from '../utils/api';
+import { updateProfile, getMyOrders, getCMSContent, getCustomerNotifications, markCustomerNotificationAsRead } from '../utils/api';
 import { toast } from 'react-hot-toast';
 import { User, Mail, Phone, MapPin, Save, Loader2, Package, LogOut } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -18,6 +18,7 @@ export default function Profile() {
   });
   const [orderCount, setOrderCount] = useState(0);
   const [waNumber, setWaNumber] = useState('628123456789'); // Default
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadStats() {
@@ -28,6 +29,8 @@ export default function Profile() {
       if (cms?.footer?.phone) {
         setWaNumber(cms.footer.phone);
       }
+      const notifs = await getCustomerNotifications();
+      setNotifications(notifs);
     }
     loadStats();
   }, []);
@@ -145,6 +148,29 @@ export default function Profile() {
             >
               Hubungi WhatsApp
             </a>
+          </div>
+
+          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+            <h3 className="font-bold mb-3 text-sm">Notifikasi Terbaru</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <p className="text-xs text-gray-400">Belum ada notifikasi.</p>
+              ) : notifications.slice(0, 10).map((notif) => (
+                <button
+                  key={notif.id}
+                  onClick={async () => {
+                    if (!notif.is_read) {
+                      const ok = await markCustomerNotificationAsRead(notif.id);
+                      if (ok) setNotifications((prev) => prev.map((n) => n.id === notif.id ? { ...n, is_read: true } : n));
+                    }
+                  }}
+                  className={`w-full text-left p-3 rounded-xl border transition-colors ${notif.is_read ? 'border-gray-100 bg-gray-50' : 'border-[#722F38]/20 bg-[#722F38]/5'}`}
+                >
+                  <p className="text-xs font-semibold text-gray-800">{notif.message}</p>
+                  <p className="text-[10px] text-gray-400 mt-1">{new Date(notif.created_at).toLocaleString('id-ID')}</p>
+                </button>
+              ))}
+            </div>
           </div>
 
           <button 

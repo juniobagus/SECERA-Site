@@ -44,6 +44,7 @@ import AdminLogin from './pages/admin/AdminLogin';
 import AdminJobs from './pages/admin/AdminJobs';
 import AdminApplications from './pages/admin/AdminApplications';
 import AdminLayout from './pages/admin/AdminLayout';
+import AdminNotificationDeliveries from './pages/admin/AdminNotificationDeliveries';
 
 function StorefrontLayout() {
   const location = useLocation();
@@ -53,6 +54,7 @@ function StorefrontLayout() {
   const isSolidPage = path.startsWith('/product/') || 
                       path.startsWith('/karir/') ||
                       (path.startsWith('/careers/') && path !== '/careers') ||
+                      (path.split('/').length === 3 && path.split('/')[1] !== 'admin') || // Detail pages
                       ['/my-orders', '/profile', '/checkout'].includes(path) ||
                       path.startsWith('/admin');
 
@@ -110,6 +112,7 @@ export default function App() {
                 <Route path="cms" element={<AdminCMS />} />
                 <Route path="jobs" element={<AdminJobs />} />
                 <Route path="applications" element={<AdminApplications />} />
+                <Route path="notification-deliveries" element={<AdminNotificationDeliveries />} />
                 <Route path="settings" element={<AdminSettings />} />
               </Route>
 
@@ -125,6 +128,7 @@ export default function App() {
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/my-orders" element={<MyOrders />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/:prefix/:identifier" element={<DynamicTwoSegmentRedirect />} />
                 <Route path="/:slug" element={<DynamicSlugRedirect />} />
               </Route>
             </Routes>
@@ -169,19 +173,19 @@ function DynamicSlugRedirect() {
           return;
         }
 
-        // 1 & 2. Check Product and Job in parallel
-        const [product, job] = await Promise.all([
-          getProductBySlug(slug),
-          getJobBySlug(slug)
-        ]);
-
+        // 1. Check Product
+        const product = await getProductBySlug(slug);
         if (product) {
-          setDestination(`/product/${product.id}`);
+          const shopSlug = shopData?.seo?.slug || 'shop';
+          setDestination(`/${shopSlug}/${product.id}`);
           return;
         }
 
+        // 2. Check Job
+        const job = await getJobBySlug(slug);
         if (job) {
-          setDestination(`/careers/${job.id}`);
+          const careerSlug = careerData?.seo?.slug || 'careers';
+          setDestination(`/${careerSlug}/${job.id}`);
           return;
         }
 
@@ -211,4 +215,58 @@ function DynamicSlugRedirect() {
   if (destination?.startsWith('/product/')) return <ProductDetail />;
 
   return <Navigate to={destination} replace />;
+}
+
+/**
+ * Handles two-segment URLs like /koleksi/kala-outer or /karir/fashion-designer
+ * Resolves whether the prefix matches a CMS page slug and renders the appropriate detail page
+ */
+function DynamicTwoSegmentRedirect() {
+  const { prefix, identifier } = useParams();
+  const [target, setTarget] = useState<'product' | 'job' | 'none' | null>(null);
+
+  useEffect(() => {
+    async function resolvePrefix() {
+      if (!prefix || !identifier) return;
+      
+      const lowerPrefix = prefix.toLowerCase();
+      
+      try {
+        const [shopData, careerData] = await Promise.all([
+          getCMSContent('shop_page'),
+          getCMSContent('career_page')
+        ]);
+
+        const shopSlug = (shopData?.seo?.slug || 'shop').toLowerCase();
+        const careerSlug = (careerData?.seo?.slug || 'careers').toLowerCase();
+
+        if (lowerPrefix === shopSlug || lowerPrefix === 'product' || lowerPrefix === 'shop' || lowerPrefix === 'koleksi') {
+          setTarget('product');
+        } else if (lowerPrefix === careerSlug || lowerPrefix === 'careers' || lowerPrefix === 'karir') {
+          setTarget('job');
+        } else {
+          setTarget('none');
+        }
+      } catch (error) {
+        console.error('Error resolving prefix:', error);
+        setTarget('none');
+      }
+    }
+
+    resolvePrefix();
+  }, [prefix, identifier]);
+
+  if (target === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <Loader2 className="w-8 h-8 text-[#722F38] animate-spin" />
+      </div>
+    );
+  }
+
+  if (target === 'product') return <ProductDetail />;
+  if (target === 'job') return <JobDetail />;
+  
+  // Fallback to 1-segment logic if prefix wasn't a known category
+  return <Navigate to={`/shop?tag=${prefix}`} replace />;
 }

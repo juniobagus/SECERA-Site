@@ -9,8 +9,9 @@ import { motion, useReducedMotion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { products, formatPrice } from '../data/products';
 import { initialCMSContent } from '../data/cms';
-import { getCMSContent, getProducts } from '../utils/api';
+import { getCMSContent, getProducts, getSettings } from '../utils/api';
 import { getGoogleDrivePreviewUrl, normalizeVideoUrl } from '../utils/media';
+import { applyCdn } from '../utils/mediaUrl';
 import ProductCard from '../components/ProductCard';
 import CTAButton from '../components/CTAButton';
 import UGCPlayer from '../components/UGCPlayer';
@@ -26,6 +27,7 @@ export default function Home() {
   const [activeUgcIndex, setActiveUgcIndex] = useState(0);
   const [cms, setCms] = useState(initialCMSContent);
   const [productsList, setProductsList] = useState<any[]>([]);
+  const [cdnBaseUrl, setCdnBaseUrl] = useState('');
 
   const handleUgcScroll = () => {
     if (ugcRef.current) {
@@ -51,10 +53,12 @@ export default function Home() {
   useEffect(() => {
     async function loadAllData() {
       try {
-        const [cmsData, productsData] = await Promise.all([
+        const [cmsData, productsData, settingsData] = await Promise.all([
           getCMSContent('main_site'),
-          getProducts('active')
+          getProducts('active'),
+          getSettings()
         ]);
+        setCdnBaseUrl(settingsData?.cdn_base_url || '');
 
         // Process CMS
         if (cmsData) {
@@ -117,7 +121,7 @@ export default function Home() {
             text: cms.hero.cta,
             link: cms.hero.link || '/shop'
           }}
-          imageUrl={cms.hero.imageUrl}
+          imageUrl={applyCdn(cms.hero.imageUrl, cdnBaseUrl)}
           videoUrl={cms.hero.videoUrl}
           alignment="center"
         />
@@ -204,7 +208,7 @@ export default function Home() {
             transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
             className="text-label text-[#722F38]/55 mb-4"
           >
-            Pilihan Kurasi
+            {cms.showcase.label}
           </motion.p>
           <motion.h2
             initial={{ opacity: 0, y: 35 }}
@@ -228,7 +232,7 @@ export default function Home() {
             transition={{ duration: 1, delay: 0.25, ease: [0.25, 1, 0.5, 1] }}
             className="text-[#3A3A3A]/70 mt-5 max-w-2xl"
           >
-            Mulai dari pilihan teraman untuk acara spesial, lalu sesuaikan detail di halaman produk.
+            {cms.showcase.description}
           </motion.p>
         </div>
 
@@ -254,7 +258,7 @@ export default function Home() {
               transition={{ duration: 1, ease: [0.25, 1, 0.5, 1] }}
               className="text-3xl md:text-5xl font-serif text-brand-wine mb-4"
             >
-              Cerita Pelanggan
+              {cms.ugc.title}
             </motion.h2>
             <motion.p 
               initial={{ opacity: 0, y: 15 }}
@@ -263,7 +267,7 @@ export default function Home() {
               transition={{ duration: 1, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
               className="text-muted max-w-xl"
             >
-              Lihat gaya nyata pelanggan SECERA untuk referensi cepat sebelum memilih.
+              {cms.ugc.subtitle}
             </motion.p>
           </div>
         </div>

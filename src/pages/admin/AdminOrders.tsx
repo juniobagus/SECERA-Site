@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
-import { Search, Filter, Eye, Edit2, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
+import { Search, Eye, Loader2 } from 'lucide-react';
 import { formatPrice } from '../../data/products';
 import { getOrders, updateOrderStatus, getOrderById } from '../../utils/api';
 import OrderDetailModal from '../../components/admin/OrderDetailModal';
+import AdminDataTable from '../../components/admin/AdminDataTable';
 
 export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,7 +14,6 @@ export default function AdminOrders() {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('All');
-  const [isFilterMenuOpen, setIsFilterMenuOpen] = useState(false);
   
   const statusOptions = ['All', 'pending', 'waiting_confirmation', 'paid', 'processing', 'shipped', 'completed', 'cancelled'];
 
@@ -95,18 +95,18 @@ export default function AdminOrders() {
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-8">
+    <div className="flex h-full flex-col">
+      <div className="mb-6 flex items-start justify-between gap-4 sm:mb-8 sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Orders</h1>
+          <h1 className="mb-1 text-2xl font-bold text-gray-900">Orders</h1>
           <p className="text-sm text-gray-500">Manage customer orders and fulfillment.</p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
-        {/* Toolbar */}
-        <div className="p-4 border-b border-gray-200 flex flex-col gap-4 bg-gray-50/50">
-          <div className="flex items-center justify-between gap-4">
+      <AdminDataTable
+        toolbar={
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
             <div className="relative max-w-md w-full">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input 
@@ -117,18 +117,18 @@ export default function AdminOrders() {
                 className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#722F38] focus:ring-1 focus:ring-[#722F38] outline-none transition-shadow bg-white"
               />
             </div>
-            <div className="text-xs text-gray-500 font-medium">
+            <div className="text-xs text-gray-500 font-medium shrink-0">
               Showing {filteredOrders.length} orders
             </div>
           </div>
 
-          {/* Status Tabs */}
-          <div className="flex items-center gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="inline-flex min-w-full items-center gap-1 rounded-xl bg-gray-100 p-1 sm:min-w-0 sm:w-fit">
             {statusOptions.map(status => (
               <button
                 key={status}
                 onClick={() => setFilterStatus(status)}
-                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${
+                className={`shrink-0 px-4 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${
                   filterStatus === status 
                     ? 'bg-white text-[#722F38] shadow-sm' 
                     : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
@@ -137,11 +137,13 @@ export default function AdminOrders() {
                 {status}
               </button>
             ))}
+            </div>
           </div>
-        </div>
+          </div>
+        }
+      >
 
-        {/* Table */}
-        <div className="overflow-x-auto flex-1">
+        <div className="overflow-x-auto">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <Loader2 className="w-8 h-8 animate-spin text-[#722F38]" />
@@ -160,7 +162,7 @@ export default function AdminOrders() {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-gray-900">{order.id.slice(0, 8)}...</span>
                     </td>
@@ -181,7 +183,7 @@ export default function AdminOrders() {
                       <div className="text-xs text-gray-500">{order.item_count || 0} items</div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2 opacity-100">
                         <select 
                           className="text-xs border border-gray-200 rounded p-1 outline-none focus:border-[#722F38]"
                           value={order.status}
@@ -219,7 +221,7 @@ export default function AdminOrders() {
             </table>
           )}
         </div>
-      </div>
+      </AdminDataTable>
 
       <OrderDetailModal 
         isOpen={isDetailOpen}

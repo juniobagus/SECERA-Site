@@ -2,26 +2,30 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Briefcase, MapPin, Clock, ArrowRight, Loader2 } from 'lucide-react';
-import { getJobs, getCMSContent } from '../utils/api';
+import { getJobs, getCMSContent, getSettings } from '../utils/api';
 import Hero from '../components/Hero';
 import SEO from '../components/SEO';
 import CTAButton from '../components/CTAButton';
+import { applyCdn } from '../utils/mediaUrl';
 
 export default function Careers() {
   const [jobs, setJobs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [cmsContent, setCmsContent] = useState<any>(null);
+  const [cdnBaseUrl, setCdnBaseUrl] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        const [jobsData, cmsData] = await Promise.all([
+        const [jobsData, cmsData, settings] = await Promise.all([
           getJobs(),
-          getCMSContent('career_page')
+          getCMSContent('career_page'),
+          getSettings()
         ]);
         setJobs(jobsData);
         setCmsContent(cmsData);
+        setCdnBaseUrl(settings?.cdn_base_url || '');
       } catch (error) {
         console.error(error);
       } finally {
@@ -66,7 +70,7 @@ export default function Careers() {
       <Hero 
         title={content.hero.title}
         subtitle={content.hero.subtitle}
-        imageUrl={content.hero.imageUrl}
+        imageUrl={applyCdn(content.hero.imageUrl, cdnBaseUrl)}
         videoUrl={content.hero.videoUrl}
         height="min-h-[70vh]"
         alignment="left"

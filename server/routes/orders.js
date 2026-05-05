@@ -4,6 +4,7 @@ const db = require('../db');
 const { v4: uuidv4 } = require('uuid');
 const jwt = require('jsonwebtoken');
 const { authenticateAdmin } = require('../middleware/auth');
+const { emitNotification, CHANNELS } = require('../services/notificationService');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key';
 
@@ -69,6 +70,24 @@ router.post('/', async (req, res) => {
       }
 
       await connection.commit();
+      const payload = {
+        order_id: orderId,
+        customer_name: shipping_name,
+        shipping_phone,
+        total_amount
+      };
+      await emitNotification({
+        event_type: 'checkout_created',
+        entity_id: orderId,
+        actor_id: userId,
+        idempotency_key: `checkout_created:${orderId}`,
+        payload,
+        recipients: [
+          { role: 'admin', recipient_id: 'admin', channels: [CHANNELS.IN_APP, CHANNELS.EMAIL, CHANNELS.WHATSAPP], email: process.env.ADMIN_EMAIL, phone: process.env.ADMIN_WHATSAPP },
+          ...(userId ? [{ role: 'customer', recipient_id: userId, channels: [CHANNELS.IN_APP, CHANNELS.EMAIL, CHANNELS.WHATSAPP], phone: shipping_phone }] : []),
+          { role: 'guest', recipient_id: null, channels: [CHANNELS.EMAIL, CHANNELS.WHATSAPP], phone: shipping_phone }
+        ]
+      });
       res.status(201).json({ id: orderId, message: 'Order created successfully' });
     } catch (err) {
       if (connection) await connection.rollback();
@@ -240,6 +259,28 @@ router.patch('/:id/status', authenticateAdmin, async (req, res) => {
     } else {
       await db.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
     }
+
+    const [rows] = await db.query('SELECT id, user_id, shipping_name, shipping_phone FROM orders WHERE id = ? LIMIT 1', [id]);
+    const order = rows[0];
+    const statusEventMap = {
+      paid: 'payment_confirmed',
+      shipped: 'order_shipped',
+      completed: 'order_completed',
+      cancelled: 'order_cancelled'
+    };
+    const eventType = statusEventMap[status];
+    if (eventType && order) {
+      await emitNotification({
+        event_type: eventType,
+        entity_id: id,
+        idempotency_key: `${eventType}:${id}:${tracking_number || '-'}:${status}`,
+        payload: { order_id: id, tracking_number: tracking_number || null },
+        recipients: [
+          { role: 'admin', recipient_id: 'admin', channels: [CHANNELS.IN_APP], email: process.env.ADMIN_EMAIL, phone: process.env.ADMIN_WHATSAPP },
+          ...(order.user_id ? [{ role: 'customer', recipient_id: order.user_id, channels: [CHANNELS.IN_APP, CHANNELS.EMAIL, CHANNELS.WHATSAPP], phone: order.shipping_phone }] : [{ role: 'guest', recipient_id: null, channels: [CHANNELS.EMAIL, CHANNELS.WHATSAPP], phone: order.shipping_phone }])
+        ]
+      });
+    }
     res.json({ message: 'Order status updated successfully' });
   } catch (err) {
     console.error(err);
@@ -261,14 +302,19 @@ router.patch('/:id/payment-proof', async (req, res) => {
     
     await db.query('UPDATE orders SET payment_proof_url = ?, status = "waiting_confirmation" WHERE id = ?', [payment_proof_url, id]);
     
-    // Create notification for admin
-    await db.query(
-      'INSERT INTO notifications (id, type, message, data) VALUES (?, ?, ?, ?)',
-      [uuidv4(), 'payment_uploaded', `Bukti pembayaran baru diunggah untuk pesanan #${id.slice(0, 8)}`, JSON.stringify({ order_id: id })]
-    );
-    
-    // Placeholder for real-time notification (e.g. Socket.io or Push)
-    console.log(`[Notification] Admin: New payment proof uploaded for order ${id}`);
+    const [rows] = await db.query('SELECT id, user_id, shipping_phone FROM orders WHERE id = ? LIMIT 1', [id]);
+    const order = rows[0];
+    await emitNotification({
+      event_type: 'payment_proof_uploaded',
+      entity_id: id,
+      actor_id: userId,
+      idempotency_key: `payment_proof_uploaded:${id}:${payment_proof_url}`,
+      payload: { order_id: id, payment_proof_url },
+      recipients: [
+        { role: 'admin', recipient_id: 'admin', channels: [CHANNELS.IN_APP, CHANNELS.EMAIL, CHANNELS.WHATSAPP], email: process.env.ADMIN_EMAIL, phone: process.env.ADMIN_WHATSAPP },
+        ...(order?.user_id ? [{ role: 'customer', recipient_id: order.user_id, channels: [CHANNELS.IN_APP, CHANNELS.EMAIL], phone: order.shipping_phone }] : [{ role: 'guest', recipient_id: null, channels: [CHANNELS.EMAIL, CHANNELS.WHATSAPP], phone: order?.shipping_phone }])
+      ]
+    });
 
     res.json({ success: true, message: 'Bukti pembayaran berhasil diunggah. Menunggu konfirmasi admin.' });
   } catch (err) {

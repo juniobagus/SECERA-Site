@@ -357,7 +357,7 @@ export async function saveCMSContent(key: string, content: any) {
     inflight.delete(key);
   }
 }
-export type UploadImageSlot = 'hero_16x9' | 'product_detail' | 'product_listing' | 'generic';
+export type UploadImageSlot = 'hero_16x9' | 'hero_original' | 'product_detail' | 'product_listing' | 'generic';
 
 export async function uploadImage(file: File, slot: UploadImageSlot = 'generic'): Promise<string | null> {
   const formData = new FormData();

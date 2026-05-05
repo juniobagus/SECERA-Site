@@ -17,6 +17,26 @@ interface ProductModalProps {
 }
 
 export default function ProductModal({ isOpen, onClose, onSave, product }: ProductModalProps) {
+  const normalizeAmount = (raw: unknown) => {
+    if (typeof raw === 'number' && Number.isFinite(raw)) return Math.max(0, Math.trunc(raw));
+    if (raw == null) return 0;
+
+    const text = String(raw).trim();
+    if (!text) return 0;
+
+    // Handle legacy decimal forms like "189800,00" / "189800.00"
+    const noDecimal = text.replace(/[.,]00$/, '');
+    const digits = noDecimal.replace(/\D/g, '');
+    return parseInt(digits, 10) || 0;
+  };
+
+  const formatRupiahInput = (value: number | string) => {
+    const numeric = normalizeAmount(value);
+    return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(numeric);
+  };
+
+  const parseRupiahInput = (value: string) => normalizeAmount(value);
+
   const [categories, setCategories] = useState<any[]>([]);
   const [isAddingNewCategory, setIsAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -52,10 +72,26 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
   });
   const [tagInput, setTagInput] = useState('');
   const [selectedVariants, setSelectedVariants] = useState<number[]>([]);
-  const [bulkEditValues, setBulkEditValues] = useState({ price: '', promo_price: '', stock: '' });
+  const [bulkEditValues, setBulkEditValues] = useState({ price: '', promo_price: '', stock: '', discount_percent: '' });
   const [showBulkEdit, setShowBulkEdit] = useState(false);
   const [activeTab, setActiveTab] = useState<'basic' | 'variants' | 'cms' | 'seo'>('basic');
   const [showDropdown, setShowDropdown] = useState(false);
+  const [urlPrefix, setUrlPrefix] = useState('shop');
+
+  useEffect(() => {
+    async function fetchPrefix() {
+      try {
+        const { getCMSContent } = await import('../../utils/api');
+        const shopData = await getCMSContent('shop_page');
+        if (shopData?.seo?.slug) {
+          setUrlPrefix(shopData.seo.slug);
+        }
+      } catch (err) {
+        console.error('Failed to fetch shop prefix:', err);
+      }
+    }
+    fetchPrefix();
+  }, []);
 
   useEffect(() => {
     async function loadCategories() {
@@ -65,6 +101,17 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
     if (isOpen) {
       loadCategories();
     }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
   }, [isOpen]);
 
   useEffect(() => {
@@ -93,8 +140,8 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
             sku: v.sku || '',
             color: v.color || '',
             option_name: v.option_name || v.option || '',
-            price: v.price || 0,
-            promo_price: v.promo_price || v.promoPrice || 0,
+            price: normalizeAmount(v.price),
+            promo_price: normalizeAmount(v.promo_price || v.promoPrice),
             stock: v.stock || 0,
             image_url: v.image_url || v.image || ''
           })),
@@ -229,15 +276,41 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
 
   const handleApplyBulkEdit = () => {
     const newVariants = [...formData.variants];
+    const discountPercent = Number(bulkEditValues.discount_percent || 0);
+
     selectedVariants.forEach(index => {
       if (bulkEditValues.price) newVariants[index].price = parseInt(bulkEditValues.price);
       if (bulkEditValues.promo_price) newVariants[index].promo_price = parseInt(bulkEditValues.promo_price);
+      if (discountPercent > 0) {
+        const basePrice = newVariants[index].price || 0;
+        const discounted = Math.max(0, Math.round(basePrice * (1 - discountPercent / 100)));
+        newVariants[index].promo_price = discounted;
+      }
       if (bulkEditValues.stock) newVariants[index].stock = parseInt(bulkEditValues.stock);
     });
     setFormData({ ...formData, variants: newVariants });
     setShowBulkEdit(false);
-    setBulkEditValues({ price: '', promo_price: '', stock: '' });
+    setBulkEditValues({ price: '', promo_price: '', stock: '', discount_percent: '' });
     toast.success('Bulk update applied');
+  };
+
+  const openBulkEdit = () => {
+    if (selectedVariants.length === 0) {
+      toast.error('Select at least 1 variant first');
+      return;
+    }
+    setShowBulkEdit(true);
+  };
+
+  const allVariantIndexes = formData.variants.map((_: any, idx: number) => idx);
+  const isAllVariantsSelected = formData.variants.length > 0 && selectedVariants.length === formData.variants.length;
+
+  const toggleSelectAllVariants = () => {
+    if (isAllVariantsSelected) {
+      setSelectedVariants([]);
+      return;
+    }
+    setSelectedVariants(allVariantIndexes);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -258,21 +331,22 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col border border-white/20">
+    <div className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain bg-black/50 backdrop-blur-sm sm:items-center sm:p-4">
+      <div className="flex h-[100dvh] w-full flex-col overflow-hidden border border-white/20 bg-white shadow-2xl sm:h-auto sm:min-h-0 sm:max-h-[92dvh] sm:max-w-5xl sm:rounded-3xl">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <div className="flex items-start justify-between border-b border-gray-100 bg-gray-50/50 px-4 py-4 sm:items-center sm:px-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">{product ? 'Edit Product' : 'Add New Product'}</h2>
+            <h2 className="text-lg font-bold text-gray-900 sm:text-xl">{product ? 'Edit Product' : 'Add New Product'}</h2>
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mt-0.5">SECERA Admin Panel</p>
           </div>
-          <button type="button" onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-400 hover:text-gray-600">
+          <button type="button" onClick={onClose} className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-1 border-b border-gray-100 bg-gray-50/30 p-2">
+        <div className="overflow-x-auto border-b border-gray-100 bg-gray-50/30 p-2 md:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max gap-1 md:grid md:min-w-0 md:grid-cols-4">
           {[
             { id: 'basic', label: 'Basic Information', icon: LayoutGrid },
             { id: 'variants', label: 'Inventory & Variants', icon: Layers },
@@ -283,7 +357,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold rounded-xl transition-all ${activeTab === tab.id
+              className={`flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-bold transition-all md:min-w-0 md:px-3 ${activeTab === tab.id
                 ? 'bg-white text-[#722F38] shadow-sm border border-gray-100'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-white/50'
                 }`}
@@ -292,9 +366,10 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
               {tab.label}
             </button>
           ))}
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-8">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto overscroll-contain px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
           {/* BASIC TAB */}
           {activeTab === 'basic' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -406,8 +481,17 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Marketplace Links</label>
                     <div className="space-y-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-[#EE4D2D]/10 flex items-center justify-center shrink-0">
-                          <img src="https://upload.wikimedia.org/wikipedia/commons/b/bc/Shopee_logo_transparent_PNG.png" className="w-4 h-4 object-contain" alt="Shopee" />
+                        <div className="w-8 h-8 rounded-lg bg-[#EE4D2D]/10 flex items-center justify-center shrink-0 overflow-hidden">
+                          <img
+                            src="https://shopee.co.id/favicon.ico"
+                            className="w-4 h-4 object-contain"
+                            alt="Shopee"
+                            onError={(e) => {
+                              const el = e.currentTarget;
+                              el.onerror = null;
+                              el.src = 'https://icons.duckduckgo.com/ip3/shopee.co.id.ico';
+                            }}
+                          />
                         </div>
                         <input
                           type="url"
@@ -418,8 +502,17 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                         />
                       </div>
                       <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center shrink-0">
-                          <img src="https://cdn.pixabay.com/photo/2021/06/15/12/28/tiktok-6338430_1280.png" className="w-4 h-4 object-contain" alt="TikTok" />
+                        <div className="w-8 h-8 rounded-lg bg-black/5 flex items-center justify-center shrink-0 overflow-hidden">
+                          <img
+                            src="https://www.tiktok.com/favicon.ico"
+                            className="w-4 h-4 object-contain"
+                            alt="TikTok"
+                            onError={(e) => {
+                              const el = e.currentTarget;
+                              el.onerror = null;
+                              el.src = 'https://icons.duckduckgo.com/ip3/tiktok.com.ico';
+                            }}
+                          />
                         </div>
                         <input
                           type="url"
@@ -615,7 +708,7 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
           {/* VARIANTS TAB */}
           {activeTab === 'variants' && (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="flex justify-between items-center">
+              <div className="flex flex-wrap justify-between items-center gap-3">
                 <div>
                   <h3 className="text-md font-bold text-gray-900 flex items-center gap-2">
                     Manage Inventory
@@ -623,46 +716,73 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                   </h3>
                   <p className="text-xs text-gray-400 mt-1">Set prices and stock levels for each SKU</p>
                 </div>
-                <div className="flex gap-2">
-                  {selectedVariants.length > 0 && (
-                    <div className="flex gap-2 mr-2 border-r border-gray-100 pr-4">
-                      <button type="button" onClick={() => setShowBulkEdit(true)} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-xl flex items-center gap-2 transition-all">
-                        <Edit2 className="w-4 h-4" /> Bulk Edit
-                      </button>
-                      <button type="button" onClick={handleBulkDeleteVariants} className="text-xs font-bold text-red-600 hover:bg-red-50 px-4 py-2 rounded-xl flex items-center gap-2 transition-all">
-                        <Trash2 className="w-4 h-4" /> Delete
-                      </button>
-                    </div>
-                  )}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleSelectAllVariants}
+                    className={`text-xs font-bold px-4 py-2 rounded-xl border transition-all ${isAllVariantsSelected ? 'text-[#722F38] border-[#722F38]/30 bg-[#722F38]/5' : 'text-gray-500 border-gray-200 hover:border-[#722F38]/30 hover:text-[#722F38]'}`}
+                  >
+                    {isAllVariantsSelected ? 'Unselect All' : 'Select All'}
+                  </button>
                   <button type="button" onClick={handleAddVariant} className="bg-[#722F38] text-white text-xs font-bold px-6 py-2.5 rounded-xl flex items-center gap-2 hover:bg-[#5a252d] shadow-lg shadow-[#722F38]/20 transition-all active:scale-95">
                     <Plus className="w-4 h-4" /> Add Variant
                   </button>
                 </div>
               </div>
 
+              {selectedVariants.length > 0 && (
+                <div className="sticky top-0 z-20 border border-[#722F38]/15 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-xl">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-xs font-bold text-[#722F38]">{selectedVariants.length} variant selected</p>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={openBulkEdit} className="text-xs font-bold text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-xl flex items-center gap-2 transition-all border border-blue-100">
+                        <Edit2 className="w-4 h-4" /> Bulk Edit
+                      </button>
+                      <button type="button" onClick={handleBulkDeleteVariants} className="text-xs font-bold text-red-600 hover:bg-red-50 px-3 py-2 rounded-xl flex items-center gap-2 transition-all border border-red-100">
+                        <Trash2 className="w-4 h-4" /> Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {showBulkEdit && (
-                <div className="p-6 bg-blue-50/50 border border-blue-100 rounded-3xl animate-in zoom-in-95 duration-300">
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="text-xs font-bold text-blue-800 uppercase tracking-widest flex items-center gap-2">
-                      <CheckSquare className="w-4 h-4" /> Bulk Edit Selected
-                    </p>
-                    <button type="button" onClick={() => setShowBulkEdit(false)} className="text-blue-400 hover:text-blue-600"><X className="w-5 h-5" /></button>
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20 px-4">
+                  <div className="w-full max-w-2xl rounded-2xl border border-blue-100 bg-white p-5 shadow-2xl">
+                    <div className="mb-4 flex items-center justify-between">
+                      <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-blue-800">
+                        <CheckSquare className="w-4 h-4" /> Bulk Edit Selected
+                      </p>
+                      <button type="button" onClick={() => setShowBulkEdit(false)} className="text-blue-400 hover:text-blue-600"><X className="w-5 h-5" /></button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-blue-400 uppercase">Price</label>
+                        <input type="number" value={bulkEditValues.price} onChange={e => setBulkEditValues({ ...bulkEditValues, price: e.target.value })} className="w-full rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-blue-400 uppercase">Promo Price</label>
+                        <input type="number" value={bulkEditValues.promo_price} onChange={e => setBulkEditValues({ ...bulkEditValues, promo_price: e.target.value })} className="w-full rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-blue-400 uppercase">Stock</label>
+                        <input type="number" value={bulkEditValues.stock} onChange={e => setBulkEditValues({ ...bulkEditValues, stock: e.target.value })} className="w-full rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-bold text-blue-400 uppercase">Discount (%)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={bulkEditValues.discount_percent}
+                          onChange={e => setBulkEditValues({ ...bulkEditValues, discount_percent: e.target.value })}
+                          className="w-full rounded-xl border border-blue-100 bg-white px-4 py-2.5 text-sm outline-none"
+                          placeholder="e.g. 15"
+                        />
+                      </div>
+                    </div>
+                    <button type="button" onClick={handleApplyBulkEdit} className="mt-6 w-full rounded-2xl bg-blue-600 py-3 text-xs font-bold text-white shadow-xl shadow-blue-600/10 transition-all hover:bg-blue-700">Apply Changes</button>
                   </div>
-                  <div className="grid grid-cols-3 gap-6">
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-blue-400 uppercase">Price</label>
-                      <input type="number" value={bulkEditValues.price} onChange={e => setBulkEditValues({ ...bulkEditValues, price: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-sm outline-none" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-blue-400 uppercase">Promo Price</label>
-                      <input type="number" value={bulkEditValues.promo_price} onChange={e => setBulkEditValues({ ...bulkEditValues, promo_price: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-sm outline-none" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[10px] font-bold text-blue-400 uppercase">Stock</label>
-                      <input type="number" value={bulkEditValues.stock} onChange={e => setBulkEditValues({ ...bulkEditValues, stock: e.target.value })} className="w-full px-4 py-2.5 bg-white border border-blue-100 rounded-xl text-sm outline-none" />
-                    </div>
-                  </div>
-                  <button type="button" onClick={handleApplyBulkEdit} className="w-full mt-6 py-3 bg-blue-600 text-white text-xs font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/10">Apply Changes</button>
                 </div>
               )}
 
@@ -769,14 +889,14 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Price</label>
                                     <div className="relative">
                                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">Rp</span>
-                                      <input type="number" value={variant.price} onChange={e => { const v = [...formData.variants]; v[idx].price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-bold" />
+                                      <input type="text" inputMode="numeric" value={formatRupiahInput(variant.price)} onChange={e => { const v = [...formData.variants]; v[idx].price = parseRupiahInput(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-bold" />
                                     </div>
                                   </div>
                                   <div className="space-y-2">
                                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Promo Price</label>
                                     <div className="relative">
                                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400">Rp</span>
-                                      <input type="number" value={variant.promo_price} onChange={e => { const v = [...formData.variants]; v[idx].promo_price = parseInt(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-bold text-[#722F38]" />
+                                      <input type="text" inputMode="numeric" value={formatRupiahInput(variant.promo_price)} onChange={e => { const v = [...formData.variants]; v[idx].promo_price = parseRupiahInput(e.target.value); setFormData({ ...formData, variants: v }) }} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-sm focus:bg-white outline-none font-bold text-[#722F38]" />
                                     </div>
                                   </div>
                                   <div className="space-y-2">
@@ -1128,15 +1248,16 @@ export default function ProductModal({ isOpen, onClose, onSave, product }: Produ
                 ogImage={formData.og_image_url}
                 setOgImage={(og_image_url) => setFormData({ ...formData, og_image_url })}
                 titlePlaceholder={formData.name}
+                urlPrefix={urlPrefix}
               />
             </div>
           )}
         </form>
 
         {/* Footer */}
-        <div className="p-8 border-t border-gray-100 flex justify-end gap-4 bg-gray-50/50">
-          <button type="button" onClick={onClose} className="px-8 py-3 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-200 transition-all">Cancel</button>
-          <button type="submit" onClick={handleSubmit} className="px-10 py-3 bg-[#722F38] text-white rounded-2xl text-sm font-bold hover:bg-[#5a252d] shadow-xl shadow-[#722F38]/20 transition-all active:scale-95">
+        <div className="sticky bottom-0 z-20 flex gap-3 border-t border-gray-100 bg-gray-50/95 px-4 py-3 backdrop-blur-md sm:justify-end sm:px-6 lg:px-8">
+          <button type="button" onClick={onClose} className="w-full rounded-xl px-4 py-3 text-sm font-bold text-gray-500 transition-all hover:bg-gray-200 sm:w-auto sm:px-8">Cancel</button>
+          <button type="submit" onClick={handleSubmit} className="w-full rounded-xl bg-[#722F38] px-5 py-3 text-sm font-bold text-white shadow-xl shadow-[#722F38]/20 transition-all hover:bg-[#5a252d] active:scale-95 sm:w-auto sm:px-10">
             {product ? 'Update Changes' : 'Publish Product'}
           </button>
         </div>

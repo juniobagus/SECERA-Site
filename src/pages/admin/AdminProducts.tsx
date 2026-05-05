@@ -6,6 +6,7 @@ import { formatPrice } from '../../data/products';
 import { getProducts, getCategories, createProduct, updateProduct, deleteProduct } from '../../utils/api';
 import ProductModal from '../../components/admin/ProductModal';
 import BulkEditModal from '../../components/admin/BulkEditModal';
+import AdminDataTable from '../../components/admin/AdminDataTable';
 
 export default function AdminProducts() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -271,9 +272,8 @@ export default function AdminProducts() {
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col flex-1">
-        {/* Toolbar */}
-        <div className="p-4 border-b border-gray-200 flex items-center justify-between gap-4 bg-gray-50/50">
+      <AdminDataTable toolbar={
+        <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 flex-1">
             <div className="relative max-w-md w-full">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
@@ -345,6 +345,7 @@ export default function AdminProducts() {
             )}
           </div>
         </div>
+      }>
 
         {/* Table */}
         <div className="overflow-x-auto flex-1">
@@ -413,17 +414,22 @@ export default function AdminProducts() {
                         />
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(product)}
+                          className="group/product flex w-full items-center gap-4 rounded-lg text-left transition-colors hover:bg-gray-50/80"
+                          title="Open product detail"
+                        >
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
                             {(product.thumbnail_url || firstVariant?.image_url || firstVariant?.image) && (
-                              <img src={product.thumbnail_url || firstVariant.image_url || firstVariant.image} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                              <img src={product.thumbnail_url || firstVariant.image_url || firstVariant.image} alt="" className="h-full w-full object-cover transition-transform group-hover/product:scale-[1.03]" referrerPolicy="no-referrer" />
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold text-gray-900">{product.short_name || product.shortName}</div>
-                            <div className="text-xs text-gray-500 truncate max-w-xs">{product.name}</div>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-gray-900 group-hover/product:text-[#722F38]">{product.short_name || product.shortName}</div>
+                            <div className="max-w-xs truncate text-xs text-gray-500">{product.name}</div>
                           </div>
-                        </div>
+                        </button>
                       </td>
                       <td className="px-6 py-4">
                         {editingCell?.id === product.id && editingCell?.field === 'category' ? (
@@ -541,7 +547,7 @@ export default function AdminProducts() {
                       </td>
 
                       <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center justify-end gap-2 opacity-100">
                           {currentTab === 'active' && (
                             <button 
                               onClick={() => handleStatusChange(product.id, 'archived')}
@@ -591,7 +597,7 @@ export default function AdminProducts() {
             </table>
           )}
         </div>
-      </div>
+      </AdminDataTable>
 
       <ProductModal 
         isOpen={isModalOpen}
