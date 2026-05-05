@@ -141,7 +141,8 @@ async function createImageVariants(buffer, assetId, profile) {
       encoded = await encodeWebpBuffer(buffer, effectiveWidth, profile.ratio, quality);
     }
 
-    const webpFilename = `${assetId}-w${effectiveWidth}.webp`;
+    // Keep filename keyed by requested target width for stable srcset URLs.
+    const webpFilename = `${assetId}-w${targetWidth}.webp`;
     const webpPath = path.join(derivedDir, webpFilename);
     await fs.promises.writeFile(webpPath, encoded.data);
 
