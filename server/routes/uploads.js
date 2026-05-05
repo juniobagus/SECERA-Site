@@ -4,6 +4,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const { spawn } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 
 const upload = multer({
@@ -28,6 +29,24 @@ if (!fs.existsSync(derivedDir)) fs.mkdirSync(derivedDir, { recursive: true });
 
 const IMAGE_WIDTHS = [480, 768, 1080, 1440, 2000];
 const MIN_IMAGE_WIDTH = 1200;
+const VIDEO_HEIGHTS = [720, 1080];
+
+function runFfmpeg(args) {
+  return new Promise((resolve, reject) => {
+    const ff = spawn('ffmpeg', args);
+    let stderr = '';
+
+    ff.stderr.on('data', (d) => {
+      stderr += d.toString();
+    });
+
+    ff.on('error', (err) => reject(err));
+    ff.on('close', (code) => {
+      if (code === 0) return resolve();
+      reject(new Error(stderr || `ffmpeg exited with code ${code}`));
+    });
+  });
+}
 
 async function createImageVariants(buffer, assetId) {
   const meta = await sharp(buffer).metadata();
@@ -62,6 +81,53 @@ async function createImageVariants(buffer, assetId) {
   const defaultUrl = `/uploads/derived/${assetId}-w${defaultWidth}.webp`;
 
   return { defaultUrl, variants, width: meta.width || null, height: meta.height || null };
+}
+
+async function createVideoVariants(inputPath, assetId) {
+  const variants = [];
+
+  for (const height of VIDEO_HEIGHTS) {
+    const filename = `${assetId}-h${height}.mp4`;
+    const outputPath = path.join(derivedDir, filename);
+    const bitrate = height === 1080 ? '4500k' : '2200k';
+
+    await runFfmpeg([
+      '-y',
+      '-i', inputPath,
+      '-vf', `scale=-2:${height}`,
+      '-c:v', 'libx264',
+      '-profile:v', 'high',
+      '-movflags', '+faststart',
+      '-pix_fmt', 'yuv420p',
+      '-b:v', bitrate,
+      '-maxrate', bitrate,
+      '-bufsize', height === 1080 ? '9000k' : '4400k',
+      '-g', '60',
+      '-keyint_min', '60',
+      '-c:a', 'aac',
+      '-b:a', '128k',
+      outputPath,
+    ]);
+
+    variants.push({ height, format: 'mp4', url: `/uploads/derived/${filename}` });
+  }
+
+  const posterName = `${assetId}-poster-1080.webp`;
+  const posterPath = path.join(derivedDir, posterName);
+  await runFfmpeg([
+    '-y',
+    '-i', inputPath,
+    '-ss', '00:00:00.500',
+    '-vframes', '1',
+    '-vf', 'scale=-2:1080',
+    posterPath,
+  ]);
+
+  return {
+    variants,
+    posterUrl: `/uploads/derived/${posterName}`,
+    defaultUrl: variants.find((v) => v.height === 720)?.url || variants[0]?.url,
+  };
 }
 
 router.post('/', upload.single('image'), async (req, res) => {
@@ -105,13 +171,30 @@ router.post('/video', uploadVideo.single('video'), async (req, res) => {
   }
 
   const ext = mime === 'video/webm' ? 'webm' : mime === 'video/ogg' ? 'ogv' : 'mp4';
-  const filename = `${uuidv4()}.${ext}`;
-  const filepath = path.join(uploadDir, filename);
+  const assetId = uuidv4();
+  const originalFilename = `${assetId}.${ext}`;
+  const originalPath = path.join(uploadDir, originalFilename);
 
   try {
-    fs.writeFileSync(filepath, req.file.buffer);
-    const videoUrl = `/uploads/${filename}`;
-    res.json({ url: videoUrl });
+    fs.writeFileSync(originalPath, req.file.buffer);
+
+    try {
+      const processed = await createVideoVariants(originalPath, assetId);
+      return res.json({
+        url: processed.defaultUrl,
+        originalUrl: `/uploads/${originalFilename}`,
+        posterUrl: processed.posterUrl,
+        variants: processed.variants,
+      });
+    } catch (ffmpegErr) {
+      console.warn('Video processing degraded (ffmpeg unavailable or failed):', ffmpegErr?.message || ffmpegErr);
+      return res.json({
+        url: `/uploads/${originalFilename}`,
+        originalUrl: `/uploads/${originalFilename}`,
+        degraded: true,
+        message: 'Video uploaded without renditions. ffmpeg is unavailable or processing failed.',
+      });
+    }
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Error saving video' });
