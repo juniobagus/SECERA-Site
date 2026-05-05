@@ -141,13 +141,6 @@ async function createImageVariants(buffer, assetId, profile) {
       encoded = await encodeWebpBuffer(buffer, effectiveWidth, profile.ratio, quality);
     }
 
-    // If the output is too small, raise quality back up to preserve detail.
-    while (encoded.info.size < profile.targetMinBytes && quality < 98) {
-      quality += 2;
-      encoded = await encodeWebpBuffer(buffer, effectiveWidth, profile.ratio, quality);
-      if (encoded.info.size > profile.hardMaxBytes) break;
-    }
-
     const webpFilename = `${assetId}-w${effectiveWidth}.webp`;
     const webpPath = path.join(derivedDir, webpFilename);
     await fs.promises.writeFile(webpPath, encoded.data);
@@ -174,10 +167,10 @@ async function createImageVariants(buffer, assetId, profile) {
   const sorted = variants.slice().sort((a, b) => a.width - b.width);
   // Use the largest variant as default so srcset generation can include the full width range.
   const preferred = sorted[sorted.length - 1];
+  const belowTargetMin = qualityReport.some((r) => r.finalBytes < profile.targetMinBytes);
   const status = qualityReport.some((r) =>
     r.finalBytes > profile.hardMaxBytes ||
-    (r.endQuality <= profile.qualityFloor && r.finalBytes > profile.targetMaxBytes) ||
-    (r.endQuality >= 98 && r.finalBytes < profile.targetMinBytes)
+    (r.endQuality <= profile.qualityFloor && r.finalBytes > profile.targetMaxBytes)
   )
     ? 'needs_review'
     : 'ready';
@@ -192,6 +185,7 @@ async function createImageVariants(buffer, assetId, profile) {
       profile: profile.family,
       targetBytesRange: [profile.targetMinBytes, profile.targetMaxBytes],
       hardMaxBytes: profile.hardMaxBytes,
+      belowTargetMin,
       totalDimensionSteps,
       entries: qualityReport,
     },
@@ -275,6 +269,9 @@ router.post('/', upload.single('image'), async (req, res) => {
       variants: result.variants,
       meta: { width: result.width, height: result.height },
       qualityReport: result.qualityReport,
+      warning: result.qualityReport?.belowTargetMin
+        ? `Output is below recommended minimum size for slot ${profile.family}. Upload is allowed by user preference.`
+        : undefined,
     });
   } catch (err) {
     console.error(err);
