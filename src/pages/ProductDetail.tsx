@@ -6,9 +6,12 @@ import { formatPrice } from '../data/products';
 import { useCart } from '../context/CartContext';
 import { getProductById, getProductBySlug } from '../utils/api';
 import SEO from '../components/SEO';
+import { buildDerivedSrcSet, defaultResponsiveSizes } from '../utils/responsiveMedia';
 import CTAButton from '../components/CTAButton';
 
 const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, className?: string, id: string }) => {
+  const srcSet = buildDerivedSrcSet(src, 'webp');
+  const sizes = defaultResponsiveSizes('product');
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -51,6 +54,8 @@ const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, 
         ref={imgRef}
         key={`img-${src}`}
         src={src}
+        srcSet={srcSet}
+        sizes={sizes}
         alt={alt}
         onLoad={() => setIsLoaded(true)}
         initial={{ opacity: 0, scale: 1.05 }}
@@ -67,6 +72,8 @@ const ImageWithSkeleton = ({ src, alt, className }: { src: string, alt: string, 
 };
 
 const ThumbnailImage = ({ src }: { src: string }) => {
+  const srcSet = buildDerivedSrcSet(src, 'webp');
+  const sizes = '(max-width: 768px) 25vw, 120px';
   const [isLoaded, setIsLoaded] = useState(false);
   const imgRef = useRef<HTMLImageElement>(null);
 
@@ -82,6 +89,8 @@ const ThumbnailImage = ({ src }: { src: string }) => {
       <img
         ref={imgRef}
         src={src}
+        srcSet={srcSet}
+        sizes={sizes}
         alt=""
         onLoad={() => setIsLoaded(true)}
         className={`w-full h-full object-cover transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}
@@ -92,8 +101,8 @@ const ThumbnailImage = ({ src }: { src: string }) => {
 };
 
 export default function ProductDetail() {
-  const { id, slug } = useParams<{ id?: string, slug?: string }>();
-  const identifier = id || slug;
+  const { id, slug, identifier: paramId } = useParams<{ id?: string, slug?: string, identifier?: string }>();
+  const identifier = paramId || id || slug;
   const { addItem } = useCart();
 
   const [product, setProduct] = useState<any>(null);
@@ -107,8 +116,11 @@ export default function ProductDetail() {
 
   useEffect(() => {
     async function loadProduct() {
-      if (!identifier) return;
       setIsLoading(true);
+      if (!identifier) {
+        setIsLoading(false);
+        return;
+      }
       try {
         // Try UUID first if it matches UUID format, else try slug
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(identifier);
@@ -118,13 +130,13 @@ export default function ProductDetail() {
         } else {
           data = await getProductBySlug(identifier);
         }
-        
+
         // Fallback: if not found by one, try the other
         if (!data) {
           if (isUuid) data = await getProductBySlug(identifier);
           else data = await getProductById(identifier);
         }
- 
+
         setProduct(data);
       } finally {
         setIsLoading(false);
@@ -167,7 +179,7 @@ export default function ProductDetail() {
 
   const allImages = useMemo(() => {
     if (!product) return [];
-    
+
     // 1. Collect gallery images from the new structure
     const galleryImages = (product.product_images || product.images || [])
       .map((img: any) => typeof img === 'string' ? img : img.image_url)
@@ -175,11 +187,11 @@ export default function ProductDetail() {
 
     // 2. Collect color-specific variant images
     const variantImages = colorVariants.map((variant: any) => variant.image_url || variant.image).filter(Boolean);
-    
+
     // Combine them, starting with gallery images then variant images
     const combined = [...galleryImages, ...variantImages];
     const uniqueImages = Array.from(new Set(combined)) as string[];
-    
+
     // 3. Ensure the thumbnail is included and at the very front
     const thumb = product?.thumbnail_url || product?.thumbnailUrl || product?.image_url || product?.image;
     if (thumb) {
@@ -189,13 +201,13 @@ export default function ProductDetail() {
       }
       uniqueImages.unshift(thumb);
     }
-    
+
     // 4. Fallback to all variant images if still empty
     if (uniqueImages.length === 0) {
       const allVariantImages = variants.map((v: any) => v.image_url || v.image).filter(Boolean);
       return Array.from(new Set(allVariantImages)) as string[];
     }
-    
+
     return uniqueImages;
   }, [colorVariants, variants, product]);
 
@@ -266,8 +278,8 @@ export default function ProductDetail() {
   }
 
   return (
-    <main className="min-h-screen bg-paper font-sans w-full max-w-full pt-[72px] pb-24 md:pb-0">
-      <SEO 
+    <main className="min-h-screen bg-paper font-sans w-full max-w-full pb-24 md:pb-0">
+      <SEO
         title={product?.seo_title || product?.name}
         description={product?.seo_description || product?.description}
         ogImage={product?.og_image_url || product?.thumbnail_url}
@@ -438,8 +450,8 @@ export default function ProductDetail() {
                           type="button"
                           onClick={() => setSelectedOption(option)}
                           className={`h-11 min-w-11 px-4 border text-sm font-bold tracking-wider transition-all ${isActive
-                              ? 'border-brand-wine bg-brand-wine text-white shadow-lg shadow-brand-wine/10'
-                              : 'border-ink/10 bg-white/50 text-ink hover:border-brand-wine/40'
+                            ? 'border-brand-wine bg-brand-wine text-white shadow-lg shadow-brand-wine/10'
+                            : 'border-ink/10 bg-white/50 text-ink hover:border-brand-wine/40'
                             }`}
                         >
                           {option}
@@ -558,8 +570,8 @@ export default function ProductDetail() {
                 </tr>
               </thead>
               <tbody>
-                {(product?.cms_content?.size_guide?.table?.length > 0 
-                  ? product.cms_content.size_guide.table 
+                {(product?.cms_content?.size_guide?.table?.length > 0
+                  ? product.cms_content.size_guide.table
                   : (options.length ? options.map((s: any, i: number) => ({ label: s, dada: `${88 + i * 4} cm`, panjang: `${66 + i * 2} cm` })) : [])
                 ).map((row: any) => (
                   <tr key={row.label || row.id} className="border-b border-[#00000012] text-[#3C3C3C]">
