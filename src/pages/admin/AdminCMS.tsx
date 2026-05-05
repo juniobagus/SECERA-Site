@@ -115,10 +115,11 @@ export default function AdminCMS() {
               subtitle: saved.hero?.subtitle || initialCMSContent.hero.subtitle,
               cta: saved.hero?.cta || initialCMSContent.hero.cta,
               link: saved.hero?.link || initialCMSContent.hero.link || '',
-              imageUrl: saved.hero?.imageUrl || initialCMSContent.hero.imageUrl,
+              imageUrl: saved.hero?.imageUrl ?? initialCMSContent.hero.imageUrl,
               videoUrl: saved.hero?.videoUrl || ''
             },
             showcase: {
+              label: saved.showcase?.label || initialCMSContent.showcase.label,
               title: saved.showcase?.title || initialCMSContent.showcase.title,
               description: saved.showcase?.description || initialCMSContent.showcase.description,
               productIds: saved.showcase?.productIds || initialCMSContent.showcase.productIds
@@ -190,7 +191,7 @@ export default function AdminCMS() {
                 subtitle: item.subtitle || initialCMSContent.stylePreference.items[i]?.subtitle || '',
                 cta: item.cta || initialCMSContent.stylePreference.items[i]?.cta || '',
                 link: item.link || initialCMSContent.stylePreference.items[i]?.link || '',
-                imageUrl: item.imageUrl || initialCMSContent.stylePreference.items[i]?.imageUrl || '',
+                imageUrl: item.imageUrl ?? initialCMSContent.stylePreference.items[i]?.imageUrl ?? '',
                 videoUrl: item.videoUrl || ''
               }))
             },
@@ -209,7 +210,7 @@ export default function AdminCMS() {
             hero: {
               title: saved.hero?.title || initialAboutContent.hero.title,
               subtitle: saved.hero?.subtitle || initialAboutContent.hero.subtitle,
-              imageUrl: saved.hero?.imageUrl || initialAboutContent.hero.imageUrl,
+              imageUrl: saved.hero?.imageUrl ?? initialAboutContent.hero.imageUrl,
               videoUrl: saved.hero?.videoUrl || ''
             },
             inspiration: {
@@ -217,7 +218,7 @@ export default function AdminCMS() {
               subtitle: saved.inspiration?.subtitle || initialAboutContent.inspiration.subtitle,
               description1: saved.inspiration?.description1 || initialAboutContent.inspiration.description1,
               description2: saved.inspiration?.description2 || initialAboutContent.inspiration.description2,
-              imageUrl: saved.inspiration?.imageUrl || initialAboutContent.inspiration.imageUrl
+              imageUrl: saved.inspiration?.imageUrl ?? initialAboutContent.inspiration.imageUrl
             },
             mission: {
               title: saved.mission?.title || initialAboutContent.mission.title,
@@ -239,7 +240,7 @@ export default function AdminCMS() {
             hero: {
               title: saved.hero?.title || initialShopContent.hero.title,
               subtitle: saved.hero?.subtitle || initialShopContent.hero.subtitle,
-              imageUrl: saved.hero?.imageUrl || initialShopContent.hero.imageUrl,
+              imageUrl: saved.hero?.imageUrl ?? initialShopContent.hero.imageUrl,
               videoUrl: saved.hero?.videoUrl || ''
             },
             seo: {
@@ -257,7 +258,7 @@ export default function AdminCMS() {
             hero: {
               title: saved.hero?.title || initialCareerContent.hero.title,
               subtitle: saved.hero?.subtitle || initialCareerContent.hero.subtitle,
-              imageUrl: saved.hero?.imageUrl || initialCareerContent.hero.imageUrl,
+              imageUrl: saved.hero?.imageUrl ?? initialCareerContent.hero.imageUrl,
               videoUrl: saved.hero?.videoUrl || ''
             },
             intro: {
@@ -317,9 +318,9 @@ export default function AdminCMS() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="mx-auto w-full max-w-5xl">
       {/* Sticky Header Bar */}
-      <div className="sticky top-[-2rem] z-30 -mx-8 px-8 py-6 mb-8 bg-gray-50/80 backdrop-blur-md border-b border-gray-200/50 flex justify-between items-center">
+      <div className="sticky top-0 z-20 mb-6 flex flex-col items-start gap-4 border-b border-gray-200/70 bg-gray-50/95 px-4 py-4 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Content Management System</h1>
           <p className="text-sm text-gray-500 font-medium">Manage your site text, hero sections, and FAQ.</p>
@@ -329,40 +330,44 @@ export default function AdminCMS() {
           whileTap={{ scale: 0.98 }}
           onClick={handleSave}
           disabled={isSaving}
-          className="bg-[#722F38] text-white px-8 py-3 rounded-2xl font-bold hover:bg-[#5a252d] transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg shadow-[#722F38]/20"
+          className="hidden lg:flex items-center justify-center gap-2 rounded-xl bg-[#722F38] px-7 py-3 font-bold text-white shadow-lg shadow-[#722F38]/20 transition-all hover:bg-[#5a252d] disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
           {isSaving ? 'Saving...' : 'Save CMS Changes'}
         </motion.button>
       </div>
 
-      <div className="pb-20">
+      <div className="pb-32 lg:pb-20">
 
 
         {/* Modern Tabs */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-2xl mb-12 w-fit">
-          {[
-            { id: 'home', label: 'Home Page', icon: Home },
-            { id: 'about', label: 'About Page', icon: Info },
-            { id: 'shop', label: 'Shop Page', icon: Search },
-            { id: 'career', label: 'Career Page', icon: Briefcase },
-            { id: 'global', label: 'Global Settings', icon: Globe },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-6 py-2.5 text-sm font-bold rounded-xl transition-all ${activeTab === tab.id
-                ? 'bg-white text-[#722F38] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-            </button>
-          ))}
+        <div className="mb-8 -mx-1 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="inline-flex min-w-full gap-1 rounded-2xl bg-gray-100 p-1 sm:min-w-0">
+            {[
+              { id: 'home', label: 'Home Page', icon: Home },
+              { id: 'about', label: 'About Page', icon: Info },
+              { id: 'shop', label: 'Shop Page', icon: Search },
+              { id: 'career', label: 'Career Page', icon: Briefcase },
+              { id: 'global', label: 'Global Settings', icon: Globe },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`shrink-0 whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-bold transition-all sm:px-6 ${activeTab === tab.id
+                  ? 'bg-white text-[#722F38] shadow-sm'
+                  : 'text-gray-500 hover:text-gray-700'
+                  }`}
+              >
+                <span className="flex items-center gap-2">
+                  <tab.icon className="h-4 w-4" />
+                  {tab.label}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-8 px-1 sm:px-0">
           {activeTab === 'home' ? (
           <>
               {/* CMS: Hero Section */}
@@ -392,7 +397,7 @@ export default function AdminCMS() {
                       className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900 resize-none"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Button Text</label>
                       <input
@@ -418,6 +423,7 @@ export default function AdminCMS() {
                       label="Hero Image (Poster)"
                       value={homeContent.hero.imageUrl || ''}
                       onChange={(url) => setHomeContent({ ...homeContent, hero: { ...homeContent.hero, imageUrl: url } })}
+                      slot="hero_16x9"
                     />
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -518,7 +524,7 @@ export default function AdminCMS() {
                         className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:border-[#722F38] outline-none bg-white"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-bold text-gray-500 uppercase mb-1">CTA Text</label>
                         <input
@@ -642,7 +648,17 @@ export default function AdminCMS() {
             </div>
           </div>
           <div className="p-10 pt-6 space-y-8">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Section Label</label>
+                <input
+                  type="text"
+                  value={homeContent.showcase.label}
+                  onChange={(e) => setHomeContent({ ...homeContent, showcase: { ...homeContent.showcase, label: e.target.value } })}
+                  className="w-full px-6 py-3 bg-gray-50 border border-gray-100 rounded-2xl focus:bg-white focus:border-[#722F38] focus:ring-4 focus:ring-[#722F38]/5 outline-none transition-all font-medium text-gray-900"
+                  placeholder="Pilihan Kurasi"
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
                 <textarea
@@ -724,7 +740,7 @@ export default function AdminCMS() {
             </button>
           </div>
           <div className="p-10 pt-6 space-y-8">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
                 <input
@@ -956,6 +972,7 @@ export default function AdminCMS() {
                 label="Hero Image (Poster)"
                 value={aboutContent.hero.imageUrl}
                 onChange={(url) => setAboutContent({ ...aboutContent, hero: { ...aboutContent.hero, imageUrl: url } })}
+                slot="hero_16x9"
               />
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -1043,6 +1060,18 @@ export default function AdminCMS() {
         </div>
       </div>
 
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200/80 bg-gray-50/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-md lg:hidden">
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#722F38] px-5 py-3 font-bold text-white shadow-lg shadow-[#722F38]/20 transition-all hover:bg-[#5a252d] disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {isSaving ? 'Saving...' : 'Save CMS Changes'}
+        </motion.button>
+      </div>
+
       {/* About Page: Mission */}
       <div className="bg-white rounded-[2.5rem] border border-slate-200/50 shadow-[0_20px_40px_-15px_rgba(0,0,0,0.05)] overflow-hidden">
         <div className="p-10 pb-4 flex items-center gap-3">
@@ -1121,6 +1150,7 @@ export default function AdminCMS() {
                     label="Hero Image (Poster)"
                     value={shopContent.hero.imageUrl}
                     onChange={(url) => setShopContent({ ...shopContent, hero: { ...shopContent.hero, imageUrl: url } })}
+                    slot="hero_16x9"
                   />
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -1213,6 +1243,7 @@ export default function AdminCMS() {
               label="Hero Image (Poster)"
               value={careerContent.hero.imageUrl}
               onChange={(url) => setCareerContent({ ...careerContent, hero: { ...careerContent.hero, imageUrl: url } })}
+              slot="hero_16x9"
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Hero Video URL (Optional)</label>
@@ -1306,7 +1337,7 @@ export default function AdminCMS() {
                 </div>
               </div>
               <div className="p-10 pt-6 space-y-8">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Section Title</label>
                     <input 
@@ -1631,6 +1662,7 @@ export default function AdminCMS() {
               label="CTA Background Image (Fallback/Poster)"
               value={homeContent.cta.backgroundImageUrl || ''}
               onChange={(url) => setHomeContent({ ...homeContent, cta: { ...homeContent.cta, backgroundImageUrl: url } })}
+              slot="hero_16x9"
             />
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">CTA Background Video URL (Optional)</label>
@@ -1674,6 +1706,18 @@ export default function AdminCMS() {
       </div>
           </>
         )}
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-200/80 bg-gray-50/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-3 backdrop-blur-md lg:hidden">
+        <motion.button
+          whileTap={{ scale: 0.98 }}
+          onClick={handleSave}
+          disabled={isSaving}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#722F38] px-5 py-3 font-bold text-white shadow-lg shadow-[#722F38]/20 transition-all hover:bg-[#5a252d] disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {isSaving ? 'Saving...' : 'Save CMS Changes'}
+        </motion.button>
       </div>
     </div>
   </div>
