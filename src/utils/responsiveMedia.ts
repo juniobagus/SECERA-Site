@@ -4,11 +4,16 @@ export function buildDerivedSrcSet(url?: string | null, format: 'webp' | 'avif' 
   if (!url) return undefined;
 
   // Expected upload URL: /uploads/derived/<assetId>-w<width>.webp
-  const m = url.match(/^\/uploads\/derived\/(.+)-w\d+\.(webp|avif)$/i);
+  const m = url.match(/^\/uploads\/derived\/(.+)-w(\d+)\.(webp|avif)$/i);
   if (!m) return undefined;
 
   const assetId = m[1];
-  return CANDIDATE_WIDTHS
+  const maxAvailableWidth = Number(m[2] || 0);
+  if (!maxAvailableWidth) return undefined;
+  const widths = CANDIDATE_WIDTHS.filter((w) => w <= maxAvailableWidth);
+  if (!widths.length) widths.push(maxAvailableWidth);
+
+  return widths
     .map((w) => `/uploads/derived/${assetId}-w${w}.${format} ${w}w`)
     .join(', ');
 }
