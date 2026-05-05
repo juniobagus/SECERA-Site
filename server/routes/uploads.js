@@ -27,6 +27,7 @@ if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
 if (!fs.existsSync(derivedDir)) fs.mkdirSync(derivedDir, { recursive: true });
 
 const IMAGE_WIDTHS = [480, 768, 1080, 1440, 2000];
+const MIN_IMAGE_WIDTH = 1200;
 
 async function createImageVariants(buffer, assetId) {
   const meta = await sharp(buffer).metadata();
@@ -69,6 +70,19 @@ router.post('/', upload.single('image'), async (req, res) => {
   const assetId = uuidv4();
 
   try {
+    const meta = await sharp(req.file.buffer).metadata();
+    if (!meta.width || meta.width < MIN_IMAGE_WIDTH) {
+      return res.status(400).json({
+        message: `Image resolution too small. Minimum width is ${MIN_IMAGE_WIDTH}px.`,
+        code: 'IMAGE_RESOLUTION_TOO_SMALL',
+        meta: {
+          minWidth: MIN_IMAGE_WIDTH,
+          detectedWidth: meta.width || 0,
+          detectedHeight: meta.height || 0,
+        },
+      });
+    }
+
     const result = await createImageVariants(req.file.buffer, assetId);
     res.json({
       url: result.defaultUrl,

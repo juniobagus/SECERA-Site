@@ -371,10 +371,18 @@ export async function uploadImage(file: File): Promise<string | null> {
       const data = await response.json();
       return data.url;
     }
-    return null;
+
+    // Surface server-side validation messages to the caller.
+    try {
+      const err = await response.json();
+      throw new Error(err?.message || 'Failed to upload image');
+    } catch (parseErr: any) {
+      if (parseErr instanceof Error) throw parseErr;
+      throw new Error('Failed to upload image');
+    }
   } catch (error) {
     console.error('API Error (uploadImage):', error);
-    return null;
+    throw error;
   }
 }
 
@@ -395,6 +403,27 @@ export async function uploadVideo(file: File): Promise<string | null> {
     return null;
   } catch (error) {
     console.error('API Error (uploadVideo):', error);
+    return null;
+  }
+}
+
+export async function uploadDocument(file: File): Promise<string | null> {
+  const formData = new FormData();
+  formData.append('document', file);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/uploads/document`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data.url;
+    }
+    return null;
+  } catch (error) {
+    console.error('API Error (uploadDocument):', error);
     return null;
   }
 }
@@ -611,7 +640,9 @@ export async function getNotifications() {
     const response = await fetch(`${API_BASE_URL}/notifications`, {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
     });
-    return await response.json();
+    if (!response.ok) return [];
+    const data = await response.json();
+    return Array.isArray(data) ? data : [];
   } catch (error) {
     console.error('API Error (getNotifications):', error);
     return [];
@@ -654,6 +685,63 @@ export async function markAllAsRead() {
   } catch (error) {
     console.error('API Error (markAllAsRead):', error);
     return false;
+  }
+}
+
+export async function getCustomerNotifications() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/notifications/customer`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('customer_token')}` },
+      credentials: 'include'
+    });
+    if (!response.ok) return [];
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getCustomerNotifications):', error);
+    return [];
+  }
+}
+
+export async function getCustomerUnreadCount() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/notifications/customer/unread-count`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('customer_token')}` },
+      credentials: 'include'
+    });
+    if (!response.ok) return 0;
+    const data = await response.json();
+    return data.count || 0;
+  } catch (error) {
+    console.error('API Error (getCustomerUnreadCount):', error);
+    return 0;
+  }
+}
+
+export async function markCustomerNotificationAsRead(id: string) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/notifications/customer/${id}/read`, {
+      method: 'PATCH',
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('customer_token')}` },
+      credentials: 'include'
+    });
+    return response.ok;
+  } catch (error) {
+    console.error('API Error (markCustomerNotificationAsRead):', error);
+    return false;
+  }
+}
+
+export async function getNotificationDeliveries(status?: string) {
+  try {
+    const url = status ? `${API_BASE_URL}/admin/notification-deliveries?status=${encodeURIComponent(status)}` : `${API_BASE_URL}/admin/notification-deliveries`;
+    const response = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('admin_token')}` }
+    });
+    if (!response.ok) return [];
+    return await response.json();
+  } catch (error) {
+    console.error('API Error (getNotificationDeliveries):', error);
+    return [];
   }
 }
 

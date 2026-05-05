@@ -41,13 +41,14 @@ export default function ImageUpload({ value, onChange, label, className = '', as
   const handleCropSave = async (croppedFile: File) => {
     setShowCropModal(false);
     setIsUploading(true);
-    const url = await uploadImage(croppedFile);
-    setIsUploading(false);
-
-    if (url) {
-      onChange(url);
-    } else {
-      alert('Failed to upload image.');
+    try {
+      const url = await uploadImage(croppedFile);
+      if (url) onChange(url);
+      else alert('Failed to upload image.');
+    } catch (err: any) {
+      alert(err?.message || 'Failed to upload image.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
